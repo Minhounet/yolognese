@@ -1,3 +1,4 @@
+import { COLORS, Code } from '../domain/color';
 import { GameRepository, RandomSource } from './ports';
 import { GameView } from './views';
 
@@ -12,6 +13,12 @@ export class StartGameImpl implements StartGame {
   ) {}
 
   execute(): GameView {
+    this.repository.save({ game: { secret: this.drawSecret() } });
     return { turns: [] };
+  }
+
+  private drawSecret(): Code {
+    const drawColor = () => COLORS[this.random.nextInt(COLORS.length)];
+    return [drawColor(), drawColor(), drawColor(), drawColor()];
   }
 }
