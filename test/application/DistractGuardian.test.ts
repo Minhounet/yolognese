@@ -18,4 +18,12 @@ describe('DistractGuardian', () => {
 
     expect(response).toMatchObject({ kind: 'distracted', view: { gaze: { x: 120, y: -40 } } });
   });
+
+  it('shouldStayDistractedFor1500Ms_whenPointedAt', () => {
+    const distractGuardian = startedGame(new FakeClock());
+
+    const response = distractGuardian.execute({ target: { x: 120, y: -40 } });
+
+    expect(response).toMatchObject({ kind: 'distracted', view: { remainingMs: 1500 } });
+  });
 });
