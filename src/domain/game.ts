@@ -7,3 +7,7 @@ export interface Game {
 export function countExact(game: Game, guess: Code): number {
   return guess.filter((color, position) => color === game.secret[position]).length;
 }
+
+export function countMisplaced(game: Game, guess: Code): number {
+  return guess.filter((color, position) => color !== game.secret[position] && game.secret.includes(color)).length;
+}

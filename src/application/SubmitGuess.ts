@@ -1,5 +1,5 @@
 import { Code } from '../domain/color';
-import { countExact } from '../domain/game';
+import { countExact, countMisplaced } from '../domain/game';
 import { GameRepository } from './ports';
 import { GameView } from './views';
 
@@ -24,9 +24,10 @@ export class SubmitGuessImpl implements SubmitGuess {
       return { kind: 'rejected', reason: 'no-game' };
     }
     const exact = countExact(session.game, command.guess);
+    const misplaced = countMisplaced(session.game, command.guess);
     return {
       kind: 'played',
-      view: { turns: [{ guess: command.guess, exact, misplaced: 0 }] },
+      view: { turns: [{ guess: command.guess, exact, misplaced }] },
     };
   }
 }
