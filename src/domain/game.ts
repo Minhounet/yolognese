@@ -1,6 +1,6 @@
 import { Code, COLORS, Color } from './color';
 
-export const MAX_ATTEMPTS = 10;
+const MAX_ATTEMPTS = 10;
 
 export interface Turn {
   readonly guess: Code;
