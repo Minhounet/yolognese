@@ -1,5 +1,5 @@
 import { Code } from '../domain/color';
-import { isWon, play } from '../domain/game';
+import { isOver, play } from '../domain/game';
 import { toGameView } from './GameMapper';
 import { GameRepository } from './ports';
 import { GameView } from './views';
@@ -24,7 +24,7 @@ export class SubmitGuessImpl implements SubmitGuess {
     if (session === undefined) {
       return { kind: 'rejected', reason: 'no-game' };
     }
-    if (isWon(session.game)) {
+    if (isOver(session.game)) {
       return { kind: 'rejected', reason: 'game-over' };
     }
     const game = play(session.game, command.guess);
