@@ -8,5 +8,6 @@ export interface TurnView {
 
 export interface GameView {
   readonly status: 'playing' | 'won';
+  readonly attemptsLeft: number;
   readonly turns: readonly TurnView[];
 }
