@@ -45,4 +45,15 @@ describe('SubmitGuess', () => {
       view: { turns: [{ guess: ['yellow', 'red', 'blue', 'green'], exact: 0, misplaced: 4 }] },
     });
   });
+
+  it('shouldCountColourOnce_whenSecretHoldsItOnce', () => {
+    const submitGuess = startedGame(RED_YELLOW_GREEN_BLUE);
+
+    const response = submitGuess.execute({ guess: ['red', 'red', 'yellow', 'yellow'] });
+
+    expect(response).toMatchObject({
+      kind: 'played',
+      view: { turns: [{ guess: ['red', 'red', 'yellow', 'yellow'], exact: 1, misplaced: 1 }] },
+    });
+  });
 });
