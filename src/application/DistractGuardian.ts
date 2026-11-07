@@ -21,6 +21,6 @@ export class DistractGuardianImpl implements DistractGuardian {
   ) {}
 
   execute(command: DistractCommand): DistractResponse {
-    return { kind: 'distracted', view: { gaze: { x: -1, y: -1 }, remainingMs: 0 } };
+    return { kind: 'distracted', view: { gaze: command.target, remainingMs: 0 } };
   }
 }
