@@ -20,6 +20,18 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "90eceada-289a-4a45-b958-180a23ddedb8"
+      }
+    },
+    "owner": "minhounets-team",
+    "updates": {
+      "url": "https://u.expo.dev/90eceada-289a-4a45-b958-180a23ddedb8"
+    },
+    "runtimeVersion": {
+      "policy": "sdkVersion"
     }
   }
 }

@@ -65,3 +65,10 @@
 - Decided: build the playable screen before AC3 ("build the screen after AC2 so I can play"); UI without TDD (No skill: React Native screen), proven by Playwright checks on the web build, one per AC
 - Asked user: yes (the order); the rest no (yolo)
 - No skill: React Native screen
+
+## Publish - EAS Update for Expo Go
+- Decided: Expo project @minhounets-team/yolognese (created with the user's token, a robot of that team), runtimeVersion policy `sdkVersion` (exposdk:58.0.0) so Expo Go can load it, channel `feat-peek-a-code` bound to the branch of the same name, environment `preview`
+- Why: `eas update:configure` set policy appVersion (1.0.0), which Expo Go cannot load; a channel gives one stable link instead of one per update
+- Rejected: development build (needs EAS Build, an APK; Expo Go is enough so far)
+- Asked user: no (yolo; private to the user's Expo account, like the feature-branch push)
+- Not verified: opening the link in Expo Go on the phone (HUMAN)
