@@ -23,4 +23,15 @@ describe('SubmitGuess', () => {
       view: { turns: [{ guess: ['red', 'yellow', 'green', 'blue'], exact: 4, misplaced: 0 }] },
     });
   });
+
+  it('shouldReportNothing_whenGuessSharesNoColour', () => {
+    const submitGuess = startedGame(RED_YELLOW_GREEN_BLUE);
+
+    const response = submitGuess.execute({ guess: ['purple', 'purple', 'orange', 'orange'] });
+
+    expect(response).toMatchObject({
+      kind: 'played',
+      view: { turns: [{ guess: ['purple', 'purple', 'orange', 'orange'], exact: 0, misplaced: 0 }] },
+    });
+  });
 });
