@@ -92,4 +92,12 @@ describe('SubmitGuess', () => {
 
     expect(response).toMatchObject({ kind: 'played', view: { status: 'won' } });
   });
+
+  it('shouldKeepPlaying_whenGuessMisses', () => {
+    const submitGuess = startedGame(RED_YELLOW_GREEN_BLUE);
+
+    const response = submitGuess.execute({ guess: ['purple', 'purple', 'orange', 'orange'] });
+
+    expect(response).toMatchObject({ kind: 'played', view: { status: 'playing' } });
+  });
 });
