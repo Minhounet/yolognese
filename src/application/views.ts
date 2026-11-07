@@ -6,8 +6,10 @@ export interface TurnView {
   readonly misplaced: number;
 }
 
+export type GameStatus = 'playing' | 'won' | 'lost';
+
 export interface GameView {
-  readonly status: 'playing' | 'won';
+  readonly status: GameStatus;
   readonly attemptsLeft: number;
   readonly turns: readonly TurnView[];
 }

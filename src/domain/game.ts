@@ -1,5 +1,7 @@
 import { Code, COLORS, Color } from './color';
 
+export const MAX_ATTEMPTS = 10;
+
 export interface Turn {
   readonly guess: Code;
   readonly exact: number;
@@ -45,4 +47,12 @@ export function play(game: Game, guess: Code): Game {
 
 export function isWon(game: Game): boolean {
   return game.turns.some(({ exact }) => exact === game.secret.length);
+}
+
+export function attemptsLeft(game: Game): number {
+  return MAX_ATTEMPTS - game.turns.length;
+}
+
+export function isLost(game: Game): boolean {
+  return !isWon(game) && attemptsLeft(game) === 0;
 }
