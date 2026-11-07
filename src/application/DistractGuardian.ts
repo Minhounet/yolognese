@@ -2,6 +2,8 @@ import { Point } from '../domain/point';
 import { Clock, GameRepository } from './ports';
 import { GuardianView } from './views';
 
+const DISTRACTION_MS = 1500;
+
 export interface DistractCommand {
   readonly target: Point;
 }
@@ -21,6 +23,6 @@ export class DistractGuardianImpl implements DistractGuardian {
   ) {}
 
   execute(command: DistractCommand): DistractResponse {
-    return { kind: 'distracted', view: { gaze: command.target, remainingMs: 0 } };
+    return { kind: 'distracted', view: { gaze: command.target, remainingMs: DISTRACTION_MS } };
   }
 }
