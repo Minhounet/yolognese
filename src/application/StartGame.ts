@@ -1,4 +1,6 @@
 import { COLORS, Code } from '../domain/color';
+import { newGame } from '../domain/game';
+import { toGameView } from './GameMapper';
 import { GameRepository, RandomSource } from './ports';
 import { GameView } from './views';
 
@@ -13,8 +15,9 @@ export class StartGameImpl implements StartGame {
   ) {}
 
   execute(): GameView {
-    this.repository.save({ game: { secret: this.drawSecret() } });
-    return { turns: [] };
+    const game = newGame(this.drawSecret());
+    this.repository.save({ game });
+    return toGameView(game);
   }
 
   private drawSecret(): Code {
