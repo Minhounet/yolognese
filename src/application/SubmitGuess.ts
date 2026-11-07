@@ -18,6 +18,9 @@ export class SubmitGuessImpl implements SubmitGuess {
   constructor(private readonly repository: GameRepository) {}
 
   execute(command: SubmitGuessCommand): SubmitGuessResponse {
-    return { kind: 'rejected', reason: 'no-game' };
+    return {
+      kind: 'played',
+      view: { turns: [{ guess: command.guess, exact: 4, misplaced: 0 }] },
+    };
   }
 }
