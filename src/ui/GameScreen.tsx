@@ -1,9 +1,11 @@
-import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ComponentRef, useEffect, useRef, useState } from 'react';
+import { GestureResponderEvent, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { GameView } from '../application/views';
 import { UseCases } from '../compositionRoot';
 import { COLORS, Code, Color } from '../domain/color';
+import { Point } from '../domain/point';
 import { Feedback } from './Feedback';
+import { Guardian } from './Guardian';
 import { Peg } from './Peg';
 import { THEME } from './theme';
 
@@ -34,6 +36,32 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
   const [view, setView] = useState<GameView>(() => useCases.startGame.execute());
   const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
   const playing = view.status === 'playing';
+  const [gaze, setGaze] = useState<Point | undefined>(undefined);
+  const guardianCentre = useRef<Point>({ x: 0, y: 0 });
+  const guardianRef = useRef<ComponentRef<typeof View>>(null);
+  const remainingMs = useRef(0);
+
+  useEffect(() => {
+    if (gaze === undefined) return undefined;
+    const timer = setTimeout(() => setGaze(undefined), remainingMs.current);
+    return () => clearTimeout(timer);
+  }, [gaze]);
+
+  const measureGuardian = () =>
+    guardianRef.current?.measureInWindow((x, y, width, height) => {
+      guardianCentre.current = { x: x + width / 2, y: y + height / 2 };
+    });
+
+  const pointAt = (event: GestureResponderEvent) => {
+    const target = {
+      x: event.nativeEvent.pageX - guardianCentre.current.x,
+      y: event.nativeEvent.pageY - guardianCentre.current.y,
+    };
+    const response = useCases.distractGuardian.execute({ target });
+    if (response.kind !== 'distracted') return;
+    remainingMs.current = response.view.remainingMs;
+    setGaze({ ...response.view.gaze });
+  };
 
   const submit = () => {
     if (!isComplete(draft)) return;
@@ -48,8 +76,11 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
   };
 
   return (
-    <View style={styles.screen}>
+    <Pressable testID="scene" style={styles.screen} onPress={pointAt}>
       <Text style={styles.title}>Yolognese</Text>
+      <View ref={guardianRef} onLayout={measureGuardian}>
+        <Guardian gaze={gaze} />
+      </View>
       <View style={styles.row} testID="secret">
         {(view.secret ?? EMPTY_DRAFT).map((color, slot) => (
           <Peg key={slot} testID={`secret-${slot}`} color={color} hidden={view.secret === undefined} />
@@ -95,13 +126,13 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
           <Text style={styles.buttonText}>New game</Text>
         </Pressable>
       )}
-    </View>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: THEME.background, alignItems: 'center', paddingTop: 48, paddingBottom: 24 },
-  title: { fontSize: 32, fontWeight: 'bold', color: THEME.sauce, marginBottom: 8 },
+  screen: { flex: 1, backgroundColor: THEME.background, alignItems: 'center', paddingTop: 36, paddingBottom: 24 },
+  title: { fontSize: 24, fontWeight: 'bold', color: THEME.sauce, marginBottom: 8 },
   status: { color: THEME.ink, fontSize: 16, marginVertical: 8 },
   board: { flex: 1, alignSelf: 'stretch', marginHorizontal: 16, backgroundColor: THEME.board, borderRadius: 12 },
   boardContent: { alignItems: 'center', paddingVertical: 8 },
