@@ -137,4 +137,15 @@ describe('SubmitGuess', () => {
 
     expect(response).toEqual({ kind: 'rejected', reason: 'game-over' });
   });
+
+  it('shouldRevealSecret_whenGameIsOver', () => {
+    const submitGuess = startedGame(RED_YELLOW_GREEN_BLUE);
+
+    const response = submitGuess.execute({ guess: ['red', 'yellow', 'green', 'blue'] });
+
+    expect(response).toMatchObject({
+      kind: 'played',
+      view: { secret: ['red', 'yellow', 'green', 'blue'] },
+    });
+  });
 });
