@@ -1,3 +1,4 @@
+import { Point } from '../domain/point';
 import { Code } from '../domain/color';
 
 export interface TurnView {
@@ -13,4 +14,9 @@ export interface GameView {
   readonly attemptsLeft: number;
   readonly secret?: Code;
   readonly turns: readonly TurnView[];
+}
+
+export interface GuardianView {
+  readonly gaze: Point;
+  readonly remainingMs: number;
 }
