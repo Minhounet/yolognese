@@ -127,4 +127,14 @@ describe('SubmitGuess', () => {
 
     expect(response).toEqual({ kind: 'rejected', reason: 'game-over' });
   });
+
+  it('shouldRejectGuess_whenGameIsLost', () => {
+    const submitGuess = startedGame(RED_YELLOW_GREEN_BLUE);
+    const miss = { guess: ['purple', 'purple', 'orange', 'orange'] } as const;
+    Array.from({ length: 10 }).forEach(() => submitGuess.execute(miss));
+
+    const response = submitGuess.execute(miss);
+
+    expect(response).toEqual({ kind: 'rejected', reason: 'game-over' });
+  });
 });
