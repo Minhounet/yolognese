@@ -42,3 +42,7 @@ export function play(game: Game, guess: Code): Game {
   };
   return { ...game, turns: [...game.turns, turn] };
 }
+
+export function isWon(game: Game): boolean {
+  return game.turns.some(({ guess }) => countExact(game, guess) === game.secret.length);
+}
