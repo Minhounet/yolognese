@@ -118,4 +118,13 @@ describe('SubmitGuess', () => {
 
     expect(response).toMatchObject({ kind: 'played', view: { status: 'lost', attemptsLeft: 0 } });
   });
+
+  it('shouldRejectGuess_whenGameIsOver', () => {
+    const submitGuess = startedGame(RED_YELLOW_GREEN_BLUE);
+    submitGuess.execute({ guess: ['red', 'yellow', 'green', 'blue'] });
+
+    const response = submitGuess.execute({ guess: ['red', 'yellow', 'green', 'blue'] });
+
+    expect(response).toEqual({ kind: 'rejected', reason: 'game-over' });
+  });
 });
