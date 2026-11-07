@@ -84,4 +84,12 @@ describe('SubmitGuess', () => {
       view: { turns: [{ guess: ['red', 'green', 'green', 'green'], exact: 2, misplaced: 0 }] },
     });
   });
+
+  it('shouldBeWon_whenGuessEqualsSecret', () => {
+    const submitGuess = startedGame(RED_YELLOW_GREEN_BLUE);
+
+    const response = submitGuess.execute({ guess: ['red', 'yellow', 'green', 'blue'] });
+
+    expect(response).toMatchObject({ kind: 'played', view: { status: 'won' } });
+  });
 });
