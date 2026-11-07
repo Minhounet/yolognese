@@ -148,4 +148,12 @@ describe('SubmitGuess', () => {
       view: { secret: ['red', 'yellow', 'green', 'blue'] },
     });
   });
+
+  it('shouldHideSecret_whenPlaying', () => {
+    const submitGuess = startedGame(RED_YELLOW_GREEN_BLUE);
+
+    const response = submitGuess.execute({ guess: ['purple', 'purple', 'orange', 'orange'] });
+
+    expect(response.kind === 'played' && response.view.secret).toBeUndefined();
+  });
 });
