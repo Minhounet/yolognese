@@ -56,4 +56,21 @@ describe('SubmitGuess', () => {
       view: { turns: [{ guess: ['red', 'red', 'yellow', 'yellow'], exact: 1, misplaced: 1 }] },
     });
   });
+
+  it('shouldListGuessesInOrder_whenTwoGuessesPlayed', () => {
+    const submitGuess = startedGame(RED_YELLOW_GREEN_BLUE);
+    submitGuess.execute({ guess: ['purple', 'purple', 'orange', 'orange'] });
+
+    const response = submitGuess.execute({ guess: ['red', 'yellow', 'green', 'blue'] });
+
+    expect(response).toMatchObject({
+      kind: 'played',
+      view: {
+        turns: [
+          { guess: ['purple', 'purple', 'orange', 'orange'], exact: 0, misplaced: 0 },
+          { guess: ['red', 'yellow', 'green', 'blue'], exact: 4, misplaced: 0 },
+        ],
+      },
+    });
+  });
 });
