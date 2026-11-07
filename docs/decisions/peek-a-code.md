@@ -4,8 +4,8 @@
 - Status: open
 - Mode: build
 - Yolo: on (see references/yolo.md of saiban-orchestrator)
-- Done: scaffold (Expo SDK 58, TypeScript), structural plan and ACs, AC1
-- Next: AC2
+- Done: scaffold (Expo SDK 58, TypeScript), structural plan and ACs, AC1, AC2, playable screen (no guardian yet)
+- Next: publish to Expo Go, then AC3
 - Files: docs/ticket/PEEK-1/, src/
 
 ## Start - scope and mode
@@ -51,3 +51,17 @@
 - Deferred refinement notes: none
 - Asked user: no (yolo)
 - Carry forward: ScriptedRandomSource and startedGame() for AC2's tests; GameView will need status, attempts left and the secret at the end (AC2); the `no-game` rejection may get its test with StartGame in AC2
+
+## AC2 - plan, run and review
+- Decided: 7 tests through SubmitGuess + guard 13 (StartGame); fresh shonin-dev; all its greens accepted
+- Decided: plan deviation, red 11 shouldRejectGuess_whenGameIsLost added (GREEN 10 only rejected won games)
+- Decided: kenji-reviewer blocking finding (new game proven only by a guard) fixed with other evidence: browser check on the web build, not a waiver; minor findings: retro and log entries written here, super-green misses counted
+- Super-green misses: 2 — refactor 7 (isWon recomputed exact counts the turn already holds), refactor 9 (MAX_ATTEMPTS exported "for tests": against rule 3)
+- Deferred refinement notes: none; open: `no-game` rejection still untested (AC1)
+- Asked user: no (yolo)
+- Carry forward: GameScreen and the e2e setup for AC3-AC5; the guardian needs Clock in the composition root
+
+## Screen - after AC2, at the user's request
+- Decided: build the playable screen before AC3 ("build the screen after AC2 so I can play"); UI without TDD (No skill: React Native screen), proven by Playwright checks on the web build, one per AC
+- Asked user: yes (the order); the rest no (yolo)
+- No skill: React Native screen
