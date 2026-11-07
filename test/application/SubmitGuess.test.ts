@@ -73,4 +73,15 @@ describe('SubmitGuess', () => {
       },
     });
   });
+
+  it('shouldMatchRepeatedColour_whenSecretHoldsItTwice', () => {
+    const submitGuess = startedGame([0, 0, 2, 3]);
+
+    const response = submitGuess.execute({ guess: ['red', 'green', 'green', 'green'] });
+
+    expect(response).toMatchObject({
+      kind: 'played',
+      view: { turns: [{ guess: ['red', 'green', 'green', 'green'], exact: 2, misplaced: 0 }] },
+    });
+  });
 });
