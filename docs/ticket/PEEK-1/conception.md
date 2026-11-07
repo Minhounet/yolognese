@@ -64,7 +64,8 @@ pegs, exact / misplaced feedback), not a copy of a commercial game.
 - GameRepository (port)           + load(): Session | undefined ; + save(Session): void
     InMemoryGameRepository (same change as the port)
 - ShakeDetector (domain)          + push(sample: Acceleration, at: number): boolean
-- GameMapper                      + toView(Game): GameView ; + toGuardianView(Guardian, now): GuardianView
+- GameMapper (module GameMapper.ts, free functions — deviation logged at AC1)
+                                  + toGameView(Game): GameView ; + toGuardianView(Guardian, now): GuardianView
 - Composition root: compositionRoot.ts → MathRandomSource, SystemClock,
     InMemoryGameRepository → the four use cases, handed to App.
 ```

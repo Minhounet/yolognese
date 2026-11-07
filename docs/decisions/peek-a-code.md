@@ -4,8 +4,8 @@
 - Status: open
 - Mode: build
 - Yolo: on (see references/yolo.md of saiban-orchestrator)
-- Done: scaffold (Expo SDK 58, TypeScript), structural plan and ACs
-- Next: AC1
+- Done: scaffold (Expo SDK 58, TypeScript), structural plan and ACs, AC1
+- Next: AC2
 - Files: docs/ticket/PEEK-1/, src/
 
 ## Start - scope and mode
@@ -38,3 +38,16 @@
 - Asked user: no (yolo)
 - No skill: TypeScript functional style
 - No skill: Expo/React Native app (launch, EAS Update)
+
+## AC1 - TDD plan
+- Decided: 5 tests through SubmitGuess (exact, none, misplaced, repeated colour, history); shonin-dev on (5 tests in one run)
+- Why: drive the AC at the use-case level from the first test (objection-conception)
+- Asked user: no (yolo)
+
+## AC1 - run and review
+- Decided: GREEN 1 by shonin-dev rejected (overbuilt: scoring and history ahead of tests 2-5), rewritten minimal by the orchestrator; greens 2-5 by shonin-dev accepted
+- Decided: kenji-reviewer minor findings: (1) secret with a repeated colour untested -> guard 5 added, mutation shown; (2) `no-game` branch has no test: strict typing needs it, left, a survivor to a mutation run, open; (3)+(4) super-green misses not counted -> counted below; (5) GameMapper is a module of free functions, not a class with toView -> TypeScript idiom, plan updated, deviation logged; (6) evidence recorded
+- Super-green misses: 2 — refactor 3 (green 3 wrote a 113-character filter, named the predicate after), refactor 5 (greens 2-3 exported helpers with no outside caller)
+- Deferred refinement notes: none
+- Asked user: no (yolo)
+- Carry forward: ScriptedRandomSource and startedGame() for AC2's tests; GameView will need status, attempts left and the secret at the end (AC2); the `no-game` rejection may get its test with StartGame in AC2

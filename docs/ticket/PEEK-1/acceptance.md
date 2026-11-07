@@ -13,8 +13,8 @@ Interpretation is the orchestrator's (yolo), logged in the decision log.
   often as it appears in the secret; the guesses played stay listed.
 - Questions: none
 - Covered by: D-rules, D-structure (SubmitGuess)
-- Evidence:
-- Status: designed
+- Evidence: test/application/SubmitGuess.test.ts — shouldReportFourExact_whenGuessEqualsSecret, shouldReportNothing_whenGuessSharesNoColour, shouldReportMisplaced_whenColoursAreInWrongPlaces, shouldCountColourOnce_whenSecretHoldsItOnce, shouldListGuessesInOrder_whenTwoGuessesPlayed (guard: shouldMatchRepeatedColour_whenSecretHoldsItTwice); full build `npx jest && npx tsc --noEmit`: 6 passed, tsc clean; kenji-reviewer: 6 minor, none blocking
+- Status: verified
 
 ## AC2: End of game
 - Source: "a simple master mind game"
