@@ -34,4 +34,15 @@ describe('SubmitGuess', () => {
       view: { turns: [{ guess: ['purple', 'purple', 'orange', 'orange'], exact: 0, misplaced: 0 }] },
     });
   });
+
+  it('shouldReportMisplaced_whenColoursAreInWrongPlaces', () => {
+    const submitGuess = startedGame(RED_YELLOW_GREEN_BLUE);
+
+    const response = submitGuess.execute({ guess: ['yellow', 'red', 'blue', 'green'] });
+
+    expect(response).toMatchObject({
+      kind: 'played',
+      view: { turns: [{ guess: ['yellow', 'red', 'blue', 'green'], exact: 0, misplaced: 4 }] },
+    });
+  });
 });
