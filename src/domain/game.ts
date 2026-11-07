@@ -15,7 +15,7 @@ export function newGame(secret: Code): Game {
   return { secret, turns: [] };
 }
 
-export function countExact(game: Game, guess: Code): number {
+function countExact(game: Game, guess: Code): number {
   return guess.filter((color, position) => color === game.secret[position]).length;
 }
 
@@ -30,7 +30,7 @@ function countSharedColours(secret: Code, guess: Code): number {
   );
 }
 
-export function countMisplaced(game: Game, guess: Code): number {
+function countMisplaced(game: Game, guess: Code): number {
   return countSharedColours(game.secret, guess) - countExact(game, guess);
 }
 
