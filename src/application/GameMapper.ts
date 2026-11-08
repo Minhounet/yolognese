@@ -1,4 +1,4 @@
-import { Game, attemptsLeft, isLost, isOver, isWon } from '../domain/game';
+import { Game, isLost, isOver, isWon } from '../domain/game';
 import { GameStatus, GameView } from './views';
 
 function toStatus(game: Game): GameStatus {
@@ -9,7 +9,6 @@ function toStatus(game: Game): GameStatus {
 export function toGameView(game: Game): GameView {
   return {
     status: toStatus(game),
-    attemptsLeft: attemptsLeft(game),
     life: game.life,
     secret: isOver(game) ? game.secret : undefined,
     turns: game.turns.map(({ guess, exact, misplaced }) => ({ guess, exact, misplaced })),
