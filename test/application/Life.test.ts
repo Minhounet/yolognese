@@ -57,4 +57,13 @@ describe('Life', () => {
 
     expect(response).toMatchObject({ kind: 'caught', view: { status: 'lost', life: 0 } });
   });
+
+  it('shouldStopAtZeroLife_whenCaughtWithOneLifeLeft', () => {
+    const { submitGuess, peekSecret } = startGame();
+    Array.from({ length: 9 }).forEach(() => submitGuess.execute(MISS));
+
+    const response = peekSecret.execute({ index: 0 });
+
+    expect(response).toMatchObject({ kind: 'caught', view: { status: 'lost', life: 0 } });
+  });
 });
