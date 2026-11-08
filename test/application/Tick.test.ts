@@ -83,4 +83,15 @@ describe('Tick', () => {
 
     expect(response).toMatchObject({ kind: 'ticked', timeLeftMs: 180000 });
   });
+
+  it('shouldStayWon_whenTimeRunsOutAfterWinning', () => {
+    const { clock, tick, submitGuess } = startedGame();
+    tick.execute();
+    submitGuess.execute({ guess: ['red', 'yellow', 'green', 'blue'] });
+    clock.advance(180000);
+
+    const response = tick.execute();
+
+    expect(response).toMatchObject({ kind: 'ticked', view: { status: 'won' } });
+  });
 });
