@@ -74,6 +74,9 @@ export class CollectItemImpl implements CollectItem {
 
   private revealHiddenPeg(game: Game): Game {
     const hidden = hiddenPegs(game);
+    if (hidden.length === 0) {
+      return game;
+    }
     return revealPeg(game, hidden[this.random.nextInt(hidden.length)]);
   }
 }
