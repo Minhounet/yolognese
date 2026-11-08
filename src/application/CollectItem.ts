@@ -1,4 +1,4 @@
-import { Game, hiddenPegs, restoreLife, revealPeg } from '../domain/game';
+import { Game, hiddenPegs, isOver, restoreLife, revealPeg } from '../domain/game';
 import { blindUntil } from '../domain/guardian';
 import { GIFT_KINDS, GiftKind, HOURGLASS_BONUS_MS, ItemKind, SMOKE_BLIND_MS, isItemShown } from '../domain/items';
 import { toGameView } from './GameMapper';
@@ -33,6 +33,9 @@ export class CollectItemImpl implements CollectItem {
     const session = this.repository.load();
     if (session === undefined) {
       return { kind: 'rejected', reason: 'no-game' };
+    }
+    if (isOver(session.game)) {
+      return { kind: 'rejected', reason: 'game-over' };
     }
     const { item, itemAt } = session;
     const now = this.clock.now();
