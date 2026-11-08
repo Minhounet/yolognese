@@ -1,5 +1,5 @@
 import { restoreLife } from '../domain/game';
-import { ItemKind } from '../domain/items';
+import { ItemKind, isItemShown } from '../domain/items';
 import { toGameView } from './GameMapper';
 import { Clock, GameRepository } from './ports';
 import { GameView } from './views';
@@ -27,11 +27,12 @@ export class CollectItemImpl implements CollectItem {
     if (session === undefined) {
       return { kind: 'rejected', reason: 'no-game' };
     }
-    if (session.item === undefined) {
+    const { item, itemAt } = session;
+    if (item === undefined || itemAt === undefined || !isItemShown(itemAt, this.clock.now())) {
       return { kind: 'rejected', reason: 'no-item' };
     }
     const game = restoreLife(session.game);
     this.repository.save({ ...session, game });
-    return { kind: 'collected', item: session.item.kind, view: toGameView(game) };
+    return { kind: 'collected', item: item.kind, view: toGameView(game) };
   }
 }
