@@ -158,4 +158,13 @@ describe('PeekSecret', () => {
 
     expect(response).toMatchObject({ kind: 'played', view: { life: 7 } });
   });
+
+  it('shouldStartCooldown_whenPeekRevealed', () => {
+    const { distractGuardian, peekSecret } = startedGame();
+    distractGuardian.execute(AWAY);
+
+    const response = peekSecret.execute({ index: 3 });
+
+    expect(response).toMatchObject({ kind: 'revealed', cooldownMs: 5000 });
+  });
 });
