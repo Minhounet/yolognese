@@ -76,4 +76,14 @@ describe('PeekSecret', () => {
 
     expect(response).toMatchObject({ kind: 'caught', view: { status: 'lost', attemptsLeft: 0 } });
   });
+
+  it('shouldRejectPeek_whenGameIsOver', () => {
+    const { distractGuardian, peekSecret, submitGuess } = startedGame();
+    submitGuess.execute({ guess: ['red', 'yellow', 'green', 'blue'] });
+    distractGuardian.execute(AWAY);
+
+    const response = peekSecret.execute({ index: 2 });
+
+    expect(response).toEqual({ kind: 'rejected', reason: 'game-over' });
+  });
 });
