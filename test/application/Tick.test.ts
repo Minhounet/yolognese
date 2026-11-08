@@ -546,4 +546,21 @@ describe('Tick', () => {
 
     expect(response).toEqual({ kind: 'rejected', reason: 'game-over' });
   });
+
+  it('shouldRevealNothingMore_whenEveryPegIsRevealed', () => {
+    const { clock, collectItem, tick } = startedGame([300000, 0], [0, 2, 30, 70], [0]);
+    tick.execute();
+    const collectNextXray = () => {
+      clock.advance(8000);
+      const response = collectShownItem(tick, collectItem);
+      clock.advance(100);
+      tick.execute();
+      return response;
+    };
+    Array.from({ length: 4 }).forEach(collectNextXray);
+
+    const response = collectNextXray();
+
+    expect(response).toMatchObject({ kind: 'collected', view: { revealed: { length: 4 } } });
+  });
 });

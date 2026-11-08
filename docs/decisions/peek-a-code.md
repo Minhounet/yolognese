@@ -240,3 +240,4 @@
 - Plan change (AC13): red 70 shouldNameGift_whenPresentCollected (the screen cannot show a smoke or charm that came out of a present unless the response names it)
 - Review fix (AC13, blocking): red 71 shouldStayBlind_whenPointingDuringSmoke (a tap during the smoke replaced the blindness with a 1.5 s distraction)
 - Review fix (AC13, minor): red 72 shouldRejectCollect_whenGameIsOver (food on a lost game brought it back to life)
+- Review fix (AC13, minor): red 73 shouldRevealNothingMore_whenEveryPegIsRevealed (an x-ray with no hidden peg pushed undefined into revealed)
