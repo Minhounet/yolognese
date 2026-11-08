@@ -30,3 +30,4 @@
 - AC13: the first dev stopped on the account's 5-hour usage limit; the run was paused with its Resume block and taken over by a fresh dev at green 62.
 - AC13: a red assertion passed with the bug present (toEqual ignored an extra undefined array slot); rewritten as a length check before commit.
 - AC13: browser checks of random items fix Math.random per check (addInitScript), so every draw lands on one index: one item kind per check.
+- acceptance.md lost its "## Discrepancies" heading again during round 2 edits (a script appended after "None."); restored in round 3, and an insertion keyed on that heading misplaced AC15 until fixed
