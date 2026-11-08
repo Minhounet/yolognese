@@ -10,6 +10,15 @@ import {
 } from '../domain/attack';
 import { penalise, timeUp } from '../domain/game';
 import { isDistracted } from '../domain/guardian';
+import {
+  ITEM_DELAY_SPREAD_MS,
+  ITEM_KINDS,
+  ITEM_SPOT_SPAN,
+  Item,
+  appear,
+  isItemDue,
+  scheduleItemAt,
+} from '../domain/items';
 import { toGameView } from './GameMapper';
 import { Clock, GameRepository, RandomSource, Session } from './ports';
 import { GameView } from './views';
@@ -22,6 +31,7 @@ export type TickResponse =
       readonly view: GameView;
       readonly timeLeftMs: number;
       readonly attack?: Attack;
+      readonly item?: Item;
     }
   | { readonly kind: 'rejected'; readonly reason: 'no-game' };
 
@@ -48,8 +58,18 @@ export class TickImpl implements Tick {
     const landing = this.landing(session, now);
     const game = landing.hits ? penalise(timedGame) : timedGame;
     const attackState = this.windUpIfDue(session, now, landing.pendingLandsAt);
-    this.repository.save({ ...session, ...attackState.stored, game });
-    return { kind: 'ticked', view: toGameView(game), timeLeftMs, attack: attackState.attack };
+    const itemAt = session.itemAt ?? scheduleItemAt(now, this.itemRandom.nextInt(ITEM_DELAY_SPREAD_MS));
+    const item = isItemDue(itemAt, now) ? this.showItem() : undefined;
+    this.repository.save({ ...session, ...attackState.stored, itemAt, game });
+    return { kind: 'ticked', view: toGameView(game), timeLeftMs, attack: attackState.attack, item };
+  }
+
+  private showItem(): Item {
+    return appear(
+      this.itemRandom.nextInt(ITEM_KINDS.length),
+      this.itemRandom.nextInt(ITEM_SPOT_SPAN),
+      this.itemRandom.nextInt(ITEM_SPOT_SPAN),
+    );
   }
 
   private landing(session: Session, now: number) {

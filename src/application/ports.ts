@@ -15,6 +15,7 @@ export interface Session {
   readonly peekReadyAt: number;
   readonly endsAt: number;
   readonly attackAt?: number;
+  readonly itemAt?: number;
   readonly attackLandsAt?: number;
   readonly attackLane?: number;
   readonly shieldLane?: number;
