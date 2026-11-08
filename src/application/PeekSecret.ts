@@ -1,5 +1,5 @@
 import { Color } from '../domain/color';
-import { penalise } from '../domain/game';
+import { isOver, penalise } from '../domain/game';
 import { isDistracted } from '../domain/guardian';
 import { toGameView } from './GameMapper';
 import { Clock, GameRepository } from './ports';
@@ -28,6 +28,9 @@ export class PeekSecretImpl implements PeekSecret {
     const session = this.repository.load();
     if (session === undefined) {
       return { kind: 'rejected', reason: 'no-game' };
+    }
+    if (isOver(session.game)) {
+      return { kind: 'rejected', reason: 'game-over' };
     }
     if (!isDistracted(session.guardian, this.clock.now())) {
       const game = penalise(session.game);
