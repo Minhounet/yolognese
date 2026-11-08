@@ -92,4 +92,15 @@ describe('Cooldown', () => {
 
     expect(response).toMatchObject({ kind: 'caught', cooldownRemainingMs: 5000 });
   });
+
+  it('shouldReportRemainingCooldown_whenRejected', () => {
+    const { clock, distractGuardian, peekSecret } = startedGame();
+    distractGuardian.execute(AWAY);
+    peekSecret.execute({ index: 0 });
+    clock.advance(2000);
+
+    const response = peekSecret.execute({ index: 1 });
+
+    expect(response).toEqual({ kind: 'rejected', reason: 'cooling-down', remainingMs: 3000 });
+  });
 });
