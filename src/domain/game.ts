@@ -68,7 +68,7 @@ export function attemptsLeft(game: Game): number {
 }
 
 export function isLost(game: Game): boolean {
-  return !isWon(game) && attemptsLeft(game) === 0;
+  return !isWon(game) && game.life <= 0;
 }
 
 export function isOver(game: Game): boolean {
