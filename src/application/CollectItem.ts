@@ -16,7 +16,7 @@ export type CollectItemResponse =
       readonly gift?: GiftKind;
       readonly view: GameView;
     }
-  | { readonly kind: 'rejected'; readonly reason: 'no-game' | 'no-item' };
+  | { readonly kind: 'rejected'; readonly reason: 'no-game' | 'no-item' | 'game-over' };
 
 export interface CollectItem {
   execute(command: CollectItemCommand): CollectItemResponse;

@@ -533,4 +533,17 @@ describe('Tick', () => {
 
     expect(response).toMatchObject({ kind: 'revealed', cooldownMs: 0 });
   });
+
+  it('shouldRejectCollect_whenGameIsOver', () => {
+    const { clock, collectItem, submitGuess, tick } = startedGame([30000, 0], [0, 0, 30, 70]);
+    tick.execute();
+    clock.advance(8000);
+    const shown = tick.execute();
+    const id = shown.kind === 'ticked' && shown.item !== undefined ? shown.item.id : -1;
+    submitGuess.execute({ guess: ['red', 'yellow', 'green', 'blue'] });
+
+    const response = collectItem.execute({ id });
+
+    expect(response).toEqual({ kind: 'rejected', reason: 'game-over' });
+  });
 });
