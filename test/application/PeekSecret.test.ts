@@ -56,4 +56,12 @@ describe('PeekSecret', () => {
 
     expect(response).toEqual({ kind: 'revealed', index: 0, color: 'red' });
   });
+
+  it('shouldCostOneAttempt_whenCaught', () => {
+    const { peekSecret } = startedGame();
+
+    const response = peekSecret.execute({ index: 2 });
+
+    expect(response).toMatchObject({ kind: 'caught', view: { attemptsLeft: 9 } });
+  });
 });
