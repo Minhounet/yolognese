@@ -33,7 +33,7 @@ export type TickResponse =
       readonly timeLeftMs: number;
       readonly attack?: Attack;
       readonly item?: Item;
-      readonly landed?: 'hit';
+      readonly landed?: 'hit' | 'blocked';
     }
   | { readonly kind: 'rejected'; readonly reason: 'no-game' };
 
@@ -68,7 +68,7 @@ export class TickImpl implements Tick {
       timeLeftMs,
       attack: attackState.attack,
       item: itemState.item,
-      landed: landing.hits ? 'hit' : undefined,
+      landed: this.reported(landing),
     };
   }
 
@@ -93,10 +93,19 @@ export class TickImpl implements Tick {
     );
   }
 
+  private reported(landing: { readonly hits: boolean; readonly shielded: boolean }): 'hit' | 'blocked' | undefined {
+    if (landing.hits) {
+      return 'hit';
+    }
+    return landing.shielded ? 'blocked' : undefined;
+  }
+
   private landing(session: Session, now: number) {
     const landed = session.attackLandsAt !== undefined && hasLanded(session.attackLandsAt, now);
+    const shielded = landed && isBlocked(session.attackLane, session.shieldLane);
     return {
-      hits: landed && !isBlocked(session.attackLane, session.shieldLane) && !session.charmed,
+      shielded,
+      hits: landed && !shielded && !session.charmed,
       pendingLandsAt: landed ? undefined : session.attackLandsAt,
       charmed: session.charmed === true && !landed,
     };
