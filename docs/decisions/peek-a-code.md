@@ -144,3 +144,18 @@
 - Deferred refinement notes: untested generalization: isOutOfLife reads life <= 0 (the clamp makes it 0); play() does not clamp (unreachable: finished games reject guesses)
 - Asked user: no (yolo)
 - Carry forward: Life.test.ts startGame() helper with FakeClock for AC11-AC14 (pass the clock in when time matters); Bar for the cooldown (AC11) and the countdown (AC12); AC13 food needs max life in the view (finding 3); AC14's hit costs 2 life through a domain function like penalise
+
+## AC11 - TDD plan
+- Decided: tests through PeekSecret with the fake clock, in test/application/Cooldown.test.ts; Session holds `peekReadyAt` (D-cooldown):
+  34. shouldRejectPeek_whenPeekingAgainRightAfterReveal [AC11] - distracted, peek, peek again at once: rejected 'cooling-down'
+  35. shouldAllowPeek_whenCooldownHasPassed [AC11] - peek, 5000 ms later distracted again, peek: revealed
+  36. shouldRejectPeek_justBeforeCooldownEnds (guard if green 35 already holds it; mutation: cooldown 1 ms short) [AC11]
+  37. shouldStartCooldown_whenCaught [AC11] - caught, then distracted, peek at once: rejected 'cooling-down'
+  38. shouldCostNothing_whenPeekRejectedForCooldown [AC11] - caught (life 8), peek again at once while watched: rejected, life still 8 on the next miss (7) (guard if the order already holds it; mutation: watched check before the cooldown check)
+  Refactor 38 (traced, make room): PeekSecret tests asserting `revealed` with toEqual move to toMatchObject, so a response may carry more
+  39. shouldReportCooldown_whenRevealed [AC11] - revealed carries cooldownRemainingMs 5000
+  40. shouldReportCooldown_whenCaught [AC11] - caught carries cooldownRemainingMs 5000
+  41. shouldReportRemainingCooldown_whenRejected [AC11] - rejected 2000 ms after a peek carries remainingMs 3000
+- Decided: dev on, a fresh one (round 2 has 5 ACs; 8 tests)
+- Then: cooldown bar on the screen (Bar), browser check e2e/ac11.spec.js
+- Asked user: no (yolo)
