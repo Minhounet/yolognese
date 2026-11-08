@@ -392,4 +392,26 @@ describe('Tick', () => {
       view: { revealed: [{ index: 1, color: 'yellow' }] },
     });
   });
+
+  it('shouldRevealStillHiddenPeg_whenXrayCollectedAgain', () => {
+    const { clock, collectItem, tick } = startedGame([30000, 0], [0, 2, 30, 70], [1, 1]);
+    tick.execute();
+    clock.advance(8000);
+    collectShownItem(tick, collectItem);
+    clock.advance(100);
+    tick.execute();
+    clock.advance(8000);
+
+    const response = collectShownItem(tick, collectItem);
+
+    expect(response).toMatchObject({
+      kind: 'collected',
+      view: {
+        revealed: [
+          { index: 1, color: 'yellow' },
+          { index: 2, color: 'green' },
+        ],
+      },
+    });
+  });
 });
