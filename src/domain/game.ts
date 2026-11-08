@@ -46,7 +46,9 @@ export function play(game: Game, guess: Code): Game {
     exact: countExact(game, guess),
     misplaced: countMisplaced(game, guess),
   };
-  return { ...game, turns: [...game.turns, turn], life: game.life - LIFE_LOST_PER_MISS };
+  const isMiss = turn.exact !== game.secret.length;
+  const life = isMiss ? game.life - LIFE_LOST_PER_MISS : game.life;
+  return { ...game, turns: [...game.turns, turn], life };
 }
 
 export function penalise(game: Game): Game {
