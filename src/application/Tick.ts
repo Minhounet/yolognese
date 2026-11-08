@@ -16,7 +16,7 @@ import {
   ITEM_SPOT_SPAN,
   Item,
   appear,
-  isItemDue,
+  isItemShown,
   scheduleItemAt,
 } from '../domain/items';
 import { toGameView } from './GameMapper';
@@ -59,7 +59,7 @@ export class TickImpl implements Tick {
     const game = landing.hits ? penalise(timedGame) : timedGame;
     const attackState = this.windUpIfDue(session, now, landing.pendingLandsAt);
     const itemAt = session.itemAt ?? scheduleItemAt(now, this.itemRandom.nextInt(ITEM_DELAY_SPREAD_MS));
-    const item = isItemDue(itemAt, now) ? this.showItem() : undefined;
+    const item = isItemShown(itemAt, now) ? this.showItem() : undefined;
     this.repository.save({ ...session, ...attackState.stored, itemAt, game });
     return { kind: 'ticked', view: toGameView(game), timeLeftMs, attack: attackState.attack, item };
   }
