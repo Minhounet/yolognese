@@ -4,8 +4,8 @@
 - Status: open
 - Mode: build
 - Yolo: on (see references/yolo.md of saiban-orchestrator)
-- Done: scaffold (Expo SDK 58, TypeScript), structural plan and ACs, AC1, AC2, playable screen (no guardian yet)
-- Next: publish to Expo Go, then AC3
+- Done: scaffold (Expo SDK 58, TypeScript), structural plan and ACs, AC1, AC2, AC3, playable screen with the guardian, published to Expo Go
+- Next: AC4 (peek)
 - Files: docs/ticket/PEEK-1/, src/
 
 ## Start - scope and mode
@@ -72,3 +72,11 @@
 - Rejected: development build (needs EAS Build, an APK; Expo Go is enough so far)
 - Asked user: no (yolo; private to the user's Expo account, like the feature-branch push)
 - Not verified: opening the link in Expo Go on the phone (HUMAN)
+
+## AC3 - plan, run and review
+- Decided: 2 tests through DistractGuardian; fresh shonin-dev, both greens accepted; refactor 14 and 15: checklist, nothing applied
+- Decided: DistractGuardian returns distracted | rejected('no-game') instead of a bare GuardianView (deviation from the plan, as for SubmitGuess: strict typing on the session); the domain Guardian and toGuardianView come with AC4, which needs the stored state
+- Decided: kenji-reviewer blocking findings fixed: browser check without a fixed sleep (Playwright clock), evidence recorded; minor: pupils now checked to move toward the tap; open: `rejected` variants, `repository`/`clock` unused in DistractGuardian, FakeClock.advance unused (AC4 will use them); the screen timer and the domain state will both know when the distraction ends: AC4 derives the screen from the use case
+- Super-green misses: 0
+- Asked user: no (yolo)
+- Carry forward: AC4 stores the guardian state (distractedUntil) in the Session through DistractGuardian; PeekSecret reads it with Clock

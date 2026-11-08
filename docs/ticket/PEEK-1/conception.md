@@ -55,7 +55,8 @@ pegs, exact / misplaced feedback), not a copy of a commercial game.
     + execute(cmd: SubmitGuessCommand): SubmitGuessResponse
         played(GameView) | rejected('no-game' | 'game-over')
 - DistractGuardian (use case)     constructor(GameRepository, Clock)
-    + execute(cmd: DistractCommand { target: Point }): GuardianView
+    + execute(cmd: DistractCommand { target: Point }): DistractResponse
+        distracted(GuardianView { gaze, remainingMs }) | rejected('no-game')   (deviation at AC3, logged)
 - PeekSecret (use case)           constructor(GameRepository, Clock)
     + execute(cmd: PeekCommand { index }): PeekResponse
         revealed(index, Color) | caught(GameView) | rejected('no-game' | 'game-over')

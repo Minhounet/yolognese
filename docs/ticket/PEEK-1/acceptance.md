@@ -33,8 +33,8 @@ Interpretation is the orchestrator's (yolo), logged in the decision log.
   again.
 - Questions: none
 - Covered by: D-guardian, D-structure (DistractGuardian, Clock)
-- Evidence:
-- Status: designed
+- Evidence: test/application/DistractGuardian.test.ts — shouldLookAtTarget_whenPointedAt, shouldStayDistractedFor1500Ms_whenPointedAt (full build 17 passed, tsc clean); browser check e2e/ac3.spec.js "AC3: pointing makes the guardian look at the spot for 1.5 s, then it watches again" passed on the web build, time driven by Playwright's clock (pupils move toward the tap; still away at 1400 ms; watching at 1600 ms). "Then watches again" is a screen timer for now; the domain gets it with AC4 (peeking after 1500 ms is caught)
+- Status: verified
 
 ## AC4: Peek at a hidden peg
 - Source: "then you can watch quickly by turning up the "pawns" to know there color"

@@ -8,3 +8,5 @@
 - AC2 plan missed a case: GREEN 10 rejected only won games, so red 11 shouldRejectGuess_whenGameIsLost was added mid-run (plan deviation, AC2, approved by the orchestrator in yolo); reveal/hide renumbered 12/13.
 - "A new game can be started" could not be driven by a red: StartGame already saved a fresh game. The guard was refused as evidence by kenji-reviewer (blocking); the clause is proven by a browser check instead.
 - The scaffold copy (create-expo-app output copied over the clone) replaced .git, losing the `origin` remote; the first push failed until it was added back.
+- On the web build, the screen-wide Pressable's onPressIn never fired on a touch tap (onPress does): pointing uses onPress. Found by the browser check, not by a unit test.
+- The first AC3 browser check slept 1.2 s (kenji-reviewer, blocking: shoko-playwright forbids fixed sleeps in evidence); rewritten with Playwright's clock.
