@@ -17,7 +17,7 @@ export class StartGameImpl implements StartGame {
 
   execute(): GameView {
     const game = newGame(this.drawSecret());
-    this.repository.save({ game, guardian: WATCHING, hasPeeked: false });
+    this.repository.save({ game, guardian: WATCHING, peekReadyAt: 0 });
     return toGameView(game);
   }
 

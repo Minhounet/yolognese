@@ -12,7 +12,7 @@ export interface Clock {
 export interface Session {
   readonly game: Game;
   readonly guardian: Guardian;
-  readonly hasPeeked: boolean;
+  readonly peekReadyAt: number;
 }
 
 export interface GameRepository {
