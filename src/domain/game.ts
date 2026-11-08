@@ -1,7 +1,7 @@
 import { Code, COLORS, Color } from './color';
 
 export const MAX_LIFE = 10;
-const STARTING_LIFE = 10;
+const STARTING_LIFE = MAX_LIFE;
 const LIFE_LOST_PER_MISS = 1;
 const LIFE_LOST_WHEN_CAUGHT = 2;
 const LIFE_RESTORED_BY_FOOD = 3;
