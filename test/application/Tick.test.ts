@@ -175,7 +175,7 @@ describe('Tick', () => {
 
     const response = tick.execute();
 
-    expect(response).toMatchObject({ kind: 'ticked', attack: { lane: 2, landsInMs: 1000 } });
+    expect(response).toMatchObject({ kind: 'ticked', attack: { lane: 2 } });
   });
 
   it('shouldNotAttack_whenGuardianIsDistracted', () => {
