@@ -7,5 +7,5 @@ export interface Reading {
 }
 
 export function isShake(readings: readonly Reading[]): boolean {
-  return true;
+  return false;
 }
