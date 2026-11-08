@@ -32,11 +32,15 @@ export class PeekSecretImpl implements PeekSecret {
     if (isOver(session.game)) {
       return { kind: 'rejected', reason: 'game-over' };
     }
+    if (session.hasPeeked) {
+      return { kind: 'rejected', reason: 'cooling-down' };
+    }
     if (!isDistracted(session.guardian, this.clock.now())) {
       const game = penalise(session.game);
       this.repository.save({ ...session, game });
       return { kind: 'caught', view: toGameView(game) };
     }
+    this.repository.save({ ...session, hasPeeked: true });
     return { kind: 'revealed', index: command.index, color: session.game.secret[command.index] };
   }
 }
