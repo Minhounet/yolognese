@@ -15,7 +15,7 @@ export interface MoveShield {
 export class MoveShieldImpl implements MoveShield {
   constructor(private readonly repository: GameRepository) {}
 
-  execute(): MoveShieldResponse {
+  execute(_command: MoveShieldCommand): MoveShieldResponse {
     return { kind: 'rejected', reason: 'no-game' };
   }
 }
