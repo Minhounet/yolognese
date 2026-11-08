@@ -8,6 +8,7 @@ import { Feedback, FeedbackLegend } from './Feedback';
 import { Guardian } from './Guardian';
 import { LifeBar } from './LifeBar';
 import { CooldownBar } from './CooldownBar';
+import { ShieldLanes } from './ShieldLanes';
 import { DustPuff } from './DustPuff';
 import { Peg } from './Peg';
 import { SecretPeg } from './SecretPeg';
@@ -19,6 +20,8 @@ const EMPTY_DRAFT: Draft = [undefined, undefined, undefined, undefined];
 const PEEK_SHOWN_MS = 400;
 const CAUGHT_SHOWN_MS = 1500;
 const TICK_MS = 100;
+const MIDDLE_LANE = 1;
+const ATTACK_RESULT_SHOWN_MS = 1200;
 const MS_PER_SECOND = 1000;
 const SECONDS_PER_MINUTE = 60;
 
@@ -59,6 +62,31 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
   const [caught, setCaught] = useState(false);
   const [cooldown, setCooldown] = useState({ startedAt: 0, cooldownMs: 0 });
   const [timeLeftMs, setTimeLeftMs] = useState<number | undefined>(undefined);
+  const [shieldLane, setShieldLane] = useState(MIDDLE_LANE);
+  const [warning, setWarning] = useState<{ readonly lane: number; readonly landsAt: number } | undefined>();
+  const [attackResult, setAttackResult] = useState<'hit' | 'blocked' | undefined>();
+  const lastLife = useRef(view.life);
+  const warningRef = useRef<{ readonly lane: number; readonly landsAt: number } | undefined>(undefined);
+  const showWarning = (next: { readonly lane: number; readonly landsAt: number } | undefined) => {
+    warningRef.current = next;
+    setWarning(next);
+  };
+
+  const moveShield = useCallback(
+    (lane: number) => {
+      const response = useCases.moveShield.execute({ lane });
+      if (response.kind === 'moved') setShieldLane(response.lane);
+    },
+    [useCases],
+  );
+
+  useEffect(() => moveShield(MIDDLE_LANE), [moveShield]);
+
+  useEffect(() => {
+    if (attackResult === undefined) return undefined;
+    const timer = setTimeout(() => setAttackResult(undefined), ATTACK_RESULT_SHOWN_MS);
+    return () => clearTimeout(timer);
+  }, [attackResult]);
 
   useEffect(() => {
     if (!playing) return undefined;
@@ -66,7 +94,16 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
       const response = useCases.tick.execute();
       if (response.kind !== 'ticked') return;
       setTimeLeftMs(response.timeLeftMs);
-      if (response.view.status !== 'playing') setView(response.view);
+      const pending = warningRef.current;
+      if (pending !== undefined && Date.now() >= pending.landsAt) {
+        setAttackResult(response.view.life < lastLife.current ? 'hit' : 'blocked');
+        showWarning(undefined);
+      }
+      if (response.attack !== undefined) {
+        showWarning({ lane: response.attack.lane, landsAt: Date.now() + response.attack.landsInMs });
+      }
+      lastLife.current = response.view.life;
+      setView(response.view);
     }, TICK_MS);
     return () => clearInterval(timer);
   }, [playing, useCases]);
@@ -136,10 +173,15 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
   };
 
   const newGame = () => {
-    setView(useCases.startGame.execute());
+    const fresh = useCases.startGame.execute();
+    setView(fresh);
     setDraft(EMPTY_DRAFT);
     setCooldown({ startedAt: 0, cooldownMs: 0 });
     setTimeLeftMs(undefined);
+    showWarning(undefined);
+    setAttackResult(undefined);
+    lastLife.current = fresh.life;
+    moveShield(MIDDLE_LANE);
   };
 
   return (
@@ -165,6 +207,14 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
       <LifeBar life={view.life} />
       {playing && <CooldownBar startedAt={cooldown.startedAt} cooldownMs={cooldown.cooldownMs} />}
       <FeedbackLegend />
+      {playing && (
+        <>
+          <Text testID="attack-result" style={styles.attackResult}>
+            {attackResult === 'hit' ? '💥 Hit by a meatball! −2 life' : attackResult === 'blocked' ? '🛡️ Blocked!' : warning ? '⚠️ Incoming meatball!' : ' '}
+          </Text>
+          <ShieldLanes shieldLane={shieldLane} warningLane={warning?.lane} onMove={moveShield} />
+        </>
+      )}
       <ScrollView style={styles.board} contentContainerStyle={styles.boardContent}>
         {view.turns.map((turn, index) => (
           <View key={index} style={styles.row} testID={`turn-${index}`}>
@@ -220,6 +270,7 @@ const styles = StyleSheet.create({
   button: { backgroundColor: THEME.sauce, borderRadius: 24, paddingHorizontal: 32, paddingVertical: 12, marginTop: 8 },
   disabled: { opacity: 0.4 },
   caught: { color: THEME.sauce, fontWeight: 'bold' },
+  attackResult: { color: THEME.sauce, fontWeight: 'bold', minHeight: 20 },
   timer: { color: THEME.ink, fontSize: 16, fontWeight: 'bold', fontVariant: ['tabular-nums'] },
   buttonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
 });

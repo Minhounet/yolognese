@@ -1,6 +1,7 @@
 // Browser check for AC4, run against the web build (npm run e2e).
 // Time is driven by Playwright's clock (the game's clock reads Date.now).
 const { test, expect } = require('@playwright/test');
+const { runForBlockingAttacks } = require('./support');
 
 const HIDDEN = 'hidden peg';
 
@@ -63,7 +64,7 @@ test('AC4: getting caught until life runs out loses the game, which then rejects
     await expect(page.getByTestId('life')).toHaveAttribute('aria-label', `Life ${10 - 2 * caught} of 10`, {
       timeout: 2000,
     });
-    await page.clock.runFor(5100); // past the 5 s peek cooldown (AC11)
+    await runForBlockingAttacks(page, 5100); // past the 5 s peek cooldown (AC11)
   }
 
   await expect(page.getByTestId('new-game')).toBeVisible();
