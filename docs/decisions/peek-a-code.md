@@ -4,8 +4,8 @@
 - Status: open
 - Mode: build
 - Yolo: on (see references/yolo.md of saiban-orchestrator)
-- Done: scaffold (Expo SDK 58, TypeScript), structural plan and ACs, AC1, AC2, AC3, playable screen with the guardian, published to Expo Go
-- Next: AC4 (peek)
+- Done: scaffold (Expo SDK 58, TypeScript), structural plan and ACs, AC1, AC2, AC3, AC4, playable cheat (point, peek, caught), published to Expo Go
+- Next: AC5 (shake)
 - Files: docs/ticket/PEEK-1/, src/
 
 ## Start - scope and mode
@@ -80,3 +80,11 @@
 - Super-green misses: 0
 - Asked user: no (yolo)
 - Carry forward: AC4 stores the guardian state (distractedUntil) in the Session through DistractGuardian; PeekSecret reads it with Clock
+
+## AC4 - plan, run and review
+- Decided: 5 reds through PeekSecret + guards 18 (1499 ms still safe) and 19 (caught on the last attempt loses); fresh shonin-dev; GREEN 17 cut back to a boolean (built time ahead of red 18)
+- Decided: kenji-reviewer blocking (1): the save of the caught game came from my GREEN 19 prompt, untested -> backed out (fix commit), red 21 shouldKeepPenalty_whenGuessingAfterBeingCaught, green 21 restores it (by the orchestrator: one line the dev had written); blocking (2): "can lose the game" proven only by guard 19 -> browser check that loses by peeking
+- Decided: minor, open: guard 19's mutation also breaks red 19 (a sharper mutation would target isLost); peek index has no bounds check (the screen only sends 0-3); DistractGuardian.remainingMs is the constant, equal to the stored distractedUntil - now at the time of the call, and the screen keeps its own timer (accepted: same value, one source of the duration)
+- Super-green misses: 0
+- Asked user: no (yolo)
+- Carry forward: AC5 reuses DistractGuardian; ShakeDetector is pure domain, the accelerometer adapter (expo-sensors) is UI and only checkable on the phone (HUMAN)

@@ -10,3 +10,6 @@
 - The scaffold copy (create-expo-app output copied over the clone) replaced .git, losing the `origin` remote; the first push failed until it was added back.
 - On the web build, the screen-wide Pressable's onPressIn never fired on a touch tap (onPress does): pointing uses onPress. Found by the browser check, not by a unit test.
 - The first AC3 browser check slept 1.2 s (kenji-reviewer, blocking: shoko-playwright forbids fixed sleeps in evidence); rewritten with Playwright's clock.
+- The orchestrator's GREEN 19 prompt told the dev the caught game "must be saved": a hint about behaviour no test asked for, so the save went in untested (kenji-reviewer, blocking). Backed out, driven by red 21, restored as green 21. Lesson: a dev prompt names the failing test and the plan, never the next behaviour.
+- shonin-dev's GREEN 17 again built ahead (time-based distraction for a test that only needed distracted/watching): cut back to a boolean before commit; red 18 then forced the time.
+- A disabled Pressable on the web cannot be tapped by Playwright (actionability wait): the "no peek after the game" check forces the tap.

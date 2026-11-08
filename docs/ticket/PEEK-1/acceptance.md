@@ -43,8 +43,8 @@ Interpretation is the orchestrator's (yolo), logged in the decision log.
   attempt (which can lose the game); a finished game rejects peeks.
 - Questions: none
 - Covered by: D-peek, D-structure (PeekSecret)
-- Evidence:
-- Status: designed
+- Evidence: test/application/PeekSecret.test.ts reds — shouldRevealColour_whenPeekingWhileDistracted, shouldBeCaught_whenPeekingWhileWatched, shouldBeCaught_whenPeekingAfterDistractionEnds, shouldCostOneAttempt_whenCaught, shouldRejectPeek_whenGameIsOver, shouldKeepPenalty_whenGuessingAfterBeingCaught (guards 18 and 19 are not evidence); full build 25 passed, tsc clean. "Which can lose the game": browser check e2e/ac4.spec.js "getting caught on every attempt loses the game, which then rejects peeks"; with "a peek while the guardian looks away shows the colour briefly", "a peek while the guardian watches is caught and costs one attempt", "a peek after the guardian looks back is caught": all passed on the web build, Playwright clock
+- Status: verified
 
 ## AC5: Shake to distract
 - Source: "(or perform a strange gesture on the mobile)"
