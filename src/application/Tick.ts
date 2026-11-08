@@ -1,3 +1,4 @@
+import { toGameView } from './GameMapper';
 import { Clock, GameRepository } from './ports';
 import { GameView } from './views';
 
@@ -16,6 +17,14 @@ export class TickImpl implements Tick {
   ) {}
 
   execute(): TickResponse {
-    return { kind: 'rejected', reason: 'no-game' };
+    const session = this.repository.load();
+    if (session === undefined) {
+      return { kind: 'rejected', reason: 'no-game' };
+    }
+    return {
+      kind: 'ticked',
+      view: toGameView(session.game),
+      timeLeftMs: session.endsAt - this.clock.now(),
+    };
   }
 }

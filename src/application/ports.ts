@@ -13,6 +13,7 @@ export interface Session {
   readonly game: Game;
   readonly guardian: Guardian;
   readonly peekReadyAt: number;
+  readonly endsAt: number;
 }
 
 export interface GameRepository {
