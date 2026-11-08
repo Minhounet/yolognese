@@ -1,4 +1,5 @@
 import { DistractGuardian, DistractGuardianImpl } from './application/DistractGuardian';
+import { MoveShield, MoveShieldImpl } from './application/MoveShield';
 import { PeekSecret, PeekSecretImpl } from './application/PeekSecret';
 import { StartGame, StartGameImpl } from './application/StartGame';
 import { SubmitGuess, SubmitGuessImpl } from './application/SubmitGuess';
@@ -13,6 +14,7 @@ export interface UseCases {
   readonly distractGuardian: DistractGuardian;
   readonly peekSecret: PeekSecret;
   readonly tick: Tick;
+  readonly moveShield: MoveShield;
 }
 
 export function createUseCases(): UseCases {
@@ -25,5 +27,6 @@ export function createUseCases(): UseCases {
     distractGuardian: new DistractGuardianImpl(repository, clock),
     peekSecret: new PeekSecretImpl(repository, clock),
     tick: new TickImpl(repository, clock, random),
+    moveShield: new MoveShieldImpl(repository),
   };
 }

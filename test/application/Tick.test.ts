@@ -1,3 +1,4 @@
+import { MoveShieldImpl } from '../../src/application/MoveShield';
 import { StartGameImpl } from '../../src/application/StartGame';
 import { SubmitGuessImpl } from '../../src/application/SubmitGuess';
 import { TickImpl } from '../../src/application/Tick';
@@ -10,7 +11,12 @@ function startedGame(attackRandom: readonly number[] = [0, 2]) {
   const clock = new FakeClock();
   const repository = new InMemoryGameRepository();
   new StartGameImpl(new ScriptedRandomSource([0, 1, 2, 3]), repository, clock).execute();
-  return { clock, tick: new TickImpl(repository, clock, new ScriptedRandomSource(attackRandom)), submitGuess: new SubmitGuessImpl(repository) };
+  return {
+    clock,
+    tick: new TickImpl(repository, clock, new ScriptedRandomSource(attackRandom)),
+    submitGuess: new SubmitGuessImpl(repository),
+    moveShield: new MoveShieldImpl(repository),
+  };
 }
 
 describe('Tick', () => {
@@ -104,5 +110,18 @@ describe('Tick', () => {
     const response = tick.execute();
 
     expect(response).toMatchObject({ kind: 'ticked', view: { life: 8 } });
+  });
+
+  it('shouldBlockAttack_whenShieldIsInLane', () => {
+    const { clock, moveShield, tick } = startedGame([0, 2]);
+    tick.execute();
+    clock.advance(10000);
+    tick.execute();
+    moveShield.execute({ lane: 2 });
+    clock.advance(1000);
+
+    const response = tick.execute();
+
+    expect(response).toMatchObject({ kind: 'ticked', view: { life: 10 } });
   });
 });
