@@ -27,4 +27,14 @@ describe('Tick', () => {
 
     expect(response).toMatchObject({ kind: 'ticked', timeLeftMs: 180000 });
   });
+
+  it('shouldCountDown_whenTimePasses', () => {
+    const { clock, tick } = startedGame();
+    tick.execute();
+    clock.advance(60000);
+
+    const response = tick.execute();
+
+    expect(response).toMatchObject({ kind: 'ticked', timeLeftMs: 120000 });
+  });
 });
