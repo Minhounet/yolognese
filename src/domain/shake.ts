@@ -13,9 +13,10 @@ const magnitude = ({ x, y, z }: Reading): number => Math.sqrt(x * x + y * y + z 
 const isJolt = (reading: Reading): boolean => magnitude(reading) > JOLT_THRESHOLD_G;
 
 const SHAKE_WINDOW_MS = 1000;
+const JOLTS_FOR_SHAKE = 3;
 
 export function isShake(readings: readonly Reading[]): boolean {
   const joltTimes = readings.filter(isJolt).map(({ at }) => at);
   const spread = Math.max(...joltTimes) - Math.min(...joltTimes);
-  return joltTimes.length > 0 && spread <= SHAKE_WINDOW_MS;
+  return joltTimes.length >= JOLTS_FOR_SHAKE && spread <= SHAKE_WINDOW_MS;
 }
