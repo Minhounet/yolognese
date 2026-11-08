@@ -28,9 +28,8 @@ export function CooldownBar({ startedAt, cooldownMs }: { readonly startedAt: num
         aria-valuenow={Math.round(filled * 100)}
         style={styles.track}
       >
-        <View style={[styles.fill, ready && styles.ready, { width: `${filled * 100}%` }]} />
+        <View style={[styles.fill, { width: `${filled * 100}%` }]} />
       </View>
-      <Text style={styles.label}>{ready ? 'peek' : 'wait'}</Text>
     </View>
   );
 }
@@ -40,6 +39,4 @@ const styles = StyleSheet.create({
   icon: { fontSize: 14, marginRight: 6 },
   track: { width: 180, height: 8, borderRadius: 4, backgroundColor: THEME.empty, overflow: 'hidden' },
   fill: { height: '100%', backgroundColor: THEME.hidden },
-  ready: { backgroundColor: THEME.cooldownReady },
-  label: { color: THEME.ink, fontSize: 12, marginLeft: 6, minWidth: 30 },
 });

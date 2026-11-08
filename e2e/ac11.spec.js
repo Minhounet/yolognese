@@ -30,3 +30,16 @@ test('AC11: after a peek the cooldown bar refills for 5 s, and a peek meanwhile 
   await tapAt(page, page.getByTestId('secret-1')); // ready again, still watched: caught
   await expect(life).toHaveAttribute('aria-label', 'Life 6 of 10');
 });
+
+test('AC11: a revealed peek starts the cooldown too', async ({ page }) => {
+  await page.clock.install();
+  await page.goto('/');
+  const box = await page.getByTestId('guardian').boundingBox();
+  await page.touchscreen.tap(box.x + box.width + 120, box.y);
+  await expect(page.getByTestId('guardian')).toHaveAttribute('aria-label', 'guardian looking away');
+
+  await tapAt(page, page.getByTestId('secret-2'));
+  await expect(page.getByTestId('secret-2')).not.toHaveAttribute('aria-label', 'hidden peg');
+  await expect(page.getByTestId('cooldown')).toHaveAttribute('aria-label', 'Peek cooling down');
+  await expect(page.getByTestId('life')).toHaveAttribute('aria-label', 'Life 10 of 10');
+});

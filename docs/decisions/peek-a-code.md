@@ -4,8 +4,8 @@
 - Status: open
 - Mode: build
 - Yolo: on (see references/yolo.md of saiban-orchestrator)
-- Done: scaffold (Expo SDK 58, TypeScript), structural plan and ACs, AC1-AC4, AC6-AC10 verified, AC5 waived
-- Next: AC11 (reds from 34), then AC12, AC14, AC13; also the user's look at the flip (AC6) and the feedback marks (AC9); then the user decides: merge, more features, or keep ideas
+- Done: scaffold (Expo SDK 58, TypeScript), structural plan and ACs, AC1-AC4, AC6-AC11 verified, AC5 waived
+- Next: AC12 (reds from 39), then AC14, AC13; also the user's look at the flip (AC6) and the feedback marks (AC9); then the user decides: merge, more features, or keep ideas
 - Files: docs/ticket/PEEK-1/, src/
 
 ## Start - scope and mode
@@ -154,3 +154,11 @@
 - dev: on (6 tests, ticket with 4 ACs left); a fresh shonin-dev
 - Asked user: no (yolo)
 - Deviation (AC11, orchestrator in yolo): GREEN 34 tied the cooldown to time with a guessed 1000 ms (only "greater than 0" was forced); accepted, and the order swapped so the time is driven: red 35 shouldRejectPeek_justBeforeCooldownEnds (4999 ms: rejected, fails at 1000), then guard shouldAllowPeek_whenCooldownHasPassed (5000 ms, mutation: cooldown 1 ms long)
+
+## AC11 - run and review
+- Decided: reds 34-38 by the orchestrator, greens by a fresh shonin-dev, all accepted (green 34's guessed 1000 ms was accepted and red 35 forced 5000: see the deviation line); refactor checklist after each green: nothing applies (34-38); cooldown bar on the screen (CooldownBar), refilled from the response's cooldownMs
+- Decided: kenji-reviewer, 6 minor: (1) the toEqual -> toMatchObject change was a test refactor put in a red fix -> retro, left in history; (2) no AC11 run entry -> this one; (3) conception.md D-cooldown stale -> updated; (4) the browser check covered only the caught path -> revealed variant added; (5) unasked ready colour and peek/wait text -> removed, eye icon kept (no behaviour), LifeBar's aria-value* change kept (react-native-web drops accessibilityValue: retro); (6) the bar reads Date.now, the rule reads Clock -> open (SystemClock is Date.now; the Tick view of AC12 can carry the remaining time)
+- Super-green misses: 0
+- Deferred refinement notes: untested generalization — the revealed path's cooldown is proven in the browser only by its label, not its refill
+- Asked user: no (yolo)
+- Carry forward: AC12 adds endsAt to the Session and a time check first in every use case; the Tick use case (AC12 or AC13/14) can return the remaining cooldown and time so the screen stops reading Date.now (minor 6)
