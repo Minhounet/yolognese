@@ -12,6 +12,7 @@ import { ShieldLanes } from './ShieldLanes';
 import { ITEM_ICONS, ItemSprite } from './ItemSprite';
 import { GiftKind, Item } from '../domain/items';
 import { DustPuff } from './DustPuff';
+import { FallingMeatball } from './FallingMeatball';
 import { Peg } from './Peg';
 import { SecretPeg } from './SecretPeg';
 import { THEME } from './theme';
@@ -23,6 +24,7 @@ const PEEK_SHOWN_MS = 400;
 const CAUGHT_SHOWN_MS = 1500;
 const TICK_MS = 100;
 const MIDDLE_LANE = 1;
+const LANE_COUNT_SHOWN = 3;
 const ATTACK_RESULT_SHOWN_MS = 1200;
 const ITEM_NOTE_SHOWN_MS = 1500;
 const SMOKE_SHOWN_MS = 4000; // the smoke's length in the rules (4 s): the response does not carry it
@@ -75,8 +77,9 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
   const [cooldown, setCooldown] = useState({ startedAt: 0, cooldownMs: 0 });
   const [timeLeftMs, setTimeLeftMs] = useState<number | undefined>(undefined);
   const [shieldLane, setShieldLane] = useState(MIDDLE_LANE);
-  const [warning, setWarning] = useState<{ readonly lane: number; readonly landsAt: number } | undefined>();
+  const [warning, setWarning] = useState<{ readonly lane: number; readonly landsAt: number; readonly fallMs: number } | undefined>();
   const [attackResult, setAttackResult] = useState<'hit' | 'blocked' | undefined>();
+  const [ground, setGround] = useState<{ readonly x: number; readonly y: number; readonly width: number }>();
   const [item, setItem] = useState<Item | undefined>();
   const [itemNote, setItemNote] = useState<string | undefined>();
   const [blind, setBlind] = useState(false);
@@ -105,8 +108,8 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
     if (received === 'smoke') setBlind(true);
     if (received === 'charm') setCharmed(true);
   };
-  const warningRef = useRef<{ readonly lane: number; readonly landsAt: number } | undefined>(undefined);
-  const showWarning = (next: { readonly lane: number; readonly landsAt: number } | undefined) => {
+  const warningRef = useRef<{ readonly lane: number; readonly landsAt: number; readonly fallMs: number } | undefined>(undefined);
+  const showWarning = (next: { readonly lane: number; readonly landsAt: number; readonly fallMs: number } | undefined) => {
     warningRef.current = next;
     setWarning(next);
   };
@@ -139,7 +142,11 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
         showWarning(undefined);
       }
       if (response.attack !== undefined) {
-        showWarning({ lane: response.attack.lane, landsAt: Date.now() + response.attack.landsInMs });
+        showWarning({
+          lane: response.attack.lane,
+          landsAt: Date.now() + response.attack.landsInMs,
+          fallMs: response.attack.landsInMs,
+        });
       }
       setItem(response.item);
       setView(response.view);
@@ -251,7 +258,6 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
       <Text testID="timer" accessibilityLabel="time left" style={styles.timer}>
         ⏱️ {timeLeftMs === undefined ? "–:––" : countdown(timeLeftMs)}
       </Text>
-      <LifeBar life={view.life} maxLife={view.maxLife} />
       {playing && <CooldownBar startedAt={cooldown.startedAt} cooldownMs={cooldown.cooldownMs} />}
       <FeedbackLegend />
       {playing && (
@@ -262,7 +268,6 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
           <Text testID="item-note" style={styles.itemNote}>
             {itemNote ?? (charmed ? '🍀 Shield charm ready' : ' ')}
           </Text>
-          <ShieldLanes shieldLane={shieldLane} warningLane={warning?.lane} onMove={moveShield} />
         </>
       )}
       <ScrollView style={styles.board} contentContainerStyle={styles.boardContent}>
@@ -303,6 +308,19 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
         </Pressable>
       )}
       {playing && item !== undefined && <ItemSprite item={item} onCollect={() => collect(item)} />}
+      <View style={styles.playerZone} testID="player-zone">
+        {playing && (
+          <ShieldLanes shieldLane={shieldLane} warningLane={warning?.lane} onMove={moveShield} onMeasured={setGround} />
+        )}
+        <LifeBar life={view.life} maxLife={view.maxLife} />
+      </View>
+      {playing && warning !== undefined && ground !== undefined && (
+        <FallingMeatball
+          from={guardianCentre.current}
+          to={{ x: ground.x + ((warning.lane + 0.5) * ground.width) / LANE_COUNT_SHOWN, y: ground.y }}
+          durationMs={warning.fallMs}
+        />
+      )}
       {puffs.map((puff) => (
         <DustPuff key={puff.id} at={puff.at} onDone={() => removePuff(puff.id)} />
       ))}
@@ -323,6 +341,7 @@ const styles = StyleSheet.create({
   caught: { color: THEME.sauce, fontWeight: 'bold' },
   smoke: { position: 'absolute', alignSelf: 'center', top: 20, fontSize: 40 },
   itemNote: { color: THEME.ink, fontWeight: 'bold', minHeight: 20 },
+  playerZone: { alignSelf: 'stretch', alignItems: 'center', marginTop: 4 },
   attackResult: { color: THEME.sauce, fontWeight: 'bold', minHeight: 20 },
   timer: { color: THEME.ink, fontSize: 16, fontWeight: 'bold', fontVariant: ['tabular-nums'] },
   buttonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },

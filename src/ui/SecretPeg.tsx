@@ -18,13 +18,19 @@ export function SecretPeg({ color, onPress, testID }: SecretPegProps) {
   const width = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    if (color === shown) return;
+    if (color === shown) return undefined;
+    // Stopping toEdge would stop the value's current animation, which by then may be the opening
+    // half: the peg then stayed squeezed to nothing. Only a flip still closing is stopped.
+    let closing = true;
     const toEdge = Animated.timing(width, { toValue: 0, duration: HALF_FLIP_MS, useNativeDriver: true });
     toEdge.start(() => {
+      closing = false;
       setShown(color);
       Animated.timing(width, { toValue: 1, duration: HALF_FLIP_MS, useNativeDriver: true }).start();
     });
-    return () => toEdge.stop();
+    return () => {
+      if (closing) toEdge.stop();
+    };
   }, [color, shown, width]);
 
   return (

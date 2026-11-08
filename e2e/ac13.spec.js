@@ -66,6 +66,8 @@ test('AC13: x-ray glasses reveal a hidden peg for the rest of the game', async (
   await tapAt(page, await waitForItem(page));
 
   await expect(page.getByLabel('hidden peg')).toHaveCount(hiddenBefore - 1);
+  const revealed = page.locator('[data-testid^="secret-"]:not([aria-label="hidden peg"])');
+  await expect(revealed).toBeVisible(); // seen, not only labelled: a flip once left it squeezed to nothing
   await page.clock.runFor(3000);
   await expect(page.getByLabel('hidden peg')).toHaveCount(hiddenBefore - 1);
 });
@@ -92,7 +94,7 @@ test('AC13: a shield charm blocks the next meatball wherever the shield is', asy
   const warning = page.getByTestId('attack-warning');
   for (let step = 0; step < 40 && !(await warning.isVisible()); step += 1) await page.clock.runFor(500);
   await expect(warning).not.toHaveAttribute('aria-label', 'attack on lane 1'); // the shield stays in lane 1
-  await page.clock.runFor(1200);
+  await page.clock.runFor(2700);
 
   await expect(page.getByTestId('attack-result')).toHaveText('🛡️ Blocked!');
   await expect(page.getByTestId('life')).toHaveAttribute('aria-label', 'Life 10 of 10');

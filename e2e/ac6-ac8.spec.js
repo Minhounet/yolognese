@@ -24,9 +24,12 @@ test('AC6: a peeked peg flips back within half a second', async ({ page }) => {
   expect(await width()).toBeLessThan(open * 0.8);
   await page.clock.runFor(140);
   await expect(peg).not.toHaveAttribute('aria-label', HIDDEN);
+  await expect(peg).toBeVisible(); // turned over and open, not left squeezed
 
   await page.clock.runFor(400);
   await expect(peg).toHaveAttribute('aria-label', HIDDEN);
+  await page.clock.runFor(200);
+  expect(await width()).toBeGreaterThan(open * 0.9); // back to its full size once hidden again
 });
 
 test('AC6: a peeked peg flips back as soon as the guardian looks back', async ({ page }) => {
