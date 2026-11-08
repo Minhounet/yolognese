@@ -10,7 +10,7 @@ export const SMOKE_BLIND_MS = 4000;
 
 export const HOURGLASS_BONUS_MS = 30000;
 
-export const ITEM_KINDS = ['food', 'smoke', 'xray', 'hourglass'] as const;
+export const ITEM_KINDS = ['food', 'smoke', 'xray', 'hourglass', 'charm'] as const;
 
 export type ItemKind = (typeof ITEM_KINDS)[number];
 

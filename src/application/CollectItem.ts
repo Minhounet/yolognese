@@ -49,6 +49,8 @@ export class CollectItemImpl implements CollectItem {
         return { ...session, game: this.revealHiddenPeg(session.game) };
       case 'hourglass':
         return { ...session, endsAt: session.endsAt + HOURGLASS_BONUS_MS };
+      case 'charm':
+        return { ...session, charmed: true };
     }
   }
 

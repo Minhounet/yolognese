@@ -22,6 +22,7 @@ export interface Session {
   readonly attackLandsAt?: number;
   readonly attackLane?: number;
   readonly shieldLane?: number;
+  readonly charmed?: boolean;
 }
 
 export interface GameRepository {

@@ -88,7 +88,7 @@ export class TickImpl implements Tick {
   private landing(session: Session, now: number) {
     const landed = session.attackLandsAt !== undefined && hasLanded(session.attackLandsAt, now);
     return {
-      hits: landed && !isBlocked(session.attackLane, session.shieldLane),
+      hits: landed && !isBlocked(session.attackLane, session.shieldLane) && !session.charmed,
       pendingLandsAt: landed ? undefined : session.attackLandsAt,
     };
   }
