@@ -167,4 +167,12 @@ describe('PeekSecret', () => {
 
     expect(response).toMatchObject({ kind: 'revealed', cooldownMs: 5000 });
   });
+
+  it('shouldStartCooldown_whenCaught', () => {
+    const { peekSecret } = startedGame();
+
+    const response = peekSecret.execute({ index: 3 });
+
+    expect(response).toMatchObject({ kind: 'caught', cooldownMs: 5000 });
+  });
 });
