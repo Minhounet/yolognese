@@ -184,4 +184,16 @@ describe('Tick', () => {
 
     expect(response).toMatchObject({ kind: 'ticked', item: { kind: 'food', spot: { x: 30, y: 70 } } });
   });
+
+  it('shouldRemoveItem_afterFourSeconds', () => {
+    const { clock, tick } = startedGame([20000, 0], [0, 0, 30, 70]);
+    tick.execute();
+    clock.advance(8000);
+    tick.execute();
+    clock.advance(4000);
+
+    const response = tick.execute();
+
+    expect(response.kind === 'ticked' && response.item).toBeUndefined();
+  });
 });
