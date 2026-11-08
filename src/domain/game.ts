@@ -3,6 +3,7 @@ import { Code, COLORS, Color } from './color';
 const MAX_ATTEMPTS = 10;
 const STARTING_LIFE = 10;
 const LIFE_LOST_PER_MISS = 1;
+const LIFE_LOST_WHEN_CAUGHT = 2;
 
 export interface Turn {
   readonly guess: Code;
@@ -55,7 +56,7 @@ export function play(game: Game, guess: Code): Game {
 }
 
 export function penalise(game: Game): Game {
-  return { ...game, penalties: game.penalties + 1 };
+  return { ...game, penalties: game.penalties + 1, life: game.life - LIFE_LOST_WHEN_CAUGHT };
 }
 
 export function isWon(game: Game): boolean {
