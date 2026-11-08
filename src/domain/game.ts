@@ -2,6 +2,7 @@ import { Code, COLORS, Color } from './color';
 
 const MAX_ATTEMPTS = 10;
 const MAX_LIFE = 10;
+const LIFE_LOST_PER_MISS = 1;
 
 export interface Turn {
   readonly guess: Code;
@@ -45,7 +46,7 @@ export function play(game: Game, guess: Code): Game {
     exact: countExact(game, guess),
     misplaced: countMisplaced(game, guess),
   };
-  return { ...game, turns: [...game.turns, turn] };
+  return { ...game, turns: [...game.turns, turn], life: game.life - LIFE_LOST_PER_MISS };
 }
 
 export function penalise(game: Game): Game {
