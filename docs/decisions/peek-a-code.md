@@ -233,3 +233,4 @@
 - Plan change (AC13): red 54 shouldKeepSameItem_whileShown (Tick redraws the item on every tick of its 4 s) and red 55 shouldNotShowItem_afterItWasCollected (the next tick re-shows a collected item) added; the plan's later reds shift by two (smoke from 56)
 - Order change (AC13): the plan's shouldShowAnotherItem_afterOneLeaves moved up to red 56 (the item state grows flags while nothing reschedules; with the respawn in place the refactor can reshape it)
 - Plan change (AC13): red 57 shouldShowAnotherItem_afterOneIsCollected (a collected item also leaves: the next one comes a new delay after the tick that sees it gone)
+- Deviation (AC13): green 58 picked 5 s of smoke (invented); set to the plan's 4 s before commit, so shouldSeeAgain_afterFourSecondsOfSmoke will likely pass on write (guard)
