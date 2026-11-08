@@ -36,4 +36,14 @@ describe('PeekSecret', () => {
 
     expect(response).toMatchObject({ kind: 'caught' });
   });
+
+  it('shouldBeCaught_whenPeekingAfterDistractionEnds', () => {
+    const { clock, distractGuardian, peekSecret } = startedGame();
+    distractGuardian.execute(AWAY);
+    clock.advance(1500);
+
+    const response = peekSecret.execute({ index: 2 });
+
+    expect(response).toMatchObject({ kind: 'caught' });
+  });
 });
