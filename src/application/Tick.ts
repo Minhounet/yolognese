@@ -1,5 +1,6 @@
 import { ATTACK_DELAY_SPREAD_MS, Attack, LANE_COUNT, hasLanded, isAttackDue, isBlocked, scheduleAttackAt, windUp } from '../domain/attack';
 import { penalise, timeUp } from '../domain/game';
+import { isDistracted } from '../domain/guardian';
 import { toGameView } from './GameMapper';
 import { Clock, GameRepository, RandomSource } from './ports';
 import { GameView } from './views';
@@ -33,7 +34,8 @@ export class TickImpl implements Tick {
     const attackHits = attackLanded && !isBlocked(session.attackLane, session.shieldLane);
     const game = attackHits ? penalise(timedGame) : timedGame;
     const attackAt = session.attackAt ?? scheduleAttackAt(now, this.random.nextInt(ATTACK_DELAY_SPREAD_MS));
-    const attack = isAttackDue(attackAt, now) ? windUp(this.random.nextInt(LANE_COUNT)) : undefined;
+    const attackDue = isAttackDue(attackAt, now) && !isDistracted(session.guardian, now);
+    const attack = attackDue ? windUp(this.random.nextInt(LANE_COUNT)) : undefined;
     const nextAttackAt = attack === undefined ? attackAt : undefined;
     const pendingLandsAt = attackLanded ? undefined : session.attackLandsAt;
     const attackLandsAt = attack === undefined ? pendingLandsAt : now + attack.landsInMs;
