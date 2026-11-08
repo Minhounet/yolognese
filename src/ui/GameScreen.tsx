@@ -7,12 +7,15 @@ import { Point } from '../domain/point';
 import { Feedback } from './Feedback';
 import { Guardian } from './Guardian';
 import { Peg } from './Peg';
+import { useShake } from './useShake';
 import { THEME } from './theme';
 
 type Draft = readonly (Color | undefined)[];
 
 const EMPTY_DRAFT: Draft = [undefined, undefined, undefined, undefined];
 const PEEK_SHOWN_MS = 700;
+/** Where the guardian looks after a shake: dizzy, up and to the side. */
+const SHAKEN_LOOK: Point = { x: -100, y: -60 };
 const CAUGHT_SHOWN_MS = 1500;
 
 function isComplete(draft: Draft): draft is Code {
@@ -77,16 +80,20 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
       guardianCentre.current = { x: x + width / 2, y: y + height / 2 };
     });
 
-  const pointAt = (event: GestureResponderEvent) => {
-    const target = {
-      x: event.nativeEvent.pageX - guardianCentre.current.x,
-      y: event.nativeEvent.pageY - guardianCentre.current.y,
-    };
+  const distractTowards = (target: Point) => {
     const response = useCases.distractGuardian.execute({ target });
     if (response.kind !== 'distracted') return;
     remainingMs.current = response.view.remainingMs;
     setGaze({ ...response.view.gaze });
   };
+
+  const pointAt = (event: GestureResponderEvent) =>
+    distractTowards({
+      x: event.nativeEvent.pageX - guardianCentre.current.x,
+      y: event.nativeEvent.pageY - guardianCentre.current.y,
+    });
+
+  useShake(() => distractTowards(SHAKEN_LOOK));
 
   const submit = () => {
     if (!isComplete(draft)) return;
