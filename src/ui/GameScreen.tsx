@@ -4,6 +4,7 @@ import { GameView } from '../application/views';
 import { UseCases } from '../compositionRoot';
 import { COLORS, Code, Color } from '../domain/color';
 import { Point } from '../domain/point';
+import { Bar } from './Bar';
 import { Feedback, FeedbackLegend } from './Feedback';
 import { Guardian } from './Guardian';
 import { DustPuff } from './DustPuff';
@@ -16,6 +17,7 @@ type Draft = readonly (Color | undefined)[];
 const EMPTY_DRAFT: Draft = [undefined, undefined, undefined, undefined];
 const PEEK_SHOWN_MS = 400;
 const CAUGHT_SHOWN_MS = 1500;
+const MAX_LIFE = 10;
 
 function isComplete(draft: Draft): draft is Code {
   return draft.every((color) => color !== undefined);
@@ -33,7 +35,7 @@ function withoutSlot(draft: Draft, slot: number): Draft {
 const STATUS_TEXT: Readonly<Record<GameView['status'], string>> = {
   playing: 'Crack the secret sauce!',
   won: 'You cracked it! 🍝',
-  lost: 'Out of attempts. The guardian wins.',
+  lost: 'Out of life. The guardian wins.',
 };
 
 export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
@@ -128,9 +130,9 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
         })}
       </View>
       <Text testID="status" style={[styles.status, caught && styles.caught]}>
-        {caught ? 'Caught peeking! −1 attempt' : STATUS_TEXT[view.status]}
-        {playing ? ` · ${view.life} life` : ''}
+        {caught ? 'Caught peeking! −2 ❤️' : STATUS_TEXT[view.status]}
       </Text>
+      <Bar testID="life" icon="❤️" value={view.life} max={MAX_LIFE} color={THEME.sauce} label={`life ${view.life} of ${MAX_LIFE}`} />
       <FeedbackLegend />
       <ScrollView style={styles.board} contentContainerStyle={styles.boardContent}>
         {view.turns.map((turn, index) => (
