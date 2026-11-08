@@ -1,4 +1,4 @@
-import { expire } from '../domain/game';
+import { Game, expire } from '../domain/game';
 import { Clock, GameRepository, Session } from './ports';
 import { toGameView } from './GameMapper';
 import { GameView } from './views';
@@ -25,12 +25,14 @@ export class TickImpl implements Tick {
       return { kind: 'rejected', reason: 'no-game' };
     }
     const timeLeftMs = this.deadline(session) - this.clock.now();
-    if (timeLeftMs <= 0) {
-      const game = expire(session.game);
-      this.repository.save({ ...session, game });
-      return { kind: 'ticked', timeLeftMs, view: toGameView(game) };
-    }
-    return { kind: 'ticked', timeLeftMs, view: toGameView(session.game) };
+    const game = timeLeftMs <= 0 ? this.expired(session) : session.game;
+    return { kind: 'ticked', timeLeftMs, view: toGameView(game) };
+  }
+
+  private expired(session: Session): Game {
+    const game = expire(session.game);
+    this.repository.save({ ...session, game });
+    return game;
   }
 
   /** The game's end; the first tick of a game sets it. */
