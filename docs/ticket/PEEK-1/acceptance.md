@@ -137,8 +137,8 @@ Order: AC10, AC11, AC12, AC14, AC13; then AC15 (user, after playing) (AC11-AC14 
 - Interpretation: the guardian's meatball falls from the guardian (top) down to the player's zone at the bottom of the screen over 2.5 s (was a 1 s warning), in its lane; the player's zone holds the shield and the life bar; the shield follows the finger smoothly left and right (no jumping between boxes) and blocks when it stands over the meatball's lane as it lands (changes AC14's "1 s warning" and "drags along the bottom")
 - Questions: none (asked: which reveal was invisible -> the x-ray peg, a bug of AC13; how the shield moves -> sideways with the finger)
 - Covered by: D-attack (wind-up 2500 ms), the screen
-- Evidence:
-- Status: designed
+- Evidence: red 74 (shouldWarnOfAttack_whenAttackTimeComes expects landsInMs 2500, after the make-room refactors 73 and 73 (b)); full build: 82 passed, tsc clean. Browser checks e2e/ac14.spec.js "AC15: the meatball falls from the guardian down to the player's zone, and takes 2.5 s", "AC15: the player's zone (shield and life bar) is at the bottom of the screen", "AC15: the shield follows the finger smoothly, between the lanes too": 29 passed (twice), Playwright clock. Blocking is by the lane under the shield's centre (rules unchanged). kenji-reviewer: 1 blocking (no check of the follow) fixed, re-review PASS; open minors: the 3 lanes repeated in the UI, tapping a lane still jumps the shield (AC14 extra), the ground measured at the throw only, loose "near the ground" bound. Same run: the x-ray peg stuck squeezed after its flip (AC13 bug, also hit AC6's flip) fixed in src/ui/SecretPeg.tsx; the AC6 and AC13 checks now assert the peg is visible (they fail on the old flip). The feel on the phone, by the user, pending
+- Status: verified
 
 ## Discrepancies
 

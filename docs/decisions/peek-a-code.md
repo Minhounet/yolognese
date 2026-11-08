@@ -1,11 +1,11 @@
 # Decision log: peek-a-code
 
 ## Resume
-- Status: open
+- Status: done
 - Mode: build
 - Yolo: on (see references/yolo.md of saiban-orchestrator)
-- Done: scaffold, plan and ACs; AC1-AC4 and AC6-AC14 verified, AC5 waived (user); round 2 published to the feat-peek-a-code channel
-- Next: round 3 (user feedback): fix the x-ray peg stuck mid-flip (AC13 bug), AC15 (meatball falls top to bottom over 2.5 s, player zone at the bottom, shield follows the finger)
+- Done: scaffold, plan and ACs; AC1-AC4 and AC6-AC15 verified, AC5 waived (user); round 3 published to the feat-peek-a-code channel
+- Next: the user's look on the phone (the fall, the shield follow, the x-ray peg, and the earlier looks); then merge (a pull request, not opened), more features, or tuning
 - Files: docs/ticket/PEEK-1/, src/
 
 ## Start - scope and mode
@@ -264,3 +264,10 @@
 - Decided: AC15 written from the user's words; wind-up 1000 -> 2500 ms (orchestrator's number: slow enough to see it fall); blocking stays by lane (the shield's nearest lane when it lands), the domain unchanged; the life bar moves to the player's zone at the bottom with the shield (yolo)
 - Decided: TDD for the rule change: make-room refactor first (the attack tests wait 2500 ms after the warning, still green at 1000), then red 74 (landsInMs 2500); dev: on (rule: ticket with several ACs), a fresh shonin-dev; the screen without TDD, browser checks that assert the pegs are visible, not only labelled
 - Asked user: no (yolo) for the numbers and the layout
+
+## Round 3 - run and review
+- Decided: refactors 73 and 73 (b) made room in the tests, red 74 (changed requirement: 2.5 s), green 74 by a fresh shonin-dev; screen: FallingMeatball, the player's zone at the bottom (ShieldLanes + LifeBar), the shield follows the finger; SecretPeg's flip fixed (its clean-up stopped the opening half)
+- Decided: kenji-reviewer, 1 blocking (no check of the follow) -> mid-drag check; the fall check then exposed a stale ground measure -> measured again on each throw; AC14's wording amended by AC15; re-review PASS; open minors listed in acceptance.md AC15
+- Super-green misses: 0
+- Asked user: yes (the two questions above); the rest no (yolo)
+- Verdict: NOT GUILTY: AC1-AC4, AC6-AC15 verified, AC5 waived, last runs green (82 unit, tsc clean, 29 browser checks twice), no blocking finding open, committed and pushed
