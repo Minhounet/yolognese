@@ -509,4 +509,14 @@ describe('Tick', () => {
 
     expect(response).toMatchObject({ kind: 'ticked', landed: 'blocked' });
   });
+
+  it('shouldNameGift_whenPresentCollected', () => {
+    const { clock, collectItem, tick } = startedGame([30000, 0], [0, 5, 30, 70], [1]);
+    tick.execute();
+    clock.advance(8000);
+
+    const response = collectShownItem(tick, collectItem);
+
+    expect(response).toMatchObject({ kind: 'collected', item: 'present', gift: 'smoke' });
+  });
 });

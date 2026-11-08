@@ -237,3 +237,4 @@
 - Plan change (AC13): red 60 shouldReportNoCooldown_whenPeekingWhileBlind (a blind peek still told the screen to refill the bar); shouldSeeAgain and shouldNotAttack_whenGuardianIsBlind passed on write: guards 59
 - Paused (AC13): the account's 5-hour usage limit stopped the run's shonin-dev at green 62 (resets 20:30 UTC). Reds 48-62 so far, greens 48-61 committed; guards 59 (two); plan changes logged above. Resume: say "resume peek-a-code"; a fresh shonin-dev takes green 62 (the old one's context is heavy).
 - Plan change (AC13): red 69 shouldReportBlocked_whenCharmStopsAttack (a charmed landing reported no outcome, so the screen would show none)
+- Plan change (AC13): red 70 shouldNameGift_whenPresentCollected (the screen cannot show a smoke or charm that came out of a present unless the response names it)
