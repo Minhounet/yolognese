@@ -90,7 +90,7 @@ Interpretation is the orchestrator's (yolo), logged in the decision log.
 ## Round 2 (user, during the yolo run): the guardian becomes an enemy
 
 Source for AC10-AC14, verbatim: "I would like to change the try count. It should be a life bar. Before cheating again there must be a cooling bar. Being caught decrease the count bar. We must have a time limit for the game. Now an random item can be display on the screen. If "present" it will be a random thing. I suggest the following items, some food to regain life. Smoke bomb to blind the enemy. Etc.. if you have more idea. A "x ray glass" to see a peg randomly. Treat the opponent like an ennemy, he can attack us and we must use a shield to protect (you can drag the shield)."
-Order: AC10, AC11, AC12, AC14, AC13; then AC15 (user, after playing) (AC11-AC14 spend or restore life; AC13's items act on AC11, AC12 and AC14)
+Order: AC10, AC11, AC12, AC14, AC13; then AC15 (user, after playing); then AC16, AC18, AC17 (user, round 4: AC18's punch and AC16's fall are rules, AC17 the screen) (AC11-AC14 spend or restore life; AC13's items act on AC11, AC12 and AC14)
 
 ## AC10: Life bar instead of attempts
 - Source: "change the try count. It should be a life bar ... Being caught decrease the count bar."
@@ -139,6 +139,30 @@ Order: AC10, AC11, AC12, AC14, AC13; then AC15 (user, after playing) (AC11-AC14 
 - Covered by: D-attack (wind-up 2500 ms), the screen
 - Evidence: red 74 (shouldWarnOfAttack_whenAttackTimeComes expects landsInMs 2500, after the make-room refactors 73 and 73 (b)); full build: 82 passed, tsc clean. Browser checks e2e/ac14.spec.js "AC15: the meatball falls from the guardian down to the player's zone, and takes 2.5 s", "AC15: the player's zone (shield and life bar) is at the bottom of the screen", "AC15: the shield follows the finger smoothly, between the lanes too": 29 passed (twice), Playwright clock. Blocking is by the lane under the shield's centre (rules unchanged). kenji-reviewer: 1 blocking (no check of the follow) fixed, re-review PASS; open minors: the 3 lanes repeated in the UI, tapping a lane still jumps the shield (AC14 extra), the ground measured at the throw only, loose "near the ground" bound. Same run: the x-ray peg stuck squeezed after its flip (AC13 bug, also hit AC6's flip) fixed in src/ui/SecretPeg.tsx; the AC6 and AC13 checks now assert the peg is visible (they fail on the old flip). The feel on the phone, by the user, pending
 - Status: verified
+
+## AC16: A faster meatball with no target shown (user, round 4)
+- Source: "Meet ball can be faster and we must not see the target location (too easy)."
+- Interpretation: the meatball falls in 1.5 s (was 2.5 s) and its lane is no longer marked; the player reads it from the falling meatball (amends AC14 and AC15)
+- Questions: none
+- Covered by: D-attack (wind-up 1500 ms), the screen
+- Evidence:
+- Status: designed
+
+## AC17: A tap on a peg is a peek, never a distraction (user, round 4)
+- Source: "We cannot be caught when cheating (i tap and the peg self flip back itself)."
+- Interpretation: tapping a hidden peg while the guardian watches gets the player caught; on the phone the same tap also reached the scene and distracted the guardian first (reading of the orchestrator: not reproducible on the web build), so a tap on a peg, the controls, the items or the shield never distracts
+- Questions: none (the cause on the phone is an assumption, to confirm by the user)
+- Covered by: the screen (GameScreen)
+- Evidence:
+- Status: designed
+
+## AC18: Distracting can fail, and the guardian punches (user, round 4)
+- Source: "sometimes, distracting should fail and in place you can be attacked by a punch for example."
+- Interpretation: one distraction in four fails: the guardian keeps watching and punches the player for 1 life
+- Questions: none
+- Covered by: D-guardian (DistractGuardian draws luck from a RandomSource)
+- Evidence:
+- Status: designed
 
 ## Discrepancies
 

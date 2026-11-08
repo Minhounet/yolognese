@@ -1,11 +1,11 @@
 # Decision log: peek-a-code
 
 ## Resume
-- Status: done
+- Status: open
 - Mode: build
 - Yolo: on (see references/yolo.md of saiban-orchestrator)
 - Done: scaffold, plan and ACs; AC1-AC4 and AC6-AC15 verified, AC5 waived (user); round 3 published to the feat-peek-a-code channel
-- Next: the user's look on the phone (the fall, the shield follow, the x-ray peg, and the earlier looks); then merge (a pull request, not opened), more features, or tuning
+- Next: round 4 (user): AC16 faster fall without target, AC18 failed distraction and punch, AC17 a peg tap never distracts
 - Files: docs/ticket/PEEK-1/, src/
 
 ## Start - scope and mode
@@ -271,3 +271,9 @@
 - Super-green misses: 0
 - Asked user: yes (the two questions above); the rest no (yolo)
 - Verdict: NOT GUILTY: AC1-AC4, AC6-AC15 verified, AC5 waived, last runs green (82 unit, tsc clean, 29 browser checks twice), no blocking finding open, committed and pushed
+
+## Round 4 - the user's feedback
+- Decided: AC16 fall 1.5 s (orchestrator's number), 🎯 marker removed; AC18 fail chance 1 in 4, punch costs 1 life (orchestrator's numbers); AC17 read as the phone delivering a peg tap to the scene too (not reproducible here): taps inside the pegs, controls, items and shield never distract, whatever the platform does
+- Decided: DistractGuardian gets a RandomSource (luck); the composition root takes a fixed luck draw from globalThis.yologneseLuck when a check sets it, else Math.random: the browser checks that distract set it to "always fooled", the AC18 check to "never" (a configuration seam in the composition root, not a branch in the rules)
+- Decided: TDD reds from 75 (AC16 changed requirement, AC18 through DistractGuardian), dev: on, a fresh shonin-dev
+- Asked user: no (yolo)
