@@ -51,4 +51,15 @@ describe('Tick', () => {
       view: { status: 'lost', secret: ['red', 'yellow', 'green', 'blue'] },
     });
   });
+
+  it('shouldRejectGuess_whenTimeIsUp', () => {
+    const { clock, tick, submitGuess } = startedGame();
+    tick.execute();
+    clock.advance(180000);
+    tick.execute();
+
+    const response = submitGuess.execute({ guess: ['purple', 'purple', 'orange', 'orange'] });
+
+    expect(response).toEqual({ kind: 'rejected', reason: 'game-over' });
+  });
 });
