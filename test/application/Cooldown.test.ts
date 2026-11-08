@@ -43,4 +43,16 @@ describe('Cooldown', () => {
 
     expect(response).toEqual({ kind: 'revealed', index: 1, color: 'yellow' });
   });
+
+  it('shouldRejectPeek_justBeforeCooldownEnds', () => {
+    const { clock, distractGuardian, peekSecret } = startedGame();
+    distractGuardian.execute(AWAY);
+    peekSecret.execute({ index: 0 });
+    clock.advance(4999);
+    distractGuardian.execute(AWAY);
+
+    const response = peekSecret.execute({ index: 1 });
+
+    expect(response).toEqual({ kind: 'rejected', reason: 'cooling-down' });
+  });
 });
