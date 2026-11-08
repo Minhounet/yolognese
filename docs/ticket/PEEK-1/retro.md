@@ -23,3 +23,6 @@
 - react-native-web does not render accessibilityValue as aria-valuenow; the bars use RN's aria-value* props (LifeBar too, same meaning).
 - AC12: time up empties the life bar (GREEN 40 reused "lost at 0 life"): the bar reads 0 when the clock ends the game; the screen says "Time's up" from the countdown at 0. Kept (yolo), worth the user's look.
 - AC12 review: kenji-reviewer said it could not load the skills with its Skill tool and did not read their bodies line by line; its PASS rests on the code, history and runs. A weaker review than the earlier ones: the next reviewer prompt names the skill paths to Read, not to load.
+- AC14: the random attacks broke the long browser checks (AC12's 3 minutes, AC4's loss loop): meatballs hit at random. A shared e2e/support.js runs the clock while moving the shield to each warned lane, as a player would. Lane clicks under page.clock hang (the "stable" wait again): taps where the lane is.
+- AC14: a real bug found by the flaky AC4 check: a tap on the shield passed through to the scene and distracted the guardian, so the next peek was safe. The shield now takes its own taps; pinned by "tapping the shield moves nothing else".
+- AC14: GREEN 43 built the random schedule ahead of reds 44-45 with invented tuning; they became guards. ScriptedRandomSource ignores its bound, so no test pins a spread (attack delay) or a lane count.
