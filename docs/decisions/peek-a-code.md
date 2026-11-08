@@ -5,7 +5,7 @@
 - Mode: build
 - Yolo: on (see references/yolo.md of saiban-orchestrator)
 - Done: scaffold (Expo SDK 58, TypeScript), structural plan and ACs, AC1, AC2, AC3, AC4 verified; AC5 built and published, waiting for the phone check
-- Next: round 2, AC10..AC14 in the order of acceptance.md, in a fresh session (say: resume peek-a-code); also the user's look at the flip (AC6) and the feedback marks (AC9); then the user decides: merge, more features, or keep ideas
+- Next: round 2 in progress (AC10 first), order AC10, AC11, AC12, AC14, AC13; also the user's look at the flip (AC6) and the feedback marks (AC9); then the user decides: merge, more features, or keep ideas
 - Files: docs/ticket/PEEK-1/, src/
 
 ## Start - scope and mode
@@ -116,4 +116,22 @@
 - Decided: AC10-AC14 written from the user's request; numbers (10 life, costs 1/2/2, 5 s cooldown, 3 min, items every 8-15 s for 4 s, attacks every 10-20 s with a 1 s warning, 3 lanes) and two extra items (hourglass, shield charm) chosen by the orchestrator; a Tick use case drives time-based rules so they stay test-driven
 - Decided: build in a fresh session: this one is long and costly per step (the user raised token cost)
 - Fixed: the AC9 edit had dropped the "## Discrepancies" heading of acceptance.md; restored
+- Asked user: no (yolo)
+
+## Round 2 resumed - new session
+- Decided: work on branch `ccr-e460c87d-7q11ue` (the session's designated branch, same commit as feat/peek-a-code) and push there; the EAS channel stays `feat-peek-a-code`
+- Why: this session may push only to its designated branch; publishing an update reads the working tree, not the branch name
+- Asked user: no (yolo)
+
+## AC10 - TDD plan
+- Decided: tests through StartGame, SubmitGuess and PeekSecret, in test/application/Life.test.ts:
+  28. shouldStartWithTenLife_whenGameStarts [AC10] - StartGame view.life 10
+  29. shouldLoseOneLife_whenGuessMisses [AC10] - one miss: life 9
+  30. shouldKeepLife_whenGuessWins [AC10] - winning guess: life 10
+  31. shouldLoseTwoLife_whenCaught [AC10] - caught peeking: life 8
+  32. shouldBeLost_whenCaughtWithTwoLifeLeft [AC10] - 8 misses then caught: lost, life 0
+  33. shouldStopAtZeroLife_whenCaughtWithOneLifeLeft [AC10] - 9 misses then caught: lost, life 0
+  Refactor 33 (traced): retire attempts (AC10 replaces them): `attemptsLeft` leaves the view and the domain; old tests reworded or removed, each named in the refactor summary. Not behaviour-preserving for that field: a superseded behaviour removed, logged here
+- Decided: dev on (round 2 has 5 ACs, 6 tests in this run)
+- Then: life bar on the screen, browser check e2e/ac10.spec.js (shoko-playwright), older checks' "attempts left" texts follow
 - Asked user: no (yolo)
