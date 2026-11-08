@@ -127,4 +127,16 @@ describe('PeekSecret', () => {
 
     expect(response).toEqual({ kind: 'rejected', reason: 'cooling-down' });
   });
+
+  it('shouldAllowPeek_whenCooldownHasPassed', () => {
+    const { clock, distractGuardian, peekSecret } = startedGame();
+    distractGuardian.execute(AWAY);
+    peekSecret.execute({ index: 0 });
+    clock.advance(5000);
+    distractGuardian.execute(AWAY);
+
+    const response = peekSecret.execute({ index: 1 });
+
+    expect(response).toEqual({ kind: 'revealed', index: 1, color: 'yellow' });
+  });
 });
