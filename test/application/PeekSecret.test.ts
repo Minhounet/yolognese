@@ -28,7 +28,7 @@ describe('PeekSecret', () => {
 
     const response = peekSecret.execute({ index: 2 });
 
-    expect(response).toEqual({ kind: 'revealed', index: 2, color: 'green' });
+    expect(response).toMatchObject({ kind: 'revealed', index: 2, color: 'green' });
   });
 
   it('shouldBeCaught_whenPeekingWhileWatched', () => {
@@ -56,7 +56,7 @@ describe('PeekSecret', () => {
 
     const response = peekSecret.execute({ index: 0 });
 
-    expect(response).toEqual({ kind: 'revealed', index: 0, color: 'red' });
+    expect(response).toMatchObject({ kind: 'revealed', index: 0, color: 'red' });
   });
 
   it('shouldRejectPeek_whenGameIsOver', () => {

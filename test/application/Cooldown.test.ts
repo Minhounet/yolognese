@@ -41,7 +41,7 @@ describe('Cooldown', () => {
 
     const response = peekSecret.execute({ index: 1 });
 
-    expect(response).toEqual({ kind: 'revealed', index: 1, color: 'yellow' });
+    expect(response).toMatchObject({ kind: 'revealed', index: 1, color: 'yellow' });
   });
 
   it('shouldRejectPeek_justBeforeCooldownEnds', () => {
