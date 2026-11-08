@@ -129,7 +129,7 @@ describe('Tick', () => {
     tick.execute();
     clock.advance(10000);
     tick.execute();
-    clock.advance(1000);
+    clock.advance(2500);
 
     const response = tick.execute();
 
@@ -142,7 +142,7 @@ describe('Tick', () => {
     clock.advance(10000);
     tick.execute();
     moveShield.execute({ lane: 2 });
-    clock.advance(1000);
+    clock.advance(2500);
 
     const response = tick.execute();
 
@@ -154,7 +154,7 @@ describe('Tick', () => {
     tick.execute();
     clock.advance(10000);
     tick.execute();
-    clock.advance(1000);
+    clock.advance(2500);
     tick.execute();
     clock.advance(100);
 
@@ -169,7 +169,7 @@ describe('Tick', () => {
     tick.execute();
     clock.advance(10000);
     tick.execute();
-    clock.advance(1000);
+    clock.advance(2500);
     tick.execute();
     clock.advance(10000);
 
@@ -433,7 +433,7 @@ describe('Tick', () => {
     collectShownItem(tick, collectItem);
     clock.advance(2000);
     tick.execute();
-    clock.advance(1000);
+    clock.advance(2500);
 
     const response = tick.execute();
 
@@ -447,11 +447,11 @@ describe('Tick', () => {
     collectShownItem(tick, collectItem);
     clock.advance(10000);
     tick.execute();
-    clock.advance(1000);
+    clock.advance(2500);
     tick.execute();
     clock.advance(10000);
     tick.execute();
-    clock.advance(1000);
+    clock.advance(2500);
 
     const response = tick.execute();
 
@@ -476,7 +476,7 @@ describe('Tick', () => {
     tick.execute();
     clock.advance(10000);
     tick.execute();
-    clock.advance(1000);
+    clock.advance(2500);
 
     const response = tick.execute();
 
@@ -489,7 +489,7 @@ describe('Tick', () => {
     clock.advance(10000);
     tick.execute();
     moveShield.execute({ lane: 2 });
-    clock.advance(1000);
+    clock.advance(2500);
 
     const response = tick.execute();
 
@@ -503,7 +503,7 @@ describe('Tick', () => {
     collectShownItem(tick, collectItem);
     clock.advance(2000);
     tick.execute();
-    clock.advance(1000);
+    clock.advance(2500);
 
     const response = tick.execute();
 
