@@ -240,4 +240,17 @@ describe('Tick', () => {
 
     expect(response).toEqual({ kind: 'rejected', reason: 'no-item' });
   });
+
+  it('shouldRejectCollect_whenAlreadyCollected', () => {
+    const { clock, collectItem, tick } = startedGame([20000, 0], [0, 0, 30, 70]);
+    tick.execute();
+    clock.advance(8000);
+    const shown = tick.execute();
+    const id = shown.kind === 'ticked' && shown.item !== undefined ? shown.item.id : -1;
+    collectItem.execute({ id });
+
+    const response = collectItem.execute({ id });
+
+    expect(response).toEqual({ kind: 'rejected', reason: 'no-item' });
+  });
 });
