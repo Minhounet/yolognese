@@ -1,4 +1,4 @@
-import { punch } from '../domain/game';
+import { isOver, punch } from '../domain/game';
 import { distract } from '../domain/guardian';
 import { Point } from '../domain/point';
 import { Clock, GameRepository, RandomSource } from './ports';
@@ -33,6 +33,9 @@ export class DistractGuardianImpl implements DistractGuardian {
     const session = this.repository.load();
     if (session === undefined) {
       return { kind: 'rejected', reason: 'no-game' };
+    }
+    if (isOver(session.game)) {
+      return { kind: 'rejected', reason: 'game-over' };
     }
     if (this.luck.nextInt(LUCK_OUTCOMES) === SEES_THROUGH) {
       const game = punch(session.game);
