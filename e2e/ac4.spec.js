@@ -62,6 +62,7 @@ test('AC4: getting caught on every attempt loses the game, which then rejects pe
 
   await expect(page.getByTestId('new-game')).toBeVisible();
   await expect(peg).not.toHaveAttribute('aria-label', HIDDEN);
+  await page.clock.runFor(200); // let the peg finish turning over before tapping it
   await peg.tap({ force: true }); // the peg is no longer pressable: force the tap to prove nothing happens
   await expect(page.getByTestId('status')).toHaveText('Out of attempts. The guardian wins.');
 });

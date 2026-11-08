@@ -1,4 +1,4 @@
-import { ComponentRef, useEffect, useRef, useState } from 'react';
+import { ComponentRef, useCallback, useEffect, useRef, useState } from 'react';
 import { GestureResponderEvent, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { GameView } from '../application/views';
 import { UseCases } from '../compositionRoot';
@@ -6,14 +6,16 @@ import { COLORS, Code, Color } from '../domain/color';
 import { Point } from '../domain/point';
 import { Feedback } from './Feedback';
 import { Guardian } from './Guardian';
+import { DustPuff } from './DustPuff';
 import { Peg } from './Peg';
+import { SecretPeg } from './SecretPeg';
 import { useShake } from './useShake';
 import { THEME } from './theme';
 
 type Draft = readonly (Color | undefined)[];
 
 const EMPTY_DRAFT: Draft = [undefined, undefined, undefined, undefined];
-const PEEK_SHOWN_MS = 700;
+const PEEK_SHOWN_MS = 400;
 /** Where the guardian looks after a shake: dizzy, up and to the side. */
 const SHAKEN_LOOK: Point = { x: -100, y: -60 };
 const CAUGHT_SHOWN_MS = 1500;
@@ -47,6 +49,12 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
   const remainingMs = useRef(0);
   const [peeked, setPeeked] = useState<{ readonly index: number; readonly color: Color } | undefined>();
   const [caught, setCaught] = useState(false);
+  const [puffs, setPuffs] = useState<readonly { readonly id: number; readonly at: Point }[]>([]);
+  const nextPuff = useRef(0);
+
+  useEffect(() => {
+    if (gaze === undefined) setPeeked(undefined);
+  }, [gaze]);
 
   useEffect(() => {
     if (peeked === undefined) return undefined;
@@ -87,11 +95,14 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
     setGaze({ ...response.view.gaze });
   };
 
-  const pointAt = (event: GestureResponderEvent) =>
-    distractTowards({
-      x: event.nativeEvent.pageX - guardianCentre.current.x,
-      y: event.nativeEvent.pageY - guardianCentre.current.y,
-    });
+  const pointAt = (event: GestureResponderEvent) => {
+    const { pageX, pageY } = event.nativeEvent;
+    const id = nextPuff.current++;
+    setPuffs((current) => [...current, { id, at: { x: pageX, y: pageY } }]);
+    distractTowards({ x: pageX - guardianCentre.current.x, y: pageY - guardianCentre.current.y });
+  };
+
+  const removePuff = useCallback((id: number) => setPuffs((current) => current.filter((puff) => puff.id !== id)), []);
 
   useShake(() => distractTowards(SHAKEN_LOOK));
 
@@ -117,13 +128,7 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
         {(view.secret ?? EMPTY_DRAFT).map((color, slot) => {
           const shown = view.secret === undefined && peeked?.index === slot ? peeked.color : color;
           return (
-            <Peg
-              key={slot}
-              testID={`secret-${slot}`}
-              color={shown}
-              hidden={shown === undefined}
-              onPress={playing ? () => peek(slot) : undefined}
-            />
+            <SecretPeg key={slot} testID={`secret-${slot}`} color={shown} onPress={playing ? () => peek(slot) : undefined} />
           );
         })}
       </View>
@@ -168,6 +173,9 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
           <Text style={styles.buttonText}>New game</Text>
         </Pressable>
       )}
+      {puffs.map((puff) => (
+        <DustPuff key={puff.id} at={puff.at} onDone={() => removePuff(puff.id)} />
+      ))}
     </Pressable>
   );
 }

@@ -17,5 +17,6 @@ export const THEME = {
   hidden: '#7a5a43',
   empty: '#e8c99a',
   meatball: '#8d5a3b',
+  dust: '#c9a77c',
   meatballDark: '#6e4229',
 } as const;
