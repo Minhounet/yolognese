@@ -350,4 +350,16 @@ describe('Tick', () => {
 
     expect(response).toMatchObject({ kind: 'caught' });
   });
+
+  it('shouldNotAttack_whenGuardianIsBlind', () => {
+    const { clock, collectItem, tick } = startedGame([0, 2], [0, 1, 30, 70]);
+    tick.execute();
+    clock.advance(8000);
+    collectShownItem(tick, collectItem);
+    clock.advance(2000);
+
+    const response = tick.execute();
+
+    expect(response.kind === 'ticked' && response.attack).toBeUndefined();
+  });
 });
