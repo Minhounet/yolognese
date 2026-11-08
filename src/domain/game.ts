@@ -3,6 +3,7 @@ import { Code, COLORS, Color } from './color';
 const STARTING_LIFE = 10;
 const LIFE_LOST_PER_MISS = 1;
 const LIFE_LOST_WHEN_CAUGHT = 2;
+const LIFE_RESTORED_BY_FOOD = 3;
 const MIN_LIFE = 0;
 
 export interface Turn {
@@ -57,6 +58,10 @@ export function play(game: Game, guess: Code): Game {
 export function penalise(game: Game): Game {
   const life = Math.max(MIN_LIFE, game.life - LIFE_LOST_WHEN_CAUGHT);
   return { ...game, life };
+}
+
+export function restoreLife(game: Game): Game {
+  return { ...game, life: game.life + LIFE_RESTORED_BY_FOOD };
 }
 
 export function timeUp(game: Game): Game {

@@ -1,4 +1,6 @@
+import { restoreLife } from '../domain/game';
 import { ItemKind } from '../domain/items';
+import { toGameView } from './GameMapper';
 import { Clock, GameRepository } from './ports';
 import { GameView } from './views';
 
@@ -21,6 +23,15 @@ export class CollectItemImpl implements CollectItem {
   ) {}
 
   execute(_command: CollectItemCommand): CollectItemResponse {
-    return { kind: 'rejected', reason: 'no-game' };
+    const session = this.repository.load();
+    if (session === undefined) {
+      return { kind: 'rejected', reason: 'no-game' };
+    }
+    if (session.item === undefined) {
+      return { kind: 'rejected', reason: 'no-item' };
+    }
+    const game = restoreLife(session.game);
+    this.repository.save({ ...session, game });
+    return { kind: 'collected', item: session.item.kind, view: toGameView(game) };
   }
 }
