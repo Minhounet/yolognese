@@ -22,6 +22,10 @@ export class PeekSecretImpl implements PeekSecret {
   ) {}
 
   execute(command: PeekCommand): PeekResponse {
-    return { kind: 'rejected', reason: 'no-game' };
+    const session = this.repository.load();
+    if (session === undefined) {
+      return { kind: 'rejected', reason: 'no-game' };
+    }
+    return { kind: 'revealed', index: command.index, color: session.game.secret[command.index] };
   }
 }
