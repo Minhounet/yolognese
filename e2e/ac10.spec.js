@@ -29,7 +29,7 @@ test('AC10: the life bar starts full, a miss costs 1, being caught costs 2, and 
   for (const left of [7, 5, 3, 1]) {
     await tapAt(page, peg);
     await expect(life).toHaveAttribute('aria-label', `life ${left} of 10`);
-    await page.clock.runFor(1600);
+    await page.clock.runFor(5100); // past the cooldown (AC11)
   }
   await tapAt(page, peg);
 

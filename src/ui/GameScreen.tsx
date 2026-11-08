@@ -18,6 +18,12 @@ const EMPTY_DRAFT: Draft = [undefined, undefined, undefined, undefined];
 const PEEK_SHOWN_MS = 400;
 const CAUGHT_SHOWN_MS = 1500;
 const MAX_LIFE = 10;
+const COOLDOWN_TICK_MS = 100;
+
+interface CooldownState {
+  readonly until: number;
+  readonly total: number;
+}
 
 function isComplete(draft: Draft): draft is Code {
   return draft.every((color) => color !== undefined);
@@ -50,6 +56,21 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
   const [caught, setCaught] = useState(false);
   const [puffs, setPuffs] = useState<readonly { readonly id: number; readonly at: Point }[]>([]);
   const nextPuff = useRef(0);
+  const [cooldown, setCooldown] = useState<CooldownState>({ until: 0, total: 1 });
+  const [now, setNow] = useState(() => Date.now());
+  const cooldownLeft = Math.max(0, cooldown.until - now);
+
+  useEffect(() => {
+    if (cooldownLeft === 0) return undefined;
+    const timer = setInterval(() => setNow(Date.now()), COOLDOWN_TICK_MS);
+    return () => clearInterval(timer);
+  }, [cooldownLeft === 0]);
+
+  const startCooldown = (remainingMs: number) => {
+    const start = Date.now();
+    setNow(start);
+    setCooldown({ until: start + remainingMs, total: remainingMs });
+  };
 
   useEffect(() => {
     if (gaze === undefined) setPeeked(undefined);
@@ -69,10 +90,14 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
 
   const peek = (index: number) => {
     const response = useCases.peekSecret.execute({ index });
-    if (response.kind === 'revealed') setPeeked({ index, color: response.color });
+    if (response.kind === 'revealed') {
+      setPeeked({ index, color: response.color });
+      startCooldown(response.cooldownRemainingMs);
+    }
     if (response.kind === 'caught') {
       setView(response.view);
       setCaught(true);
+      startCooldown(response.cooldownRemainingMs);
     }
   };
 
@@ -112,6 +137,7 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
 
   const newGame = () => {
     setView(useCases.startGame.execute());
+    setCooldown({ until: 0, total: 1 });
     setDraft(EMPTY_DRAFT);
   };
 
@@ -133,6 +159,14 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
         {caught ? 'Caught peeking! −2 ❤️' : STATUS_TEXT[view.status]}
       </Text>
       <Bar testID="life" icon="❤️" value={view.life} max={MAX_LIFE} color={THEME.sauce} label={`life ${view.life} of ${MAX_LIFE}`} />
+      <Bar
+        testID="cooldown"
+        icon="👀"
+        value={cooldown.total - cooldownLeft}
+        max={cooldown.total}
+        color={cooldownLeft === 0 ? THEME.ready : THEME.cooling}
+        label={cooldownLeft === 0 ? 'peek ready' : 'peek cooling down'}
+      />
       <FeedbackLegend />
       <ScrollView style={styles.board} contentContainerStyle={styles.boardContent}>
         {view.turns.map((turn, index) => (
