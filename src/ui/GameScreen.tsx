@@ -6,6 +6,7 @@ import { COLORS, Code, Color } from '../domain/color';
 import { Point } from '../domain/point';
 import { Feedback, FeedbackLegend } from './Feedback';
 import { Guardian } from './Guardian';
+import { LifeBar } from './LifeBar';
 import { DustPuff } from './DustPuff';
 import { Peg } from './Peg';
 import { SecretPeg } from './SecretPeg';
@@ -33,7 +34,7 @@ function withoutSlot(draft: Draft, slot: number): Draft {
 const STATUS_TEXT: Readonly<Record<GameView['status'], string>> = {
   playing: 'Crack the secret sauce!',
   won: 'You cracked it! 🍝',
-  lost: 'Out of attempts. The guardian wins.',
+  lost: 'Out of life. The guardian wins.',
 };
 
 export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
@@ -128,9 +129,9 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
         })}
       </View>
       <Text testID="status" style={[styles.status, caught && styles.caught]}>
-        {caught ? 'Caught peeking! −1 attempt' : STATUS_TEXT[view.status]}
-        {playing ? ` · ${view.life} life left` : ''}
+        {caught ? 'Caught peeking! −2 life' : STATUS_TEXT[view.status]}
       </Text>
+      <LifeBar life={view.life} />
       <FeedbackLegend />
       <ScrollView style={styles.board} contentContainerStyle={styles.boardContent}>
         {view.turns.map((turn, index) => (

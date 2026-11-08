@@ -26,12 +26,12 @@ test('AC4: a peek while the guardian looks away shows the colour briefly', async
   await peg.tap();
 
   await expect(peg).not.toHaveAttribute('aria-label', HIDDEN);
-  await expect(page.getByTestId('status')).toContainText('10 attempts left');
+  await expect(page.getByTestId('life')).toHaveAttribute('aria-label', 'Life 10 of 10');
   await page.clock.runFor(800);
   await expect(peg).toHaveAttribute('aria-label', HIDDEN);
 });
 
-test('AC4: a peek while the guardian watches is caught and costs one attempt', async ({ page }) => {
+test('AC4: a peek while the guardian watches is caught and costs life', async ({ page }) => {
   await page.clock.install();
   await page.goto('/');
   const peg = page.getByTestId('secret-2');
@@ -39,7 +39,7 @@ test('AC4: a peek while the guardian watches is caught and costs one attempt', a
   await peg.tap();
 
   await expect(page.getByTestId('status')).toContainText('Caught peeking');
-  await expect(page.getByTestId('status')).toContainText('9 attempts left');
+  await expect(page.getByTestId('life')).toHaveAttribute('aria-label', 'Life 8 of 10');
   await expect(peg).toHaveAttribute('aria-label', HIDDEN);
 });
 
@@ -58,12 +58,11 @@ test('AC4: getting caught on every attempt loses the game, which then rejects pe
   await page.clock.install();
   await page.goto('/');
   const peg = page.getByTestId('secret-0');
-  for (let caught = 1; caught <= 10; caught += 1) {
+  for (let caught = 1; caught <= 5; caught += 1) {
     await tapAt(page, peg);
-    await expect(page.getByTestId('status')).toContainText(
-      caught < 10 ? `${10 - caught} attempts left` : 'Out of attempts',
-      { timeout: 2000 },
-    );
+    await expect(page.getByTestId('life')).toHaveAttribute('aria-label', `Life ${10 - 2 * caught} of 10`, {
+      timeout: 2000,
+    });
     await page.clock.runFor(1600);
   }
 
@@ -71,5 +70,5 @@ test('AC4: getting caught on every attempt loses the game, which then rejects pe
   await expect(peg).not.toHaveAttribute('aria-label', HIDDEN);
   await page.clock.runFor(200); // let the peg finish turning over before tapping it
   await tapAt(page, peg); // the peg is no longer pressable: the tap must change nothing
-  await expect(page.getByTestId('status')).toHaveText('Out of attempts. The guardian wins.');
+  await expect(page.getByTestId('status')).toHaveText('Out of life. The guardian wins.');
 });

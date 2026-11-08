@@ -25,10 +25,10 @@ test('AC2: losing reveals the secret, and a new game starts fresh', async ({ pag
     if (await page.getByTestId('new-game').isVisible()) break;
     await guess(page, MISS);
   }
-  await expect(page.getByTestId('status')).toContainText(/Out of attempts|You cracked it/);
+  await expect(page.getByTestId('status')).toContainText(/Out of life|You cracked it/);
   await expect(page.getByTestId('secret-0')).not.toHaveAttribute('aria-label', 'hidden peg');
   await page.getByTestId('new-game').click();
-  await expect(page.getByTestId('status')).toContainText('10 attempts left');
+  await expect(page.getByTestId('life')).toHaveAttribute('aria-label', 'Life 10 of 10');
   await expect(page.getByTestId('turn-0')).toHaveCount(0);
   await expect(page.getByTestId('secret-0')).toHaveAttribute('aria-label', 'hidden peg');
 });

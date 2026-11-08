@@ -1,0 +1,34 @@
+import { StyleSheet, Text, View } from 'react-native';
+import { THEME } from './theme';
+
+const FULL_LIFE = 10;
+const LOW_LIFE = 3;
+
+/** The player's life as a bar of hearts' worth of sauce: full at 10, empty at 0. */
+export function LifeBar({ life }: { readonly life: number }) {
+  const label = `Life ${life} of ${FULL_LIFE}`;
+  return (
+    <View style={styles.row}>
+      <Text style={styles.icon}>❤️</Text>
+      <View
+        testID="life"
+        accessibilityRole="progressbar"
+        accessibilityLabel={label}
+        accessibilityValue={{ min: 0, max: FULL_LIFE, now: life }}
+        style={styles.track}
+      >
+        <View style={[styles.fill, life <= LOW_LIFE && styles.low, { width: `${(life / FULL_LIFE) * 100}%` }]} />
+      </View>
+      <Text style={styles.count}>{life}</Text>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  row: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
+  icon: { fontSize: 14, marginRight: 6 },
+  track: { width: 180, height: 12, borderRadius: 6, backgroundColor: THEME.empty, overflow: 'hidden' },
+  fill: { height: '100%', backgroundColor: THEME.life },
+  low: { backgroundColor: THEME.sauce },
+  count: { color: THEME.ink, fontSize: 14, marginLeft: 6, minWidth: 18 },
+});
