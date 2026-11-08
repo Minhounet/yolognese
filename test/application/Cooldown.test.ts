@@ -84,4 +84,12 @@ describe('Cooldown', () => {
 
     expect(response).toMatchObject({ kind: 'revealed', cooldownRemainingMs: 5000 });
   });
+
+  it('shouldReportCooldown_whenCaught', () => {
+    const { peekSecret } = startedGame();
+
+    const response = peekSecret.execute({ index: 0 });
+
+    expect(response).toMatchObject({ kind: 'caught', cooldownRemainingMs: 5000 });
+  });
 });
