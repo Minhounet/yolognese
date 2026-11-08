@@ -206,3 +206,26 @@
 - Deferred refinement notes: untested generalizations — attacks still land on a finished game; MoveShield takes any lane number and works after the game; a distracted guardian postpones the wind-up rather than skipping it; hit and caught share penalise (both 2)
 - Asked user: no (yolo)
 - Carry forward: AC13 extends Tick (spawn and expire items with RandomSource, the landing outcome in the response), adds CollectItem; the smoke bomb makes the guardian blind (no attack, safe peeks without cooldown); food needs maxLife; the shield charm blocks the next attack whatever the lane; the hourglass moves endsAt
+
+## AC13 - TDD plan
+- Decided: through Tick and a new CollectItem({ id }) use case (collected(kind, view) | rejected('no-game' | 'no-item')), numbering from 48. Tick gets a second RandomSource for items (constructor change in red 48, the composition root passes the same MathRandomSource twice), so the attack tests' scripted draws stay as they are. Item draws, fixed by the plan so tests can script them: when an item is scheduled (first tick, and when an item leaves) its delay 8 s + nextInt(7001); when it appears its kind nextInt(6) in the order food, smoke, xray, hourglass, charm, present, then its spot x and y, each nextInt(101) (percent of the play area); an x-ray draws the index among the still-hidden pegs, a present draws its kind among the five others
+  48 [AC13] shouldShowItem_whenItemTimeComes — 8 s after the first tick: item { kind food, spot 30/70 }
+  49 [AC13] shouldRemoveItem_afterFourSeconds — 4 s after it appeared: no item
+  50 [AC13] shouldRestoreLife_whenFoodCollected — life 6, food: life 9
+  51 [AC13] shouldCapLife_whenFoodCollectedAtFullLife — life 10, food: life 10, maxLife 10 in the view (closes AC10 minor 3)
+  52 [AC13] shouldRejectCollect_whenItemIsGone — collecting 4 s after it appeared: rejected 'no-item'
+  53 [AC13] shouldBlindGuardian_whenSmokeCollected — a peek while watched is revealed, not caught
+  54 [AC13] shouldNotStartCooldown_whenPeekingWhileBlind — two peeks in a row while blind: both revealed
+  55 [AC13] shouldSeeAgain_afterFourSecondsOfSmoke — 4 s after the smoke: a peek is caught
+  56 [AC13] shouldNotAttack_whenGuardianIsBlind — blind when the attack time comes: no warning
+  57 [AC13] shouldRevealHiddenPeg_whenXrayCollected — the view lists the peg (index 1, yellow) for the rest of the game
+  58 [AC13] shouldRevealStillHiddenPeg_whenXrayCollectedAgain — the second x-ray draws among the pegs still hidden
+  59 [AC13] shouldAddThirtySeconds_whenHourglassCollected — time left grows by 30 s
+  60 [AC13] shouldBlockNextAttack_whenCharmCollected — the meatball lands outside the shield: no life lost
+  61 [AC13] shouldHitAgain_afterCharmWasUsed — the following attack hits
+  62 [AC13] shouldGiveAnotherItem_whenPresentCollected — present, then food drawn: life restored
+  63 [AC13] shouldShowAnotherItem_afterOneLeaves — the next item comes a new delay after the first left
+  64 (AC14 minor 1) shouldReportHit_whenAttackLands / blocked — Tick's response names the landing's outcome, so the screen stops guessing it
+  On the screen: the item at its spot (tap to collect), the guardian blinded by smoke, x-rayed pegs shown, the charm by the shield; browser checks e2e/ac13.spec.js
+- dev: on (17 tests); a fresh shonin-dev
+- Asked user: no (yolo)
