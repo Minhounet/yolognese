@@ -8,13 +8,13 @@ import { ScriptedRandomSource } from '../support/ScriptedRandomSource';
 
 // secret: red yellow green blue; the guardian's luck draw: 1 is fooled (0 sees through it)
 const FOOLED = 1;
-function startedGame() {
+function startedGame(luck: readonly number[] = [FOOLED]) {
   const clock = new FakeClock();
   const repository = new InMemoryGameRepository();
   new StartGameImpl(new ScriptedRandomSource([0, 1, 2, 3]), repository, clock).execute();
   return {
     clock,
-    distractGuardian: new DistractGuardianImpl(repository, clock, new ScriptedRandomSource([FOOLED])),
+    distractGuardian: new DistractGuardianImpl(repository, clock, new ScriptedRandomSource(luck)),
     peekSecret: new PeekSecretImpl(repository, clock),
     submitGuess: new SubmitGuessImpl(repository),
   };
@@ -175,5 +175,14 @@ describe('PeekSecret', () => {
     const response = peekSecret.execute({ index: 3 });
 
     expect(response).toMatchObject({ kind: 'caught', cooldownMs: 5000 });
+  });
+
+  it('shouldBeCaught_whenPeekingAfterBeingPunched', () => {
+    const { distractGuardian, peekSecret } = startedGame([0]);
+    distractGuardian.execute(AWAY);
+
+    const response = peekSecret.execute({ index: 2 });
+
+    expect(response).toMatchObject({ kind: 'caught' });
   });
 });
