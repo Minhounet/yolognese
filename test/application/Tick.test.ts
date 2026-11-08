@@ -84,4 +84,13 @@ describe('Tick', () => {
     expect(response.kind === 'ticked' && response.attack).toBeUndefined();
   });
 
+  it('shouldWaitRandomDelay_beforeAttacking', () => {
+    const { clock, tick } = startedGame([10000, 2]);
+    tick.execute();
+    clock.advance(19999);
+
+    const response = tick.execute();
+
+    expect(response.kind === 'ticked' && response.attack).toBeUndefined();
+  });
 });
