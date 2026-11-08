@@ -15,7 +15,12 @@ export interface MoveShield {
 export class MoveShieldImpl implements MoveShield {
   constructor(private readonly repository: GameRepository) {}
 
-  execute(_command: MoveShieldCommand): MoveShieldResponse {
-    return { kind: 'rejected', reason: 'no-game' };
+  execute(command: MoveShieldCommand): MoveShieldResponse {
+    const session = this.repository.load();
+    if (session === undefined) {
+      return { kind: 'rejected', reason: 'no-game' };
+    }
+    this.repository.save({ ...session, shieldLane: command.lane });
+    return { kind: 'moved', lane: command.lane };
   }
 }

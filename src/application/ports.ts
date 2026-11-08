@@ -16,6 +16,8 @@ export interface Session {
   readonly endsAt: number;
   readonly attackAt?: number;
   readonly attackLandsAt?: number;
+  readonly attackLane?: number;
+  readonly shieldLane?: number;
 }
 
 export interface GameRepository {

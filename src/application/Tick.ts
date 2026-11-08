@@ -1,4 +1,4 @@
-import { ATTACK_DELAY_SPREAD_MS, Attack, LANE_COUNT, hasLanded, isAttackDue, scheduleAttackAt, windUp } from '../domain/attack';
+import { ATTACK_DELAY_SPREAD_MS, Attack, LANE_COUNT, hasLanded, isAttackDue, isBlocked, scheduleAttackAt, windUp } from '../domain/attack';
 import { penalise, timeUp } from '../domain/game';
 import { toGameView } from './GameMapper';
 import { Clock, GameRepository, RandomSource } from './ports';
@@ -30,11 +30,13 @@ export class TickImpl implements Tick {
     const timeLeftMs = Math.max(MIN_TIME_LEFT_MS, session.endsAt - now);
     const timedGame = timeLeftMs === MIN_TIME_LEFT_MS ? timeUp(session.game) : session.game;
     const attackLanded = session.attackLandsAt !== undefined && hasLanded(session.attackLandsAt, now);
-    const game = attackLanded ? penalise(timedGame) : timedGame;
+    const attackHits = attackLanded && !isBlocked(session.attackLane, session.shieldLane);
+    const game = attackHits ? penalise(timedGame) : timedGame;
     const attackAt = session.attackAt ?? scheduleAttackAt(now, this.random.nextInt(ATTACK_DELAY_SPREAD_MS));
     const attack = isAttackDue(attackAt, now) ? windUp(this.random.nextInt(LANE_COUNT)) : undefined;
     const attackLandsAt = attack === undefined ? session.attackLandsAt : now + attack.landsInMs;
-    this.repository.save({ ...session, game, attackAt, attackLandsAt });
+    const attackLane = attack === undefined ? session.attackLane : attack.lane;
+    this.repository.save({ ...session, game, attackAt, attackLandsAt, attackLane });
     return { kind: 'ticked', view: toGameView(game), timeLeftMs, attack };
   }
 }

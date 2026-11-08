@@ -24,3 +24,7 @@ export function windUp(lane: number): Attack {
 export function hasLanded(landsAt: number, now: number): boolean {
   return landsAt <= now;
 }
+
+export function isBlocked(attackLane: number | undefined, shieldLane: number | undefined): boolean {
+  return attackLane === shieldLane;
+}
