@@ -215,4 +215,16 @@ describe('Tick', () => {
 
     expect(response).toMatchObject({ kind: 'collected', item: 'food', view: { life: 9 } });
   });
+
+  it('shouldCapLife_whenFoodCollectedAtFullLife', () => {
+    const { clock, collectItem, tick } = startedGame([20000, 0], [0, 0, 30, 70]);
+    tick.execute();
+    clock.advance(8000);
+    const shown = tick.execute();
+    const id = shown.kind === 'ticked' && shown.item !== undefined ? shown.item.id : -1;
+
+    const response = collectItem.execute({ id });
+
+    expect(response).toMatchObject({ kind: 'collected', view: { life: 10, maxLife: 10 } });
+  });
 });
