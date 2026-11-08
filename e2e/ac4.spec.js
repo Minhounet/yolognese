@@ -54,7 +54,7 @@ test('AC4: a peek after the guardian looks back is caught', async ({ page }) => 
   await expect(page.getByTestId('status')).toContainText('Caught peeking');
 });
 
-test('AC4: getting caught on every attempt loses the game, which then rejects peeks', async ({ page }) => {
+test('AC4: getting caught until life runs out loses the game, which then rejects peeks', async ({ page }) => {
   await page.clock.install();
   await page.goto('/');
   const peg = page.getByTestId('secret-0');
