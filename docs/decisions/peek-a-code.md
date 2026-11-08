@@ -4,8 +4,8 @@
 - Status: open
 - Mode: build
 - Yolo: on (see references/yolo.md of saiban-orchestrator)
-- Done: scaffold (Expo SDK 58, TypeScript), structural plan and ACs, AC1, AC2, AC3, AC4 verified; AC5 built and published, waiting for the phone check
-- Next: round 2 in progress (AC10 first), order AC10, AC11, AC12, AC14, AC13; also the user's look at the flip (AC6) and the feedback marks (AC9); then the user decides: merge, more features, or keep ideas
+- Done: scaffold (Expo SDK 58, TypeScript), structural plan and ACs, AC1-AC4, AC6-AC10 verified; AC5 waived (user)
+- Next: round 2 in progress: AC10 verified; next AC11, then AC12, AC14, AC13; also the user's look at the flip (AC6) and the feedback marks (AC9); then the user decides: merge, more features, or keep ideas
 - Files: docs/ticket/PEEK-1/, src/
 
 ## Start - scope and mode
@@ -135,3 +135,12 @@
 - Decided: dev on (round 2 has 5 ACs, 6 tests in this run)
 - Then: life bar on the screen, browser check e2e/ac10.spec.js (shoko-playwright), older checks' "attempts left" texts follow
 - Asked user: no (yolo)
+
+## AC10 - run and review
+- Decided: GREEN 29 by shonin-dev cut back (branched on "no shared colour" from one test); greens 28, 30-33 accepted; refactor 30 extracted isWinningTurn (shared with isWon); refactor 33 retired attempts (tests traced in its commit)
+- Decided: life bar on screen (src/ui/Bar.tsx), caught message "−2 ❤️", lost text "Out of life"; browser check e2e/ac10.spec.js; older checks read the life bar
+- Decided: kenji-reviewer, 4 minor: (1) AC2/AC4 still read attempts -> D1 recorded (AC-vs-AC, B wins: the user's request), AC4 evidence refreshed: fixed; (2) the check reads the bar's label, not its fill, and skips on a RRRR secret (1 in 1296) -> open, label stands in (said in the evidence); (3) MAX_LIFE stated twice (domain and GameScreen) -> open, AC13's food ("up to 10") needs the maximum in the view: put it there then; (4) Bar takes icon/max/color ahead of AC11-AC12 -> open, accepted: AC11 and AC12 reuse it next
+- Super-green misses: 0
+- Deferred refinement notes: untested generalization: isOutOfLife reads life <= 0 (the clamp makes it 0); play() does not clamp (unreachable: finished games reject guesses)
+- Asked user: no (yolo)
+- Carry forward: Life.test.ts startGame() helper with FakeClock for AC11-AC14 (pass the clock in when time matters); Bar for the cooldown (AC11) and the countdown (AC12); AC13 food needs max life in the view (finding 3); AC14's hit costs 2 life through a domain function like penalise

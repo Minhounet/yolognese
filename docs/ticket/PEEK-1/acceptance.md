@@ -43,7 +43,7 @@ Interpretation is the orchestrator's (yolo), logged in the decision log.
   attempt (which can lose the game); a finished game rejects peeks.
 - Questions: none
 - Covered by: D-peek, D-structure (PeekSecret)
-- Evidence: test/application/PeekSecret.test.ts reds — shouldRevealColour_whenPeekingWhileDistracted, shouldBeCaught_whenPeekingWhileWatched, shouldBeCaught_whenPeekingAfterDistractionEnds, shouldCostOneAttempt_whenCaught, shouldRejectPeek_whenGameIsOver, shouldKeepPenalty_whenGuessingAfterBeingCaught (guards 18 and 19 are not evidence); full build 25 passed, tsc clean. "Which can lose the game": browser check e2e/ac4.spec.js "getting caught on every attempt loses the game, which then rejects peeks"; with "a peek while the guardian looks away shows the colour briefly", "a peek while the guardian watches is caught and costs one attempt", "a peek after the guardian looks back is caught": all passed on the web build, Playwright clock
+- Evidence: test/application/PeekSecret.test.ts reds — shouldRevealColour_whenPeekingWhileDistracted, shouldBeCaught_whenPeekingWhileWatched, shouldBeCaught_whenPeekingAfterDistractionEnds, shouldCostOneAttempt_whenCaught, shouldRejectPeek_whenGameIsOver, shouldKeepPenalty_whenGuessingAfterBeingCaught (guards 18 and 19 are not evidence); full build 25 passed, tsc clean. Since AC10 (D1): the cost is 2 life — shouldCostOneAttempt_whenCaught and guard shouldLoseGame_whenCaughtOnLastAttempt were removed in refactor 33, superseded by Life.test.ts shouldLoseTwoLife_whenCaught and shouldStopAtZeroLife_whenCaughtWithOneLifeLeft; shouldKeepPenalty_whenGuessingAfterBeingCaught now asserts life 7; the browser checks were renamed ("... is caught and costs life (AC10: 2)", "getting caught until life runs out loses the game, which then rejects peeks") and pass. "Which can lose the game": browser check e2e/ac4.spec.js "getting caught on every attempt loses the game, which then rejects peeks"; with "a peek while the guardian looks away shows the colour briefly", "a peek while the guardian watches is caught and costs one attempt", "a peek after the guardian looks back is caught": all passed on the web build, Playwright clock
 - Status: verified
 
 ## AC5: Shake to distract
@@ -97,8 +97,8 @@ Order: AC10, AC11, AC12, AC14, AC13 (AC11-AC14 spend or restore life; AC13's ite
 - Interpretation: the player starts with 10 life points, shown as a bar; a guess that does not win costs 1, being caught peeking costs 2; at 0 the game is lost (replaces attempts: AC2's "10 attempts" and AC4's "costs one attempt" now read through life)
 - Questions: none
 - Covered by: D-life (round 2)
-- Evidence:
-- Status: designed
+- Evidence: test/application/Life.test.ts reds 28-33 — shouldStartWithTenLife_whenGameStarts, shouldLoseOneLife_whenGuessMisses, shouldKeepLife_whenGuessWins, shouldLoseTwoLife_whenCaught, shouldBeLost_whenCaughtWithTwoLifeLeft, shouldStopAtZeroLife_whenCaughtWithOneLifeLeft; full build `npx jest && npx tsc --noEmit`: 34 passed, tsc clean; TDD audit clean. "Shown as a bar": browser check e2e/ac10.spec.js "AC10: the life bar starts full, a miss costs 1, being caught costs 2, and empty life loses", passed on the web build (12 passed), Playwright clock; it reads the bar's label, which stands in for the fill (a screenshot showed the fill at 8 of 10). kenji-reviewer: 4 minor, none blocking
+- Status: verified
 
 ## AC11: Cheat cooldown bar
 - Source: "Before cheating again there must be a cooling bar."
@@ -133,4 +133,11 @@ Order: AC10, AC11, AC12, AC14, AC13 (AC11-AC14 spend or restore life; AC13's ite
 - Status: designed
 
 
-None.
+## Discrepancies
+### D1: attempts replaced by life
+- Kind: AC-vs-AC
+- Side A: "lost when no attempt is left (10)" (AC2 Interpretation); "peeking while it watches is caught and costs one attempt" (AC4 Interpretation)
+- Side B: "change the try count. It should be a life bar ... Being caught decrease the count bar." (AC10 Source, the user)
+- Impact: minor - a miss still costs 1 (10 misses still lose), being caught costs 2 life instead of 1 attempt
+- Owner: user
+- Resolution: B wins (the user's round 2 request replaces attempts; AC2 and AC4 read through life, their evidence refreshed at AC10)

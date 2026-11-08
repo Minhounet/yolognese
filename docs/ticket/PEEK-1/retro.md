@@ -16,3 +16,7 @@
 - kenji-reviewer found a real bug at AC5 in review: one hard bump spans about three 50 ms accelerometer samples and counted as three jolts. Red 27 drove the fix; the dev showed the rule had to be time-based (readings under 100 ms apart are one jolt), since list-neighbour edges also merged a real burst.
 - The user felt a delay before a peeked peg turned back: it was real, a fixed 700 ms that also kept the peg shown after the guardian had looked back. Now 400 ms, or the guardian's return, whichever is first.
 - The flip animation broke two AC4 browser checks: a peg mid-flip has zero width, and under page.clock Playwright's "stable" wait counts animation frames the frozen clock never runs. Checks now tap where the element is, like a finger. The first fix was pushed with the check still failing (kenji-reviewer, blocking).
+- The acceptance.md AC9 edit had lost the Discrepancies section once; at AC10 the file ended in a bare "None." under no heading. D1 (attempts replaced by life) is now its first entry.
+- shonin-dev's GREEN 29 branched on "no shared colour" from a single miss test (the wrong rule, too: AC10 says any non-winning guess costs 1). Cut back to the unconditional cost before commit; red 30 (a winning guess keeps life) forced the condition.
+- Retiring attempts (refactor 33) was not behaviour-preserving for the attemptsLeft field: three tests were reworded and three removed as superseded by AC10, named in the commit message. `toMatchObject` let a test asserting a removed field compile, so tsc did not catch it; jest did.
+
