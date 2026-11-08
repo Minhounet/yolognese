@@ -338,4 +338,16 @@ describe('Tick', () => {
 
     expect(response).toMatchObject({ kind: 'revealed', index: 1, color: 'yellow' });
   });
+
+  it('shouldSeeAgain_afterFourSecondsOfSmoke', () => {
+    const { clock, collectItem, peekSecret, tick } = startedGame([30000, 0], [0, 1, 30, 70]);
+    tick.execute();
+    clock.advance(8000);
+    collectShownItem(tick, collectItem);
+    clock.advance(4000);
+
+    const response = peekSecret.execute({ index: 0 });
+
+    expect(response).toMatchObject({ kind: 'caught' });
+  });
 });
