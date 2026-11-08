@@ -173,3 +173,4 @@
 - Deviation from D-timer (smallest change that keeps its intent): Tick, called by the screen every 100 ms, is the one judge of time and stores the lost game; the other use cases then reject as for any finished game, instead of each reading the clock first (a guess can still land within 100 ms after time is up)
 - dev: on (4 tests, 3 ACs left); a fresh shonin-dev
 - Asked user: no (yolo)
+- Deviation (AC12, orchestrator in yolo): GREEN 40 ends the game by draining life to 0 (D-life: lost at 0) without saving it; so "a won game stays won" passes on write -> guard (mutation: time-up ignores a win), and red 42 becomes shouldRejectGuess_afterTimeIsUp (a tick past the end, then a guess: rejected), which drives the save the deviation from D-timer relies on

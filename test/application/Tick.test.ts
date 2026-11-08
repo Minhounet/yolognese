@@ -33,4 +33,13 @@ describe('Tick', () => {
       view: { status: 'lost', secret: ['red', 'yellow', 'green', 'blue'] },
     });
   });
+
+  it('shouldStopTimeAtZero_whenTimeIsUp', () => {
+    const { clock, tick } = startedGame();
+    clock.advance(200000);
+
+    const response = tick.execute();
+
+    expect(response).toMatchObject({ kind: 'ticked', timeLeftMs: 0 });
+  });
 });
