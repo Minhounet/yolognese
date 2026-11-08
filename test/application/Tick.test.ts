@@ -414,4 +414,15 @@ describe('Tick', () => {
       },
     });
   });
+
+  it('shouldAddThirtySeconds_whenHourglassCollected', () => {
+    const { clock, collectItem, tick } = startedGame([30000, 0], [0, 3, 30, 70]);
+    tick.execute();
+    clock.advance(8000);
+    collectShownItem(tick, collectItem);
+
+    const response = tick.execute();
+
+    expect(response).toMatchObject({ kind: 'ticked', timeLeftMs: 202000 });
+  });
 });
