@@ -63,7 +63,7 @@ test('AC4: getting caught until life runs out loses the game, which then rejects
     await expect(page.getByTestId('life')).toHaveAttribute('aria-label', `Life ${10 - 2 * caught} of 10`, {
       timeout: 2000,
     });
-    await page.clock.runFor(1600);
+    await page.clock.runFor(5100); // past the 5 s peek cooldown (AC11)
   }
 
   await expect(page.getByTestId('new-game')).toBeVisible();

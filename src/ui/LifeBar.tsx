@@ -13,7 +13,9 @@ export function LifeBar({ life }: { readonly life: number }) {
         testID="life"
         accessibilityRole="progressbar"
         accessibilityLabel={label}
-        accessibilityValue={{ min: 0, max: FULL_LIFE, now: life }}
+        aria-valuemin={0}
+        aria-valuemax={FULL_LIFE}
+        aria-valuenow={life}
         style={styles.track}
       >
         <View style={[styles.fill, { width: `${(life / FULL_LIFE) * 100}%` }]} />

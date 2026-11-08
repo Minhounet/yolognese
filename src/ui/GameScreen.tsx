@@ -7,6 +7,7 @@ import { Point } from '../domain/point';
 import { Feedback, FeedbackLegend } from './Feedback';
 import { Guardian } from './Guardian';
 import { LifeBar } from './LifeBar';
+import { CooldownBar } from './CooldownBar';
 import { DustPuff } from './DustPuff';
 import { Peg } from './Peg';
 import { SecretPeg } from './SecretPeg';
@@ -47,6 +48,7 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
   const remainingMs = useRef(0);
   const [peeked, setPeeked] = useState<{ readonly index: number; readonly color: Color } | undefined>();
   const [caught, setCaught] = useState(false);
+  const [cooldown, setCooldown] = useState({ startedAt: 0, cooldownMs: 0 });
   const [puffs, setPuffs] = useState<readonly { readonly id: number; readonly at: Point }[]>([]);
   const nextPuff = useRef(0);
 
@@ -68,6 +70,9 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
 
   const peek = (index: number) => {
     const response = useCases.peekSecret.execute({ index });
+    if (response.kind === 'revealed' || response.kind === 'caught') {
+      setCooldown({ startedAt: Date.now(), cooldownMs: response.cooldownMs });
+    }
     if (response.kind === 'revealed') setPeeked({ index, color: response.color });
     if (response.kind === 'caught') {
       setView(response.view);
@@ -112,6 +117,7 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
   const newGame = () => {
     setView(useCases.startGame.execute());
     setDraft(EMPTY_DRAFT);
+    setCooldown({ startedAt: 0, cooldownMs: 0 });
   };
 
   return (
@@ -132,6 +138,7 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
         {caught ? 'Caught peeking! −2 life' : STATUS_TEXT[view.status]}
       </Text>
       <LifeBar life={view.life} />
+      {playing && <CooldownBar startedAt={cooldown.startedAt} cooldownMs={cooldown.cooldownMs} />}
       <FeedbackLegend />
       <ScrollView style={styles.board} contentContainerStyle={styles.boardContent}>
         {view.turns.map((turn, index) => (

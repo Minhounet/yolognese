@@ -20,4 +20,5 @@ export const THEME = {
   dust: '#c9a77c',
   meatballDark: '#6e4229',
   life: '#43a047',
+  cooldownReady: '#1e88e5',
 } as const;
