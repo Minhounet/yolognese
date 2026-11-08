@@ -90,7 +90,7 @@ Interpretation is the orchestrator's (yolo), logged in the decision log.
 ## Round 2 (user, during the yolo run): the guardian becomes an enemy
 
 Source for AC10-AC14, verbatim: "I would like to change the try count. It should be a life bar. Before cheating again there must be a cooling bar. Being caught decrease the count bar. We must have a time limit for the game. Now an random item can be display on the screen. If "present" it will be a random thing. I suggest the following items, some food to regain life. Smoke bomb to blind the enemy. Etc.. if you have more idea. A "x ray glass" to see a peg randomly. Treat the opponent like an ennemy, he can attack us and we must use a shield to protect (you can drag the shield)."
-Order: AC10, AC11, AC12, AC14, AC13 (AC11-AC14 spend or restore life; AC13's items act on AC11, AC12 and AC14)
+Order: AC10, AC11, AC12, AC14, AC13; then AC15 (user, after playing) (AC11-AC14 spend or restore life; AC13's items act on AC11, AC12 and AC14)
 
 ## AC10: Life bar instead of attempts
 - Source: "change the try count. It should be a life bar ... Being caught decrease the count bar."
@@ -133,4 +133,12 @@ Order: AC10, AC11, AC12, AC14, AC13 (AC11-AC14 spend or restore life; AC13's ite
 - Status: verified
 
 
-None.
+None
+
+## AC15: The meatball falls to the player at the bottom (user, after playing round 2)
+- Source: "Attacks from the ennemy are very fast. Can't we do something coming from top going to bottom. Our \"life\" is at the bottom. Shield could be dragged like real shield to be more realistic" (user); answer: the shield follows the finger sideways
+- Interpretation: the guardian's meatball falls from the guardian (top) down to the player's zone at the bottom of the screen over 2.5 s (was a 1 s warning), in its lane; the player's zone holds the shield and the life bar; the shield follows the finger smoothly left and right (no jumping between boxes) and blocks when it stands over the meatball's lane as it lands (changes AC14's "1 s warning" and "drags along the bottom")
+- Questions: none (asked: which reveal was invisible -> the x-ray peg, a bug of AC13; how the shield moves -> sideways with the finger)
+- Covered by: D-attack (wind-up 2500 ms), the screen
+- Evidence:
+- Status: designed.

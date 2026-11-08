@@ -1,11 +1,11 @@
 # Decision log: peek-a-code
 
 ## Resume
-- Status: done
+- Status: open
 - Mode: build
 - Yolo: on (see references/yolo.md of saiban-orchestrator)
 - Done: scaffold, plan and ACs; AC1-AC4 and AC6-AC14 verified, AC5 waived (user); round 2 published to the feat-peek-a-code channel
-- Next: the user's look on the phone (flip AC6, marks AC9, bars AC10-AC11, time's up AC12, items AC13, shield drag AC14); then merge (a pull request, not opened), more features, or keep ideas
+- Next: round 3 (user feedback): fix the x-ray peg stuck mid-flip (AC13 bug), AC15 (meatball falls top to bottom over 2.5 s, player zone at the bottom, shield follows the finger)
 - Files: docs/ticket/PEEK-1/, src/
 
 ## Start - scope and mode
@@ -258,3 +258,9 @@
   1. saiban-orchestrator / shonin-dev: the dev invented tuning values five times (delays, spans, smoke length) the tests could not pin. Add to the dev prompt rule: "Name only values the failing test forces; a value the test cannot tell apart (a random bound, a duration longer than the test runs) is the caller's: leave a TODO-free named constant only if the plan gives its value, else ask in your report."
   2. igiari-tdd audit-tdd-history.sh: in a Node project its worktree has no node_modules, so every red reads "no failure line" and the final build fails; link the checkout's node_modules (or run an install command given with --setup-cmd) before re-running.
   3. kenji-reviewer prompt in saiban-orchestrator: name the skill paths "to Read with your file tool, not a Skill tool" when the skills are not installed (the AC12 review admitted it had not read them).
+
+## Round 3 - the user's feedback after playing
+- Asked user: yes — "Cannot see the pegs when revealed" meant the x-ray peg (it is: the flip's clean-up stops the opening half of the animation, so the peg stays squeezed to 0 width; the browser check read only the label); "dragged like a real shield" means following the finger sideways
+- Decided: AC15 written from the user's words; wind-up 1000 -> 2500 ms (orchestrator's number: slow enough to see it fall); blocking stays by lane (the shield's nearest lane when it lands), the domain unchanged; the life bar moves to the player's zone at the bottom with the shield (yolo)
+- Decided: TDD for the rule change: make-room refactor first (the attack tests wait 2500 ms after the warning, still green at 1000), then red 74 (landsInMs 2500); dev: on (rule: ticket with several ACs), a fresh shonin-dev; the screen without TDD, browser checks that assert the pegs are visible, not only labelled
+- Asked user: no (yolo) for the numbers and the layout
