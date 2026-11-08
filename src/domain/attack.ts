@@ -20,3 +20,7 @@ export function isAttackDue(attackAt: number, now: number): boolean {
 export function windUp(lane: number): Attack {
   return { lane, landsInMs: ATTACK_WIND_UP_MS };
 }
+
+export function hasLanded(landsAt: number, now: number): boolean {
+  return landsAt <= now;
+}
