@@ -4,8 +4,8 @@
 - Status: open
 - Mode: build
 - Yolo: on (see references/yolo.md of saiban-orchestrator)
-- Done: scaffold (Expo SDK 58, TypeScript), structural plan and ACs, AC1-AC4, AC6-AC11 verified, AC5 waived
-- Next: AC12 (reds from 39), then AC14, AC13; also the user's look at the flip (AC6) and the feedback marks (AC9); then the user decides: merge, more features, or keep ideas
+- Done: scaffold (Expo SDK 58, TypeScript), structural plan and ACs, AC1-AC4, AC6-AC12 verified, AC5 waived
+- Next: AC14 (reds from 43), then AC13; also the user's look at the flip (AC6) and the feedback marks (AC9); then the user decides: merge, more features, or keep ideas
 - Files: docs/ticket/PEEK-1/, src/
 
 ## Start - scope and mode
@@ -174,3 +174,11 @@
 - dev: on (4 tests, 3 ACs left); a fresh shonin-dev
 - Asked user: no (yolo)
 - Deviation (AC12, orchestrator in yolo): GREEN 40 ends the game by draining life to 0 (D-life: lost at 0) without saving it; so "a won game stays won" passes on write -> guard (mutation: time-up ignores a win), and red 42 becomes shouldRejectGuess_afterTimeIsUp (a tick past the end, then a guess: rejected), which drives the save the deviation from D-timer relies on
+
+## AC12 - run and review
+- Decided: reds 39-42 by the orchestrator, greens by a fresh shonin-dev, all accepted; refactor checklist 39-42: nothing applies; countdown on the screen, Tick called every 100 ms while playing
+- Decided: kenji-reviewer PASS with 2 minor, both open: (1) no test of a tick exactly at the end (test 40 covers 180000 ms, the same instant); (2) "Time's up" is chosen in the UI from timeLeftMs 0 and status lost (the view has no loss cause) and the "–:––" placeholder before the first tick is no AC's
+- Super-green misses: 0
+- Deferred refinement notes: untested generalizations — Tick saves on every call; PeekSecret and DistractGuardian after time up are covered only by isOver (PeekSecret) or not at all (DistractGuardian)
+- Asked user: no (yolo)
+- Carry forward: AC14 extends Tick (RandomSource for the attack timing and lane, the attack resolution) and adds MoveShield; the life loss on a hit needs the clamp (penalise holds it today); the view gains the attack warning and the shield lane

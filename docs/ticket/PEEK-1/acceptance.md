@@ -112,9 +112,9 @@ Order: AC10, AC11, AC12, AC14, AC13 (AC11-AC14 spend or restore life; AC13's ite
 - Source: "We must have a time limit for the game."
 - Interpretation: a game lasts 3 minutes, shown as a countdown; at 0 the game is lost and the secret shown
 - Questions: none
-- Covered by: D-timer (round 2)
-- Evidence:
-- Status: designed
+- Covered by: D-timer (round 2, with the AC12 deviation: Tick is the one judge of time)
+- Evidence: reds 39-42 — Tick.shouldCountDownTimeLeft_whenTicked, Tick.shouldBeLost_whenTimeIsUp, Tick.shouldStopTimeAtZero_whenTimeIsUp, Tick.shouldRejectGuess_afterTimeIsUp (guard 41 shouldStayWon_whenTimeRunsOutAfterWinning is not evidence); full build `npx jest && npx tsc --noEmit`: 46 passed, tsc clean. "Shown as a countdown": browser check e2e/ac12.spec.js "a 3 minute countdown, and at 0 the game is lost and the secret shown" passed on the web build (15 passed), Playwright clock (3:00, 1:59, 0:00, Time's up, secret shown); kenji-reviewer: PASS, 2 minor
+- Status: verified
 
 ## AC13: Random items
 - Source: "an random item can be display on the screen. If "present" it will be a random thing ... food to regain life. Smoke bomb to blind the enemy ... A "x ray glass" to see a peg randomly."
