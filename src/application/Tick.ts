@@ -25,8 +25,12 @@ export class TickImpl implements Tick {
       return { kind: 'rejected', reason: 'no-game' };
     }
     const timeLeftMs = this.deadline(session) - this.clock.now();
-    const game = timeLeftMs <= 0 ? expire(session.game) : session.game;
-    return { kind: 'ticked', timeLeftMs, view: toGameView(game) };
+    if (timeLeftMs <= 0) {
+      const game = expire(session.game);
+      this.repository.save({ ...session, game });
+      return { kind: 'ticked', timeLeftMs, view: toGameView(game) };
+    }
+    return { kind: 'ticked', timeLeftMs, view: toGameView(session.game) };
   }
 
   /** The game's end; the first tick of a game sets it. */
