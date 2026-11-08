@@ -33,6 +33,7 @@ export type TickResponse =
       readonly timeLeftMs: number;
       readonly attack?: Attack;
       readonly item?: Item;
+      readonly landed?: 'hit';
     }
   | { readonly kind: 'rejected'; readonly reason: 'no-game' };
 
@@ -61,7 +62,14 @@ export class TickImpl implements Tick {
     const attackState = this.windUpIfDue(session, now, landing.pendingLandsAt);
     const itemState = this.itemOnShow(session, now);
     this.repository.save({ ...session, ...attackState.stored, ...itemState, game, charmed: landing.charmed });
-    return { kind: 'ticked', view: toGameView(game), timeLeftMs, attack: attackState.attack, item: itemState.item };
+    return {
+      kind: 'ticked',
+      view: toGameView(game),
+      timeLeftMs,
+      attack: attackState.attack,
+      item: itemState.item,
+      landed: landing.hits ? 'hit' : undefined,
+    };
   }
 
   private itemOnShow(session: Session, now: number) {
