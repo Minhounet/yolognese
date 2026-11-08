@@ -4,8 +4,8 @@
 - Status: open
 - Mode: build
 - Yolo: on (see references/yolo.md of saiban-orchestrator)
-- Done: scaffold (Expo SDK 58, TypeScript), structural plan and ACs, AC1-AC4, AC6-AC10 verified; AC5 waived (user)
-- Next: round 2 in progress: AC10 verified; next AC11, then AC12, AC14, AC13; also the user's look at the flip (AC6) and the feedback marks (AC9); then the user decides: merge, more features, or keep ideas
+- Done: scaffold (Expo SDK 58, TypeScript), structural plan and ACs, AC1-AC4, AC6-AC11 verified; AC5 waived (user)
+- Next: round 2 in progress: AC10, AC11 verified; next AC12, then AC14, AC13; also the user's look at the flip (AC6) and the feedback marks (AC9); then the user decides: merge, more features, or keep ideas
 - Files: docs/ticket/PEEK-1/, src/
 
 ## Start - scope and mode
@@ -159,3 +159,13 @@
 - Decided: dev on, a fresh one (round 2 has 5 ACs; 8 tests)
 - Then: cooldown bar on the screen (Bar), browser check e2e/ac11.spec.js
 - Asked user: no (yolo)
+
+## AC11 - run and review
+- Decided: GREEN 34 by shonin-dev cut back (time and a guessed 1000 ms ahead of the test, boolean instead); GREEN 35's 1000 ms set to 5000 (the test's number), planned test 36 became guard 35; planned test 38 became guard 36 (the check order already held it); greens 36-39 accepted; refactor 36 one cooldown start, refactor 38 one Cooldown type
+- Decided: plan deviations (yolo, smallest change): a make-room test refactor before red 37 and `red 39 (fix)`, both turning older exact assertions into toMatchObject (same expectations), traced in their commits
+- Decided: deviation from D-cooldown: `cooldownRemainingMs` rides on PeekSecret's revealed/caught responses, not GameView (no clock in the mapper); conception.md updated
+- Decided: kenji-reviewer blocking (the check never saw the bar refill) fixed: the label carries the fill percent, the check asserts 4/40/80 % and ready on a paused clock, screenshot kept; minor fixed: a peek during the cooldown shows "Still cooling down: N s" from remainingMs; re-review PASS
+- Super-green misses: 0
+- Deferred refinement notes: none
+- Asked user: no (yolo)
+- Carry forward: AC12's Tick will return a view every 100 ms: the cooldown (and the guardian's distraction) could move into it then, replacing the screen's own timers; the browser checks pause the page clock (ac11.spec.js) when a timed value is asserted; AC12's time-up must also reject peeks

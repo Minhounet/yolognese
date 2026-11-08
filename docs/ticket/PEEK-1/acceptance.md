@@ -105,8 +105,8 @@ Order: AC10, AC11, AC12, AC14, AC13 (AC11-AC14 spend or restore life; AC13's ite
 - Interpretation: after a peek (revealed or caught), peeking is unavailable for 5 s, shown as a bar refilling; a peek during the cooldown is rejected and costs nothing
 - Questions: none
 - Covered by: D-cooldown (round 2)
-- Evidence:
-- Status: designed
+- Evidence: test/application/Cooldown.test.ts reds 34-39 — shouldRejectPeek_whenPeekingAgainRightAfterReveal, shouldAllowPeek_whenCooldownHasPassed, shouldStartCooldown_whenCaught, shouldReportCooldown_whenRevealed, shouldReportCooldown_whenCaught, shouldReportRemainingCooldown_whenRejected (guards 35 shouldRejectPeek_justBeforeCooldownEnds and 36 shouldCostNothing_whenPeekRejectedForCooldown are not evidence); full build `npx jest && npx tsc --noEmit`: 42 passed, tsc clean; TDD audit clean. "Shown as a bar refilling" and "costs nothing" on screen: browser checks e2e/ac11.spec.js "AC11: after a peek, peeking cools down for 5 s, a peek meanwhile does nothing and costs nothing" (bar label 4% / 40% / 80% / ready on a paused Playwright clock, life still 10, not caught) and "AC11: being caught starts the cooldown too", passed on the web build (14 passed); screenshot mid-cooldown docs/ticket/PEEK-1/evidence/ac11-mid-cooldown.png. kenji-reviewer: 1 blocking fixed, then PASS
+- Status: verified
 
 ## AC12: Time limit
 - Source: "We must have a time limit for the game."

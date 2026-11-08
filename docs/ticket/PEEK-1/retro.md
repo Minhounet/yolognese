@@ -20,3 +20,7 @@
 - shonin-dev's GREEN 29 branched on "no shared colour" from a single miss test (the wrong rule, too: AC10 says any non-winning guess costs 1). Cut back to the unconditional cost before commit; red 30 (a winning guess keeps life) forced the condition.
 - Retiring attempts (refactor 33) was not behaviour-preserving for the attemptsLeft field: three tests were reworded and three removed as superseded by AC10, named in the commit message. `toMatchObject` let a test asserting a removed field compile, so tsc did not catch it; jest did.
 
+- AC11: shonin-dev's GREEN 34 again built time ahead (a guessed 1000 ms on a test that only needed "a second peek is refused"), cut back to a boolean; GREEN 35's guessed 1000 ms was set to 5000, the test's own number, so the planned 4999 ms test became a guard.
+- The AC11 plan twice missed that a new response field breaks older `toEqual` assertions (revealed, then cooling-down rejections): a make-room test refactor, then a `red 39 (fix)`. Plan lesson: when a red adds a field to a response, list the older exact assertions on it.
+- The first AC11 browser check read a two-state label ("cooling down" / "ready"): it could not see the bar refill (kenji-reviewer, blocking). The label now carries the fill; the check pauses the page clock (`clock.pauseAt`) because a running page clock moves the bar between retries, and lets 200 ms pass for the peg's flip, which a paused clock freezes.
+- AC11's cooldown made the older AC4 and AC10 checks (caught every 1.6 s) fail: they now wait 5.1 s between catches.
