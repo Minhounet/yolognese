@@ -14,3 +14,5 @@
 - shonin-dev's GREEN 17 again built ahead (time-based distraction for a test that only needed distracted/watching): cut back to a boolean before commit; red 18 then forced the time.
 - A disabled Pressable on the web cannot be tapped by Playwright (actionability wait): the "no peek after the game" check forces the tap.
 - kenji-reviewer found a real bug at AC5 in review: one hard bump spans about three 50 ms accelerometer samples and counted as three jolts. Red 27 drove the fix; the dev showed the rule had to be time-based (readings under 100 ms apart are one jolt), since list-neighbour edges also merged a real burst.
+- The user felt a delay before a peeked peg turned back: it was real, a fixed 700 ms that also kept the peg shown after the guardian had looked back. Now 400 ms, or the guardian's return, whichever is first.
+- The flip animation broke two AC4 browser checks: a peg mid-flip has zero width, and under page.clock Playwright's "stable" wait counts animation frames the frozen clock never runs. Checks now tap where the element is, like a finger. The first fix was pushed with the check still failing (kenji-reviewer, blocking).

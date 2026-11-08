@@ -45,8 +45,8 @@ export function Guardian({ gaze, size = 120 }: GuardianProps) {
         <Path d="M20 22 Q50 2 80 22" stroke={THEME.sauce} strokeWidth={6} fill="none" strokeLinecap="round" />
         <Circle cx={36} cy={42} r={13} fill="#fff" />
         <Circle cx={64} cy={42} r={13} fill="#fff" />
-        <Circle testID="pupil" cx={36 + pupil.x} cy={42 + pupil.y} r={5} fill={pupilColor} />
-        <Circle cx={64 + pupil.x} cy={42 + pupil.y} r={5} fill={pupilColor} />
+        <Circle testID="pupil-left" cx={36 + pupil.x} cy={42 + pupil.y} r={5} fill={pupilColor} />
+        <Circle testID="pupil-right" cx={64 + pupil.x} cy={42 + pupil.y} r={5} fill={pupilColor} />
         <Path d="M40 64 Q50 70 60 64" stroke={THEME.ink} strokeWidth={2.5} fill="none" strokeLinecap="round" />
       </Svg>
     </View>

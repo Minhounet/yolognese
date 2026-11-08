@@ -4,6 +4,13 @@ const { test, expect } = require('@playwright/test');
 
 const HIDDEN = 'hidden peg';
 
+// Taps where the element is, as a finger does: under page.clock, Playwright's
+// "stable" wait counts animation frames, which the frozen clock never runs.
+async function tapAt(page, locator) {
+  const box = await locator.boundingBox();
+  await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
+}
+
 async function distract(page) {
   const box = await page.getByTestId('guardian').boundingBox();
   await page.touchscreen.tap(box.x + box.width + 120, box.y);
@@ -52,7 +59,7 @@ test('AC4: getting caught on every attempt loses the game, which then rejects pe
   await page.goto('/');
   const peg = page.getByTestId('secret-0');
   for (let caught = 1; caught <= 10; caught += 1) {
-    await peg.tap();
+    await tapAt(page, peg);
     await expect(page.getByTestId('status')).toContainText(
       caught < 10 ? `${10 - caught} attempts left` : 'Out of attempts',
       { timeout: 2000 },
@@ -63,6 +70,6 @@ test('AC4: getting caught on every attempt loses the game, which then rejects pe
   await expect(page.getByTestId('new-game')).toBeVisible();
   await expect(peg).not.toHaveAttribute('aria-label', HIDDEN);
   await page.clock.runFor(200); // let the peg finish turning over before tapping it
-  await peg.tap({ force: true }); // the peg is no longer pressable: force the tap to prove nothing happens
+  await tapAt(page, peg); // the peg is no longer pressable: the tap must change nothing
   await expect(page.getByTestId('status')).toHaveText('Out of attempts. The guardian wins.');
 });

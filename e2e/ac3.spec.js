@@ -3,7 +3,7 @@
 const { test, expect } = require('@playwright/test');
 
 async function leftPupilX(page) {
-  return Number(await page.getByTestId('pupil').getAttribute('cx'));
+  return Number(await page.getByTestId('pupil-left').getAttribute('cx'));
 }
 
 test('AC3: pointing makes the guardian look at the spot for 1.5 s, then it watches again', async ({ page }) => {

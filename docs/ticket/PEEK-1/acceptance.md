@@ -55,6 +55,30 @@ Interpretation is the orchestrator's (yolo), logged in the decision log.
 - Evidence: supports only — test/domain/shake.test.ts: shouldNotDetectShake_whenPhoneIsStill, shouldDetectShake_whenThreeJoltsWithinOneSecond, shouldNotDetectShake_whenJoltsAreTooFarApart, shouldNotDetectShake_whenOnlyTwoJolts, shouldDetectShake_whenBurstFollowsLoneJolt, shouldNotDetectShake_whenOneLongBump (full build 31 passed, tsc clean). The AC itself needs a manual check on the phone (no accelerometer on the web build): pending, by the user — (1) shake the phone three times quickly: the guardian looks away; (2) one hard bump: it does not
 - Status: designed
 
+## AC6: Quick flip with an animation
+- Source: "When flipping back the peg there is a delay, can you check that ? And a better animation could cool during flipping." (user, added during the yolo run)
+- Interpretation: a peeked peg turns over with an animation, and turns back after 400 ms or as soon as the guardian looks back, whichever is first
+- Questions: none
+- Covered by: src/ui/SecretPeg.tsx, GameScreen (PEEK_SHOWN_MS 400, flip back on the guardian's return)
+- Evidence: e2e/ac6-ac8.spec.js "AC6: a peeked peg flips back within half a second" (squeezed mid-turn, shown at 200 ms, hidden at 600 ms) and "AC6: a peeked peg flips back as soon as the guardian looks back", passed on the web build, Playwright clock; the feel of the animation on the phone: by the user, pending
+- Status: verified
+
+## AC7: Dazed eye colours
+- Source: "Color could change during watching away (for the eyes)." (user, added during the yolo run)
+- Interpretation: while the guardian looks away, both pupils cycle through colours; they are ink again when it watches
+- Questions: none
+- Covered by: src/ui/Guardian.tsx
+- Evidence: e2e/ac6-ac8.spec.js "AC7: the eyes change colour while the guardian looks away, and come back when it watches", passed on the web build
+- Status: verified
+
+## AC8: Dust where the screen is hit
+- Source: "And hitting somewhere can make a animation of dust" (user, added during the yolo run)
+- Interpretation: a tap on the scene raises a puff of dust at the tap point, gone within half a second
+- Questions: none
+- Covered by: src/ui/DustPuff.tsx, GameScreen.pointAt
+- Evidence: e2e/ac6-ac8.spec.js "AC8: hitting the screen raises a puff of dust where it was hit, which fades", passed on the web build
+- Status: verified
+
 ## Discrepancies
 
 None.
