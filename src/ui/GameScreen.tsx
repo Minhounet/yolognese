@@ -9,6 +9,8 @@ import { Guardian } from './Guardian';
 import { LifeBar } from './LifeBar';
 import { CooldownBar } from './CooldownBar';
 import { ShieldLanes } from './ShieldLanes';
+import { ITEM_ICONS, ItemSprite } from './ItemSprite';
+import { GiftKind, Item } from '../domain/items';
 import { DustPuff } from './DustPuff';
 import { Peg } from './Peg';
 import { SecretPeg } from './SecretPeg';
@@ -22,6 +24,16 @@ const CAUGHT_SHOWN_MS = 1500;
 const TICK_MS = 100;
 const MIDDLE_LANE = 1;
 const ATTACK_RESULT_SHOWN_MS = 1200;
+const ITEM_NOTE_SHOWN_MS = 1500;
+const SMOKE_SHOWN_MS = 4000; // the smoke's length in the rules (4 s): the response does not carry it
+
+const GIFT_NOTES: Readonly<Record<GiftKind, string>> = {
+  food: 'Yum! +3 life',
+  smoke: 'Smoke bomb! The guardian is blind',
+  xray: 'X-ray! A peg is revealed',
+  hourglass: '+30 seconds',
+  charm: 'Shield charm: the next meatball is blocked',
+};
 const MS_PER_SECOND = 1000;
 const SECONDS_PER_MINUTE = 60;
 
@@ -65,7 +77,34 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
   const [shieldLane, setShieldLane] = useState(MIDDLE_LANE);
   const [warning, setWarning] = useState<{ readonly lane: number; readonly landsAt: number } | undefined>();
   const [attackResult, setAttackResult] = useState<'hit' | 'blocked' | undefined>();
-  const lastLife = useRef(view.life);
+  const [item, setItem] = useState<Item | undefined>();
+  const [itemNote, setItemNote] = useState<string | undefined>();
+  const [blind, setBlind] = useState(false);
+  const [charmed, setCharmed] = useState(false);
+
+  useEffect(() => {
+    if (itemNote === undefined) return undefined;
+    const timer = setTimeout(() => setItemNote(undefined), ITEM_NOTE_SHOWN_MS);
+    return () => clearTimeout(timer);
+  }, [itemNote]);
+
+  useEffect(() => {
+    if (!blind) return undefined;
+    const timer = setTimeout(() => setBlind(false), SMOKE_SHOWN_MS);
+    return () => clearTimeout(timer);
+  }, [blind]);
+
+  const collect = (shown: Item) => {
+    const response = useCases.collectItem.execute({ id: shown.id });
+    setItem(undefined);
+    if (response.kind !== 'collected') return;
+    const received = response.gift ?? (response.item === 'present' ? undefined : response.item);
+    if (received === undefined) return;
+    setView(response.view);
+    setItemNote(`${response.gift ? `${ITEM_ICONS.present} → ` : ''}${ITEM_ICONS[received]} ${GIFT_NOTES[received]}`);
+    if (received === 'smoke') setBlind(true);
+    if (received === 'charm') setCharmed(true);
+  };
   const warningRef = useRef<{ readonly lane: number; readonly landsAt: number } | undefined>(undefined);
   const showWarning = (next: { readonly lane: number; readonly landsAt: number } | undefined) => {
     warningRef.current = next;
@@ -94,15 +133,15 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
       const response = useCases.tick.execute();
       if (response.kind !== 'ticked') return;
       setTimeLeftMs(response.timeLeftMs);
-      const pending = warningRef.current;
-      if (pending !== undefined && Date.now() >= pending.landsAt) {
-        setAttackResult(response.view.life < lastLife.current ? 'hit' : 'blocked');
+      if (response.landed !== undefined) {
+        setAttackResult(response.landed);
+        setCharmed(false);
         showWarning(undefined);
       }
       if (response.attack !== undefined) {
         showWarning({ lane: response.attack.lane, landsAt: Date.now() + response.attack.landsInMs });
       }
-      lastLife.current = response.view.life;
+      setItem(response.item);
       setView(response.view);
     }, TICK_MS);
     return () => clearInterval(timer);
@@ -180,7 +219,9 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
     setTimeLeftMs(undefined);
     showWarning(undefined);
     setAttackResult(undefined);
-    lastLife.current = fresh.life;
+    setItem(undefined);
+    setBlind(false);
+    setCharmed(false);
     moveShield(MIDDLE_LANE);
   };
 
@@ -189,10 +230,16 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
       <Text style={styles.title}>Yolognese</Text>
       <View ref={guardianRef} onLayout={measureGuardian}>
         <Guardian gaze={gaze} />
+        {blind && (
+          <Text testID="smoke" accessibilityLabel="guardian blinded by smoke" style={styles.smoke}>
+            💨💨
+          </Text>
+        )}
       </View>
       <View style={styles.row} testID="secret">
         {(view.secret ?? EMPTY_DRAFT).map((color, slot) => {
-          const shown = view.secret === undefined && peeked?.index === slot ? peeked.color : color;
+          const xrayed = view.revealed.find((peg) => peg.index === slot)?.color;
+          const shown = view.secret === undefined && peeked?.index === slot ? peeked.color : (color ?? xrayed);
           return (
             <SecretPeg key={slot} testID={`secret-${slot}`} color={shown} onPress={playing ? () => peek(slot) : undefined} />
           );
@@ -211,6 +258,9 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
         <>
           <Text testID="attack-result" style={styles.attackResult}>
             {attackResult === 'hit' ? '💥 Hit by a meatball! −2 life' : attackResult === 'blocked' ? '🛡️ Blocked!' : warning ? '⚠️ Incoming meatball!' : ' '}
+          </Text>
+          <Text testID="item-note" style={styles.itemNote}>
+            {itemNote ?? (charmed ? '🍀 Shield charm ready' : ' ')}
           </Text>
           <ShieldLanes shieldLane={shieldLane} warningLane={warning?.lane} onMove={moveShield} />
         </>
@@ -252,6 +302,7 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
           <Text style={styles.buttonText}>New game</Text>
         </Pressable>
       )}
+      {playing && item !== undefined && <ItemSprite item={item} onCollect={() => collect(item)} />}
       {puffs.map((puff) => (
         <DustPuff key={puff.id} at={puff.at} onDone={() => removePuff(puff.id)} />
       ))}
@@ -270,6 +321,8 @@ const styles = StyleSheet.create({
   button: { backgroundColor: THEME.sauce, borderRadius: 24, paddingHorizontal: 32, paddingVertical: 12, marginTop: 8 },
   disabled: { opacity: 0.4 },
   caught: { color: THEME.sauce, fontWeight: 'bold' },
+  smoke: { position: 'absolute', alignSelf: 'center', top: 20, fontSize: 40 },
+  itemNote: { color: THEME.ink, fontWeight: 'bold', minHeight: 20 },
   attackResult: { color: THEME.sauce, fontWeight: 'bold', minHeight: 20 },
   timer: { color: THEME.ink, fontSize: 16, fontWeight: 'bold', fontVariant: ['tabular-nums'] },
   buttonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
