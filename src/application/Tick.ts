@@ -24,7 +24,7 @@ export class TickImpl implements Tick {
     if (session === undefined) {
       return { kind: 'rejected', reason: 'no-game' };
     }
-    const timeLeftMs = this.deadline(session) - this.clock.now();
+    const timeLeftMs = Math.max(0, this.deadline(session) - this.clock.now());
     const game = timeLeftMs <= 0 ? this.expired(session) : session.game;
     return { kind: 'ticked', timeLeftMs, view: toGameView(game) };
   }
