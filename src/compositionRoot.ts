@@ -1,3 +1,4 @@
+import { CollectItem, CollectItemImpl } from './application/CollectItem';
 import { DistractGuardian, DistractGuardianImpl } from './application/DistractGuardian';
 import { MoveShield, MoveShieldImpl } from './application/MoveShield';
 import { PeekSecret, PeekSecretImpl } from './application/PeekSecret';
@@ -15,6 +16,7 @@ export interface UseCases {
   readonly peekSecret: PeekSecret;
   readonly tick: Tick;
   readonly moveShield: MoveShield;
+  readonly collectItem: CollectItem;
 }
 
 export function createUseCases(): UseCases {
@@ -28,5 +30,6 @@ export function createUseCases(): UseCases {
     peekSecret: new PeekSecretImpl(repository, clock),
     tick: new TickImpl(repository, clock, random, random),
     moveShield: new MoveShieldImpl(repository),
+    collectItem: new CollectItemImpl(repository, clock),
   };
 }

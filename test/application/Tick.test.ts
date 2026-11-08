@@ -1,5 +1,7 @@
+import { CollectItemImpl } from '../../src/application/CollectItem';
 import { DistractGuardianImpl } from '../../src/application/DistractGuardian';
 import { MoveShieldImpl } from '../../src/application/MoveShield';
+import { PeekSecretImpl } from '../../src/application/PeekSecret';
 import { StartGameImpl } from '../../src/application/StartGame';
 import { SubmitGuessImpl } from '../../src/application/SubmitGuess';
 import { TickImpl } from '../../src/application/Tick';
@@ -25,6 +27,8 @@ function startedGame(attackRandom: readonly number[] = [0, 2], itemRandom: reado
     submitGuess: new SubmitGuessImpl(repository),
     moveShield: new MoveShieldImpl(repository),
     distractGuardian: new DistractGuardianImpl(repository, clock),
+    collectItem: new CollectItemImpl(repository, clock),
+    peekSecret: new PeekSecretImpl(repository, clock),
   };
 }
 
@@ -195,5 +199,20 @@ describe('Tick', () => {
     const response = tick.execute();
 
     expect(response.kind === 'ticked' && response.item).toBeUndefined();
+  });
+
+  it('shouldRestoreLife_whenFoodCollected', () => {
+    const { clock, collectItem, peekSecret, tick } = startedGame([20000, 0], [0, 0, 30, 70]);
+    tick.execute();
+    peekSecret.execute({ index: 0 });
+    clock.advance(5000);
+    peekSecret.execute({ index: 0 });
+    clock.advance(3000);
+    const shown = tick.execute();
+    const id = shown.kind === 'ticked' && shown.item !== undefined ? shown.item.id : -1;
+
+    const response = collectItem.execute({ id });
+
+    expect(response).toMatchObject({ kind: 'collected', item: 'food', view: { life: 9 } });
   });
 });

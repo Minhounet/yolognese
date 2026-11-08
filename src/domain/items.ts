@@ -11,6 +11,7 @@ export const ITEM_KINDS = ['food'] as const;
 export type ItemKind = (typeof ITEM_KINDS)[number];
 
 export interface Item {
+  readonly id: number;
   readonly kind: ItemKind;
   readonly spot: Point;
 }
@@ -24,5 +25,5 @@ export function isItemShown(itemAt: number, now: number): boolean {
 }
 
 export function appear(kindIndex: number, x: number, y: number): Item {
-  return { kind: ITEM_KINDS[kindIndex], spot: { x, y } };
+  return { id: 0, kind: ITEM_KINDS[kindIndex], spot: { x, y } };
 }
