@@ -188,3 +188,19 @@
 - Decided (user): all work on `main` from now on: `main` created from the session branch (the repo had none; its default was `feat/peek-a-code`); every commit pushed to `main`; the Expo updates go to a new channel `main` (branch `main`), new link in the Resume block and README. Setting `main` as GitHub's default branch is the user's (repository settings)
 - Asked user: yes
 
+
+## AC12 - TDD plan
+- Decided: a `Tick` use case (constructor(GameRepository, Clock)), called by the screen every 100 ms, returns ticked(timeLeftMs, GameView) | rejected('no-game'); the Session holds `endsAt`, set by the first tick of a game (start + 100 ms at most); Tick alone detects time-up and marks the game lost (Game holds `timeUp`), which SubmitGuess and PeekSecret already reject as game-over
+- Deviation from D-timer ("every use case checks the clock first"): SubmitGuess has no clock; a ≤100 ms window before the next tick is accepted; RandomSource joins Tick with AC14/AC13
+- Tests through Tick, in test/application/Tick.test.ts:
+  40. shouldReportThreeMinutesLeft_whenFirstTick [AC12] - timeLeftMs 180000
+  41. shouldCountDown_whenTimePasses [AC12] - 60 s later: 120000
+  42. shouldLoseAndRevealSecret_whenTimeRunsOut [AC12] - 180 s later: lost, secret shown, timeLeftMs 0
+  43. shouldRejectGuess_whenTimeIsUp [AC12] - SubmitGuess after time-up: rejected game-over
+  44. shouldNotGoBelowZero_whenTimeIsPast [AC12] - 200 s later: timeLeftMs 0
+  45. shouldStartFreshCountdown_whenNewGameStarted [AC12] (guard if it passes on write; mutation: StartGame keeps endsAt)
+  46. shouldStayWon_whenTimeRunsOutAfterWinning [AC12] (guard if it passes on write; mutation: time-up ignores a win)
+  Dropped: a peek after time-up (same game-over path as 43)
+- Decided: dev on, a fresh one (6+ tests)
+- Then: countdown bar and text on the screen, browser check e2e/ac12.spec.js
+- Asked user: no (yolo)
