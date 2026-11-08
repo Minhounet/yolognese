@@ -8,7 +8,7 @@ const HALF = 2;
 
 interface ShieldLanesProps {
   readonly shieldLane: number;
-  /** The lane the meatball falls into, if one is falling. */
+  /** The lane the meatball falls into, if one is falling (not shown: the player reads the meatball). */
   readonly warningLane?: number;
   readonly onMove: (lane: number) => void;
   /** Where the lanes are in the window, for the falling meatball. */
@@ -83,11 +83,6 @@ export function ShieldLanes({ shieldLane, warningLane, onMove, onMeasured }: Shi
     <View ref={ground} style={styles.ground} onLayout={measure}>
       {LANES.map((lane) => (
         <Pressable key={lane} testID={`lane-${lane}`} accessibilityRole="button" style={styles.lane} onPress={() => tapLane(lane)}>
-          {warningLane === lane && (
-            <Text testID="attack-warning" accessibilityLabel={`attack on lane ${lane}`} style={styles.warning}>
-              🎯
-            </Text>
-          )}
         </Pressable>
       ))}
       <View
@@ -115,7 +110,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  warning: { fontSize: 22, opacity: 0.6 },
   shield: { position: 'absolute', top: 0, bottom: 0, width: SHIELD_WIDTH, alignItems: 'center', justifyContent: 'center' },
   shieldPress: { alignSelf: 'stretch', flex: 1, alignItems: 'center', justifyContent: 'center' },
   shieldIcon: { fontSize: 40 },

@@ -1,5 +1,5 @@
 // Browser check for AC10, run against the web build (npm run export:web).
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./fixtures');
 
 const ALL_RED = ['red', 'red', 'red', 'red'];
 

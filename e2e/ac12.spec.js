@@ -1,6 +1,6 @@
 // Browser check for AC12, run against the web build (npm run e2e).
 // Time is driven by Playwright's clock (the game's clock reads Date.now).
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./fixtures');
 const { runForBlockingAttacks } = require('./support');
 
 test('AC12: a 3 minute countdown, and at 0 the game is lost and the secret shown', async ({ page }) => {

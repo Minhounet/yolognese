@@ -6,6 +6,8 @@ import { StartGame, StartGameImpl } from './application/StartGame';
 import { SubmitGuess, SubmitGuessImpl } from './application/SubmitGuess';
 import { Tick, TickImpl } from './application/Tick';
 import { InMemoryGameRepository } from './infrastructure/InMemoryGameRepository';
+import { RandomSource } from './application/ports';
+import { FixedRandomSource } from './infrastructure/FixedRandomSource';
 import { MathRandomSource } from './infrastructure/MathRandomSource';
 import { SystemClock } from './infrastructure/SystemClock';
 
@@ -19,6 +21,12 @@ export interface UseCases {
   readonly collectItem: CollectItem;
 }
 
+/** A luck draw fixed by configuration (globalThis.yologneseLuck), used by the browser checks; none in play. */
+function configuredLuck(): RandomSource | undefined {
+  const value = (globalThis as { yologneseLuck?: unknown }).yologneseLuck;
+  return typeof value === 'number' ? new FixedRandomSource(value) : undefined;
+}
+
 export function createUseCases(): UseCases {
   const repository = new InMemoryGameRepository();
   const clock = new SystemClock();
@@ -26,7 +34,7 @@ export function createUseCases(): UseCases {
   return {
     startGame: new StartGameImpl(random, repository, clock),
     submitGuess: new SubmitGuessImpl(repository),
-    distractGuardian: new DistractGuardianImpl(repository, clock, random),
+    distractGuardian: new DistractGuardianImpl(repository, clock, configuredLuck() ?? random),
     peekSecret: new PeekSecretImpl(repository, clock),
     tick: new TickImpl(repository, clock, random, random),
     moveShield: new MoveShieldImpl(repository),

@@ -1,6 +1,6 @@
 // Browser check for AC4, run against the web build (npm run e2e).
 // Time is driven by Playwright's clock (the game's clock reads Date.now).
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./fixtures');
 const { runForBlockingAttacks } = require('./support');
 
 const HIDDEN = 'hidden peg';

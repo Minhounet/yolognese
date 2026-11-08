@@ -1,6 +1,6 @@
 // Browser check for AC11, run against the web build (npm run e2e).
 // Time is driven by Playwright's clock (the game's clock reads Date.now).
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./fixtures');
 
 async function tapAt(page, locator) {
   const box = await locator.boundingBox();

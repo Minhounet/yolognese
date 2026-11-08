@@ -1,6 +1,6 @@
 // Browser checks for AC1 and AC2, run against the web build (npm run export:web).
 // One check per AC. The secret is random, so checks read it from the end of a lost game.
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./fixtures');
 
 const BASE = process.env.BASE_URL ?? 'http://localhost:8081';
 const MISS = ['red', 'red', 'red', 'red'];

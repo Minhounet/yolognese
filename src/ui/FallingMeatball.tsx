@@ -6,7 +6,17 @@ const MEATBALL_SIZE = 36;
 const HALF = 2;
 
 /** A meatball thrown by the guardian, falling from `from` to `to` (window points) in `durationMs`. */
-export function FallingMeatball({ from, to, durationMs }: { readonly from: Point; readonly to: Point; readonly durationMs: number }) {
+export function FallingMeatball({
+  from,
+  to,
+  durationMs,
+  lane,
+}: {
+  readonly from: Point;
+  readonly to: Point;
+  readonly durationMs: number;
+  readonly lane: number;
+}) {
   const progress = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -21,6 +31,7 @@ export function FallingMeatball({ from, to, durationMs }: { readonly from: Point
   return (
     <Animated.View
       testID="meatball"
+      accessibilityLabel={`meatball falling on lane ${lane}`}
       pointerEvents="none"
       style={[styles.meatball, { transform: [{ translateX }, { translateY }] }]}
     >

@@ -24,6 +24,7 @@ const PEEK_SHOWN_MS = 400;
 const CAUGHT_SHOWN_MS = 1500;
 const TICK_MS = 100;
 const MIDDLE_LANE = 1;
+const CONTROL_TOUCH_MS = 600;
 const LANE_COUNT_SHOWN = 3;
 const ATTACK_RESULT_SHOWN_MS = 1200;
 const ITEM_NOTE_SHOWN_MS = 1500;
@@ -78,7 +79,7 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
   const [timeLeftMs, setTimeLeftMs] = useState<number | undefined>(undefined);
   const [shieldLane, setShieldLane] = useState(MIDDLE_LANE);
   const [warning, setWarning] = useState<{ readonly lane: number; readonly landsAt: number; readonly fallMs: number } | undefined>();
-  const [attackResult, setAttackResult] = useState<'hit' | 'blocked' | undefined>();
+  const [attackResult, setAttackResult] = useState<'hit' | 'blocked' | 'punched' | undefined>();
   const [ground, setGround] = useState<{ readonly x: number; readonly y: number; readonly width: number }>();
   const [item, setItem] = useState<Item | undefined>();
   const [itemNote, setItemNote] = useState<string | undefined>();
@@ -197,12 +198,25 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
 
   const distractTowards = (target: Point) => {
     const response = useCases.distractGuardian.execute({ target });
+    if (response.kind === 'punched') {
+      setView(response.view);
+      setAttackResult('punched');
+      return;
+    }
     if (response.kind !== 'distracted') return;
     remainingMs.current = response.view.remainingMs;
     setGaze({ ...response.view.gaze });
   };
 
+  // A tap meant for a peg, a control, an item or the shield is never a distraction, even where the
+  // platform also hands it to the scene (seen on the phone: every peek was safe).
+  const lastControlTouch = useRef(0);
+  const touchedControl = () => {
+    lastControlTouch.current = Date.now();
+  };
+
   const pointAt = (event: GestureResponderEvent) => {
+    if (Date.now() - lastControlTouch.current < CONTROL_TOUCH_MS) return;
     const { pageX, pageY } = event.nativeEvent;
     const id = nextPuff.current++;
     setPuffs((current) => [...current, { id, at: { x: pageX, y: pageY } }]);
@@ -243,7 +257,7 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
           </Text>
         )}
       </View>
-      <View style={styles.row} testID="secret">
+      <View style={styles.row} testID="secret" onTouchStart={touchedControl}>
         {(view.secret ?? EMPTY_DRAFT).map((color, slot) => {
           const xrayed = view.revealed.find((peg) => peg.index === slot)?.color;
           const shown = view.secret === undefined && peeked?.index === slot ? peeked.color : (color ?? xrayed);
@@ -263,7 +277,7 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
       {playing && (
         <>
           <Text testID="attack-result" style={styles.attackResult}>
-            {attackResult === 'hit' ? '💥 Hit by a meatball! −2 life' : attackResult === 'blocked' ? '🛡️ Blocked!' : warning ? '⚠️ Incoming meatball!' : ' '}
+            {attackResult === 'punched' ? '👊 The guardian saw through it! −1 life' : attackResult === 'hit' ? '💥 Hit by a meatball! −2 life' : attackResult === 'blocked' ? '🛡️ Blocked!' : warning ? '⚠️ Incoming meatball!' : ' '}
           </Text>
           <Text testID="item-note" style={styles.itemNote}>
             {itemNote ?? (charmed ? '🍀 Shield charm ready' : ' ')}
@@ -281,7 +295,7 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
         ))}
       </ScrollView>
       {playing ? (
-        <View style={styles.controls}>
+        <View style={styles.controls} onTouchStart={touchedControl}>
           <View style={styles.row}>
             {draft.map((color, slot) => (
               <Peg key={slot} testID={`slot-${slot}`} color={color} onPress={() => setDraft(withoutSlot(draft, slot))} />
@@ -307,8 +321,10 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
           <Text style={styles.buttonText}>New game</Text>
         </Pressable>
       )}
-      {playing && item !== undefined && <ItemSprite item={item} onCollect={() => collect(item)} />}
-      <View style={styles.playerZone} testID="player-zone">
+      {playing && item !== undefined && (
+        <ItemSprite item={item} onCollect={() => collect(item)} onTouchStart={touchedControl} />
+      )}
+      <View style={styles.playerZone} testID="player-zone" onTouchStart={touchedControl}>
         {playing && (
           <ShieldLanes shieldLane={shieldLane} warningLane={warning?.lane} onMove={moveShield} onMeasured={setGround} />
         )}
@@ -319,6 +335,7 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
           from={guardianCentre.current}
           to={{ x: ground.x + ((warning.lane + 0.5) * ground.width) / LANE_COUNT_SHOWN, y: ground.y }}
           durationMs={warning.fallMs}
+          lane={warning.lane}
         />
       )}
       {puffs.map((puff) => (

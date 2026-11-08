@@ -2,7 +2,7 @@
 // Each check fixes Math.random before the page loads, so every draw lands on the same index:
 // the item kind is that index (0 food, 1 smoke, 2 xray, 3 hourglass, 4 charm, 5 present).
 // Time is driven by Playwright's clock.
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./fixtures');
 
 const KINDS = ['food', 'smoke', 'xray', 'hourglass', 'charm', 'present'];
 
@@ -91,10 +91,10 @@ test('AC13: a shield charm blocks the next meatball wherever the shield is', asy
   await tapAt(page, await waitForItem(page));
   await expect(page.getByTestId('item-note')).toContainText('Shield charm');
 
-  const warning = page.getByTestId('attack-warning');
-  for (let step = 0; step < 40 && !(await warning.isVisible()); step += 1) await page.clock.runFor(500);
-  await expect(warning).not.toHaveAttribute('aria-label', 'attack on lane 1'); // the shield stays in lane 1
-  await page.clock.runFor(2700);
+  const warning = page.getByTestId('meatball');
+  for (let step = 0; step < 200 && !(await warning.isVisible()); step += 1) await page.clock.runFor(100);
+  await expect(warning).not.toHaveAttribute('aria-label', 'meatball falling on lane 1'); // the shield stays in lane 1
+  await page.clock.runFor(1700);
 
   await expect(page.getByTestId('attack-result')).toHaveText('🛡️ Blocked!');
   await expect(page.getByTestId('life')).toHaveAttribute('aria-label', 'Life 10 of 10');

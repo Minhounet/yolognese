@@ -1,6 +1,6 @@
 // Browser checks for AC6-AC8 (added by the user during the yolo run), against the web build.
 // Time is driven by Playwright's clock, never by a sleep.
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./fixtures');
 
 const HIDDEN = 'hidden peg';
 const INK = '#3b2314';
