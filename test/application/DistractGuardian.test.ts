@@ -1,5 +1,6 @@
 import { DistractGuardian, DistractGuardianImpl } from '../../src/application/DistractGuardian';
 import { StartGameImpl } from '../../src/application/StartGame';
+import { SubmitGuessImpl } from '../../src/application/SubmitGuess';
 import { InMemoryGameRepository } from '../../src/infrastructure/InMemoryGameRepository';
 import { FakeClock } from '../support/FakeClock';
 import { ScriptedRandomSource } from '../support/ScriptedRandomSource';
@@ -37,5 +38,17 @@ describe('DistractGuardian', () => {
     const response = distractGuardian.execute({ target: { x: 120, y: -40 } });
 
     expect(response).toMatchObject({ kind: 'punched', view: { life: 9 } });
+  });
+
+  it('shouldNotPunch_whenGameIsOver', () => {
+    const clock = new FakeClock();
+    const repository = new InMemoryGameRepository();
+    new StartGameImpl(new ScriptedRandomSource([0, 1, 2, 3]), repository, clock).execute();
+    new SubmitGuessImpl(repository).execute({ guess: ['red', 'yellow', 'green', 'blue'] });
+    const distractGuardian = new DistractGuardianImpl(repository, clock, new ScriptedRandomSource([SEES_THROUGH]));
+
+    const response = distractGuardian.execute({ target: { x: 120, y: -40 } });
+
+    expect(response).toEqual({ kind: 'rejected', reason: 'game-over' });
   });
 });

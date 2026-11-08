@@ -16,7 +16,7 @@ export interface DistractCommand {
 export type DistractResponse =
   | { readonly kind: 'distracted'; readonly view: GuardianView }
   | { readonly kind: 'punched'; readonly view: GameView }
-  | { readonly kind: 'rejected'; readonly reason: 'no-game' };
+  | { readonly kind: 'rejected'; readonly reason: 'no-game' | 'game-over' };
 
 export interface DistractGuardian {
   execute(command: DistractCommand): DistractResponse;
