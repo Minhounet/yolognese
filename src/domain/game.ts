@@ -14,10 +14,11 @@ export interface Game {
   readonly secret: Code;
   readonly turns: readonly Turn[];
   readonly life: number;
+  readonly timeUp: boolean;
 }
 
 export function newGame(secret: Code): Game {
-  return { secret, turns: [], life: MAX_LIFE };
+  return { secret, turns: [], life: MAX_LIFE, timeUp: false };
 }
 
 function countExact(game: Game, guess: Code): number {
@@ -61,12 +62,16 @@ export function penalise(game: Game): Game {
   return { ...game, life };
 }
 
+export function expire(game: Game): Game {
+  return { ...game, timeUp: true };
+}
+
 export function isWon(game: Game): boolean {
   return game.turns.some((turn) => isWinningTurn(game, turn));
 }
 
 export function isLost(game: Game): boolean {
-  return !isWon(game) && isOutOfLife(game);
+  return !isWon(game) && (isOutOfLife(game) || game.timeUp);
 }
 
 function isOutOfLife(game: Game): boolean {
