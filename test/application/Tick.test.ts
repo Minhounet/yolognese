@@ -425,4 +425,18 @@ describe('Tick', () => {
 
     expect(response).toMatchObject({ kind: 'ticked', timeLeftMs: 202000 });
   });
+
+  it('shouldBlockNextAttack_whenCharmCollected', () => {
+    const { clock, collectItem, tick } = startedGame([0, 2], [0, 4, 30, 70]);
+    tick.execute();
+    clock.advance(8000);
+    collectShownItem(tick, collectItem);
+    clock.advance(2000);
+    tick.execute();
+    clock.advance(1000);
+
+    const response = tick.execute();
+
+    expect(response).toMatchObject({ kind: 'ticked', view: { life: 10 } });
+  });
 });
