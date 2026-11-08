@@ -12,7 +12,7 @@ export interface PeekCommand {
 }
 
 export type PeekResponse =
-  | { readonly kind: 'revealed'; readonly index: number; readonly color: Color }
+  | { readonly kind: 'revealed'; readonly index: number; readonly color: Color; readonly cooldownRemainingMs: number }
   | { readonly kind: 'caught'; readonly view: GameView }
   | { readonly kind: 'rejected'; readonly reason: 'no-game' | 'game-over' | 'cooling-down' };
 
@@ -45,6 +45,11 @@ export class PeekSecretImpl implements PeekSecret {
       return { kind: 'caught', view: toGameView(game) };
     }
     this.repository.save(coolingDown);
-    return { kind: 'revealed', index: command.index, color: session.game.secret[command.index] };
+    return {
+      kind: 'revealed',
+      index: command.index,
+      color: session.game.secret[command.index],
+      cooldownRemainingMs: PEEK_COOLDOWN_MS,
+    };
   }
 }
