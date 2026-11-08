@@ -2,7 +2,7 @@ import { restoreLife } from '../domain/game';
 import { blindUntil } from '../domain/guardian';
 import { ItemKind, SMOKE_BLIND_MS, isItemShown } from '../domain/items';
 import { toGameView } from './GameMapper';
-import { Clock, GameRepository, Session } from './ports';
+import { Clock, GameRepository, RandomSource, Session } from './ports';
 import { GameView } from './views';
 
 export interface CollectItemCommand {
@@ -21,6 +21,7 @@ export class CollectItemImpl implements CollectItem {
   constructor(
     private readonly repository: GameRepository,
     private readonly clock: Clock,
+    private readonly random: RandomSource,
   ) {}
 
   execute(_command: CollectItemCommand): CollectItemResponse {

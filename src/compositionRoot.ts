@@ -30,6 +30,6 @@ export function createUseCases(): UseCases {
     peekSecret: new PeekSecretImpl(repository, clock),
     tick: new TickImpl(repository, clock, random, random),
     moveShield: new MoveShieldImpl(repository),
-    collectItem: new CollectItemImpl(repository, clock),
+    collectItem: new CollectItemImpl(repository, clock, random),
   };
 }

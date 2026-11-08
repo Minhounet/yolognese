@@ -12,7 +12,12 @@ import { ScriptedRandomSource } from '../support/ScriptedRandomSource';
 // secret: red yellow green blue; attackRandom: the attack delay drawn at scheduling, then the lane at wind-up (cycling);
 // itemRandom: the item delay drawn at scheduling, then its kind and spot x, y when it appears (cycling)
 // item kinds by index: 0 food, 1 smoke, 2 xray, 3 hourglass, 4 charm, 5 present
-function startedGame(attackRandom: readonly number[] = [0, 2], itemRandom: readonly number[] = [0, 0, 30, 70]) {
+// collectRandom: what an item draws when collected (the x-ray's peg among the hidden ones, the present's kind)
+function startedGame(
+  attackRandom: readonly number[] = [0, 2],
+  itemRandom: readonly number[] = [0, 0, 30, 70],
+  collectRandom: readonly number[] = [1],
+) {
   const clock = new FakeClock();
   const repository = new InMemoryGameRepository();
   new StartGameImpl(new ScriptedRandomSource([0, 1, 2, 3]), repository, clock).execute();
@@ -27,7 +32,7 @@ function startedGame(attackRandom: readonly number[] = [0, 2], itemRandom: reado
     submitGuess: new SubmitGuessImpl(repository),
     moveShield: new MoveShieldImpl(repository),
     distractGuardian: new DistractGuardianImpl(repository, clock),
-    collectItem: new CollectItemImpl(repository, clock),
+    collectItem: new CollectItemImpl(repository, clock, new ScriptedRandomSource(collectRandom)),
     peekSecret: new PeekSecretImpl(repository, clock),
   };
 }
@@ -372,5 +377,19 @@ describe('Tick', () => {
     const response = peekSecret.execute({ index: 0 });
 
     expect(response).toMatchObject({ kind: 'revealed', cooldownMs: 0 });
+  });
+
+  it('shouldRevealHiddenPeg_whenXrayCollected', () => {
+    const { clock, collectItem, tick } = startedGame([30000, 0], [0, 2, 30, 70], [1]);
+    tick.execute();
+    clock.advance(8000);
+
+    const response = collectShownItem(tick, collectItem);
+
+    expect(response).toMatchObject({
+      kind: 'collected',
+      item: 'xray',
+      view: { revealed: [{ index: 1, color: 'yellow' }] },
+    });
   });
 });
