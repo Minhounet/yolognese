@@ -51,8 +51,8 @@ Interpretation is the orchestrator's (yolo), logged in the decision log.
 - Interpretation: shaking the phone (three strong jolts within one second)
   distracts the guardian the same way as pointing.
 - Questions: none
-- Covered by: D-guardian, D-structure (ShakeDetector, DistractGuardian)
-- Evidence:
+- Covered by: D-guardian, D-structure (isShake, useShake, DistractGuardian)
+- Evidence: supports only — test/domain/shake.test.ts: shouldNotDetectShake_whenPhoneIsStill, shouldDetectShake_whenThreeJoltsWithinOneSecond, shouldNotDetectShake_whenJoltsAreTooFarApart, shouldNotDetectShake_whenOnlyTwoJolts, shouldDetectShake_whenBurstFollowsLoneJolt, shouldNotDetectShake_whenOneLongBump (full build 31 passed, tsc clean). The AC itself needs a manual check on the phone (no accelerometer on the web build): pending, by the user — (1) shake the phone three times quickly: the guardian looks away; (2) one hard bump: it does not
 - Status: designed
 
 ## Discrepancies

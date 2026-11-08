@@ -4,8 +4,8 @@
 - Status: open
 - Mode: build
 - Yolo: on (see references/yolo.md of saiban-orchestrator)
-- Done: scaffold (Expo SDK 58, TypeScript), structural plan and ACs, AC1, AC2, AC3, AC4, playable cheat (point, peek, caught), published to Expo Go
-- Next: AC5 (shake)
+- Done: scaffold (Expo SDK 58, TypeScript), structural plan and ACs, AC1, AC2, AC3, AC4 verified; AC5 built and published, waiting for the phone check
+- Next: the user's phone check for AC5 (shake), then the user decides: merge, more features, or keep ideas
 - Files: docs/ticket/PEEK-1/, src/
 
 ## Start - scope and mode
@@ -88,3 +88,15 @@
 - Super-green misses: 0
 - Asked user: no (yolo)
 - Carry forward: AC5 reuses DistractGuardian; ShakeDetector is pure domain, the accelerometer adapter (expo-sensors) is UI and only checkable on the phone (HUMAN)
+
+## AC5 - plan, run and review
+- Decided: pure isShake(readings) instead of the planned stateful ShakeDetector (deviation: purer, the hook keeps the readings); guard "two jolts" became red 25 (it could fail); red 26 sliding window and red 27 one long bump added from the dev's note and the review (deviations, AC5)
+- Decided: kenji-reviewer blocking: no evidence at the AC's level -> a manual check on the phone, parked for the user (Waiting for you); minor: one bump counted as three -> fixed (red 27); open: no test on the exact 2 g and 1000 ms edges; the hook's 1 s buffer duplicates SHAKE_WINDOW_MS and reads Date.now, not Clock; the 1.5 s quiet time after a shake has no test (UI adapter)
+- Super-green misses: 0
+- Asked user: no (yolo)
+- Keep: Expo + EAS Update yolo setup (sdkVersion runtime policy, a channel per feature branch, the web build for Playwright checks with the page clock), generic to any mobile POC; lives in this repo's package.json, playwright.config.js and README Run section
+- Keep: isShake + useShake (shake detection from expo-sensors), generic to any app that wants a shake gesture; lives in src/domain/shake.ts and src/ui/useShake.ts
+
+## Finish
+- Verdict: GUILTY, 1 count: AC5 has no evidence at its level until the user checks it on the phone
+- Waiting for you: (1) the AC5 phone check; (2) merge feat/peek-a-code (a pull request) — not opened, outward-facing

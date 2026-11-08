@@ -64,7 +64,8 @@ pegs, exact / misplaced feedback), not a copy of a commercial game.
 - Clock (port)                    + now(): number
 - GameRepository (port)           + load(): Session | undefined ; + save(Session): void
     InMemoryGameRepository (same change as the port)
-- ShakeDetector (domain)          + push(sample: Acceleration, at: number): boolean
+- isShake (domain, pure function)  + isShake(readings: Reading[]): boolean   (was ShakeDetector.push: deviation at AC5, logged)
+- useShake (UI hook)              accelerometer adapter (expo-sensors), keeps 1 s of readings, calls DistractGuardian on a shake
 - GameMapper (module GameMapper.ts, free functions — deviation logged at AC1)
                                   + toGameView(Game): GameView ; + toGuardianView(Guardian, now): GuardianView
 - Composition root: compositionRoot.ts → MathRandomSource, SystemClock,

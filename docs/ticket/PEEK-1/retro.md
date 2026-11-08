@@ -13,3 +13,4 @@
 - The orchestrator's GREEN 19 prompt told the dev the caught game "must be saved": a hint about behaviour no test asked for, so the save went in untested (kenji-reviewer, blocking). Backed out, driven by red 21, restored as green 21. Lesson: a dev prompt names the failing test and the plan, never the next behaviour.
 - shonin-dev's GREEN 17 again built ahead (time-based distraction for a test that only needed distracted/watching): cut back to a boolean before commit; red 18 then forced the time.
 - A disabled Pressable on the web cannot be tapped by Playwright (actionability wait): the "no peek after the game" check forces the tap.
+- kenji-reviewer found a real bug at AC5 in review: one hard bump spans about three 50 ms accelerometer samples and counted as three jolts. Red 27 drove the fix; the dev showed the rule had to be time-based (readings under 100 ms apart are one jolt), since list-neighbour edges also merged a real burst.
