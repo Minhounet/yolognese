@@ -7,41 +7,43 @@ interface FeedbackProps {
 }
 
 const SLOTS = 4;
-const RIGHT_PLACE = '#2e9e44';
-const WRONG_PLACE = '#f2b705';
+const RIGHT_PLACE = '✅';
+const WRONG_PLACE = '🔄';
 
-/** Green dots: right colour, right place. Yellow dots: right colour, wrong place. */
+type Mark = typeof RIGHT_PLACE | typeof WRONG_PLACE | undefined;
+
+function Slot({ mark }: { readonly mark: Mark }) {
+  return mark === undefined ? <View style={styles.empty} /> : <Text style={styles.mark}>{mark}</Text>;
+}
+
+/** ✅ right colour, right place; 🔄 right colour, wrong place; an empty ring for nothing. */
 export function Feedback({ exact, misplaced, testID }: FeedbackProps) {
-  const kinds = Array.from({ length: SLOTS }, (_, slot) =>
-    slot < exact ? styles.exact : slot < exact + misplaced ? styles.misplaced : styles.none,
+  const marks: readonly Mark[] = Array.from({ length: SLOTS }, (_, slot) =>
+    slot < exact ? RIGHT_PLACE : slot < exact + misplaced ? WRONG_PLACE : undefined,
   );
   return (
-    <View testID={testID} accessibilityLabel={`${exact} exact, ${misplaced} misplaced`} style={styles.grid}>
-      {kinds.map((kind, slot) => (
-        <View key={slot} style={[styles.dot, kind]} />
+    <View testID={testID} accessibilityLabel={`${exact} exact, ${misplaced} misplaced`} style={styles.line}>
+      {marks.map((mark, slot) => (
+        <Slot key={slot} mark={mark} />
       ))}
     </View>
   );
 }
 
-/** Says what the two dot colours mean. */
+/** Says what the two marks mean. */
 export function FeedbackLegend() {
   return (
     <View testID="legend" style={styles.legend}>
-      <View style={[styles.dot, styles.exact]} />
-      <Text style={styles.legendText}>right place</Text>
-      <View style={[styles.dot, styles.misplaced]} />
-      <Text style={styles.legendText}>wrong place</Text>
+      <Text style={styles.legendText}>{RIGHT_PLACE} right place</Text>
+      <Text style={styles.legendText}>{WRONG_PLACE} wrong place</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  grid: { flexDirection: 'row', alignItems: 'center', marginLeft: 8 },
-  dot: { width: 12, height: 12, borderRadius: 6, margin: 3, borderWidth: 1, borderColor: '#0003' },
-  exact: { backgroundColor: RIGHT_PLACE, borderColor: '#fff', borderWidth: 2 },
-  misplaced: { backgroundColor: WRONG_PLACE, borderColor: '#fff', borderWidth: 2 },
+  line: { flexDirection: 'row', alignItems: 'center', marginLeft: 8 },
+  mark: { width: 20, fontSize: 14, textAlign: 'center' },
+  empty: { width: 12, height: 12, borderRadius: 6, margin: 4, borderWidth: 1, borderColor: '#0003' },
   legend: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
-  legendText: { color: '#3b2314', fontSize: 13, marginRight: 12 },
-  none: { backgroundColor: 'transparent' },
+  legendText: { color: '#3b2314', fontSize: 13, marginHorizontal: 6 },
 });
