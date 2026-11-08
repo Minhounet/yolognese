@@ -14,15 +14,15 @@ in `docs/ticket/PEEK-1/`, decisions in `docs/decisions/peek-a-code.md`.
 1. Install **Expo Go** from the Play Store and sign in with the Expo account
    that is a member of `minhounets-team`.
 2. Open this link on the phone:
-   `exp://u.expo.dev/90eceada-289a-4a45-b958-180a23ddedb8?channel-name=feat-peek-a-code&runtime-version=exposdk:58.0.0`
+   `exp://u.expo.dev/90eceada-289a-4a45-b958-180a23ddedb8?channel-name=main&runtime-version=exposdk:58.0.0`
    (or expo.dev → minhounets-team → yolognese → Updates → the latest update → Preview).
-3. Each push of the feature branch publishes a new update to the same
-   channel: reopen the app to get it.
+3. Each push of `main` publishes a new update to the `main` channel:
+   reopen the app to get it.
 
 **Publish an update** (needs an Expo token in `EXPO_TOKEN`):
 
 ```bash
-npx eas-cli@latest update --branch feat-peek-a-code --environment preview --message "<what changed>" --non-interactive
+npx eas-cli@latest update --branch main --environment preview --message "<what changed>" --non-interactive
 ```
 
 **In a browser:** `npm run export:web`, then serve `dist/`

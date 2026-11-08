@@ -6,7 +6,7 @@
 - Yolo: on (see references/yolo.md of saiban-orchestrator)
 - Done: scaffold (Expo SDK 58, TypeScript), structural plan and ACs, AC1-AC4, AC6-AC11 verified; AC5 waived (user)
 - Next: round 2 in progress: AC10, AC11 verified; next AC12, then AC14, AC13; also the user's look at the flip (AC6) and the feedback marks (AC9); then the user decides: merge, more features, or keep ideas
-- Expo: at every finish or pause, publish the update and give the user the Expo Go link (user, AC11): exp://u.expo.dev/90eceada-289a-4a45-b958-180a23ddedb8?channel-name=feat-peek-a-code&runtime-version=exposdk:58.0.0
+- Expo: at every finish or pause, publish the update and give the user the Expo Go link (user, AC11): exp://u.expo.dev/90eceada-289a-4a45-b958-180a23ddedb8?channel-name=main&runtime-version=exposdk:58.0.0
 - Files: docs/ticket/PEEK-1/, src/
 
 ## Start - scope and mode
@@ -183,3 +183,8 @@
 - Decided: kenji-reviewer blocking on the fix: a colour change back during the closing half (a peek in the last 90 ms before the guardian looks back) was skipped and left the peg squeezed; fixed (the effect compares the last requested colour, not the shown one, and every change runs a whole flip), a check on a paused clock covers it (failed width 0 before, passes after); minor fixed: checks tagged [AC6], the open-state wait widened to 1 s
 
 - Decided: re-review PASS (the look-back check fails on the previous code, 16/16 on the new, 5/5 extra runs)
+
+## Branch and channel - main (user)
+- Decided (user): all work on `main` from now on: `main` created from the session branch (the repo had none; its default was `feat/peek-a-code`); every commit pushed to `main`; the Expo updates go to a new channel `main` (branch `main`), new link in the Resume block and README. Setting `main` as GitHub's default branch is the user's (repository settings)
+- Asked user: yes
+
