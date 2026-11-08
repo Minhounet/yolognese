@@ -19,6 +19,8 @@ const PEEK_SHOWN_MS = 400;
 const CAUGHT_SHOWN_MS = 1500;
 const MAX_LIFE = 10;
 const COOLDOWN_TICK_MS = 100;
+const GAME_TICK_MS = 100;
+const GAME_DURATION_MS = 180000;
 
 interface CooldownState {
   readonly until: number;
@@ -44,6 +46,13 @@ const STATUS_TEXT: Readonly<Record<GameView['status'], string>> = {
   lost: 'Out of life. The guardian wins.',
 };
 
+const TIME_UP_TEXT = "Time's up! The guardian wins.";
+
+function clockText(ms: number): string {
+  const seconds = Math.ceil(ms / 1000);
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+}
+
 export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
   const [view, setView] = useState<GameView>(() => useCases.startGame.execute());
   const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
@@ -58,6 +67,18 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
   const nextPuff = useRef(0);
   const [cooldown, setCooldown] = useState<CooldownState>({ until: 0, total: 1 });
   const [now, setNow] = useState(() => Date.now());
+  const [timeLeftMs, setTimeLeftMs] = useState(GAME_DURATION_MS);
+
+  useEffect(() => {
+    if (!playing) return undefined;
+    const timer = setInterval(() => {
+      const response = useCases.tick.execute();
+      if (response.kind !== 'ticked') return;
+      setTimeLeftMs(response.timeLeftMs);
+      if (response.view.status !== 'playing') setView(response.view);
+    }, GAME_TICK_MS);
+    return () => clearInterval(timer);
+  }, [playing, useCases]);
   const cooldownLeft = Math.max(0, cooldown.until - now);
   const cooledPercent = Math.round(((cooldown.total - cooldownLeft) / cooldown.total) * 100);
   const [coolingNotice, setCoolingNotice] = useState<number | undefined>(undefined);
@@ -147,6 +168,7 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
   const newGame = () => {
     setView(useCases.startGame.execute());
     setCooldown({ until: 0, total: 1 });
+    setTimeLeftMs(GAME_DURATION_MS);
     setDraft(EMPTY_DRAFT);
   };
 
@@ -169,9 +191,20 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
           ? 'Caught peeking! −2 ❤️'
           : coolingNotice !== undefined
             ? `Still cooling down: ${Math.ceil(coolingNotice / 1000)} s`
-            : STATUS_TEXT[view.status]}
+            : view.status === 'lost' && timeLeftMs === 0
+              ? TIME_UP_TEXT
+              : STATUS_TEXT[view.status]}
       </Text>
       <Bar testID="life" icon="❤️" value={view.life} max={MAX_LIFE} color={THEME.sauce} label={`life ${view.life} of ${MAX_LIFE}`} />
+      <Bar
+        testID="time"
+        icon="⏳"
+        value={timeLeftMs}
+        max={GAME_DURATION_MS}
+        color={THEME.sauce}
+        label={`time ${clockText(timeLeftMs)} left`}
+        text={clockText(timeLeftMs)}
+      />
       <Bar
         testID="cooldown"
         icon="👀"
