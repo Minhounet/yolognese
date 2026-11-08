@@ -59,7 +59,8 @@ function lifeLost(game: Game, turn: Turn): number {
 }
 
 export function penalise(game: Game): Game {
-  return { ...game, penalties: game.penalties + 1, life: game.life - LIFE_LOST_WHEN_CAUGHT };
+  const life = Math.max(0, game.life - LIFE_LOST_WHEN_CAUGHT);
+  return { ...game, penalties: game.penalties + 1, life };
 }
 
 export function isWon(game: Game): boolean {
