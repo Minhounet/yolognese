@@ -470,4 +470,16 @@ describe('Tick', () => {
 
     expect(response).toMatchObject({ kind: 'collected', item: 'present', view: { life: 9 } });
   });
+
+  it('shouldReportHit_whenAttackLands', () => {
+    const { clock, tick } = startedGame([0, 2]);
+    tick.execute();
+    clock.advance(10000);
+    tick.execute();
+    clock.advance(1000);
+
+    const response = tick.execute();
+
+    expect(response).toMatchObject({ kind: 'ticked', landed: 'hit' });
+  });
 });
