@@ -21,4 +21,16 @@ describe('Tick', () => {
 
     expect(response).toMatchObject({ kind: 'ticked', timeLeftMs: 179000 });
   });
+
+  it('shouldBeLost_whenTimeIsUp', () => {
+    const { clock, tick } = startedGame();
+    clock.advance(180000);
+
+    const response = tick.execute();
+
+    expect(response).toMatchObject({
+      kind: 'ticked',
+      view: { status: 'lost', secret: ['red', 'yellow', 'green', 'blue'] },
+    });
+  });
 });
