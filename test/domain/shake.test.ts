@@ -33,4 +33,10 @@ describe('isShake', () => {
 
     expect(isShake(readings)).toBe(true);
   });
+
+  it('shouldNotDetectShake_whenOneLongBump', () => {
+    const readings = [still(0), jolt(50), jolt(100), jolt(150), still(200)];
+
+    expect(isShake(readings)).toBe(false);
+  });
 });
