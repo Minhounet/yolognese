@@ -93,19 +93,19 @@ export class TickImpl implements Tick {
     );
   }
 
-  private reported(landing: { readonly hits: boolean; readonly shielded: boolean }): 'hit' | 'blocked' | undefined {
+  private reported(landing: { readonly hits: boolean; readonly blocked: boolean }): 'hit' | 'blocked' | undefined {
     if (landing.hits) {
       return 'hit';
     }
-    return landing.shielded ? 'blocked' : undefined;
+    return landing.blocked ? 'blocked' : undefined;
   }
 
   private landing(session: Session, now: number) {
     const landed = session.attackLandsAt !== undefined && hasLanded(session.attackLandsAt, now);
-    const shielded = landed && isBlocked(session.attackLane, session.shieldLane);
+    const blocked = landed && (isBlocked(session.attackLane, session.shieldLane) || session.charmed === true);
     return {
-      shielded,
-      hits: landed && !shielded && !session.charmed,
+      blocked,
+      hits: landed && !blocked,
       pendingLandsAt: landed ? undefined : session.attackLandsAt,
       charmed: session.charmed === true && !landed,
     };
