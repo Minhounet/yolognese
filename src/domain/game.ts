@@ -49,9 +49,12 @@ export function play(game: Game, guess: Code): Game {
   return { ...game, turns: [...game.turns, turn], life: game.life - lifeLost(game, turn) };
 }
 
-function lifeLost(game: Game, { exact }: Turn): number {
-  const isWinningGuess = exact === game.secret.length;
-  return isWinningGuess ? 0 : LIFE_LOST_PER_MISS;
+function isWinningTurn(game: Game, { exact }: Turn): boolean {
+  return exact === game.secret.length;
+}
+
+function lifeLost(game: Game, turn: Turn): number {
+  return isWinningTurn(game, turn) ? 0 : LIFE_LOST_PER_MISS;
 }
 
 export function penalise(game: Game): Game {
@@ -59,7 +62,7 @@ export function penalise(game: Game): Game {
 }
 
 export function isWon(game: Game): boolean {
-  return game.turns.some(({ exact }) => exact === game.secret.length);
+  return game.turns.some((turn) => isWinningTurn(game, turn));
 }
 
 export function attemptsLeft(game: Game): number {
