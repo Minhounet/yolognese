@@ -11,9 +11,14 @@ export interface PeekCommand {
   readonly index: number;
 }
 
+/** A peek that went through, revealed or caught, starts the cooldown; the screen's bar reads it. */
+interface Cooldown {
+  readonly cooldownRemainingMs: number;
+}
+
 export type PeekResponse =
-  | { readonly kind: 'revealed'; readonly index: number; readonly color: Color; readonly cooldownRemainingMs: number }
-  | { readonly kind: 'caught'; readonly view: GameView; readonly cooldownRemainingMs: number }
+  | ({ readonly kind: 'revealed'; readonly index: number; readonly color: Color } & Cooldown)
+  | ({ readonly kind: 'caught'; readonly view: GameView } & Cooldown)
   | { readonly kind: 'rejected'; readonly reason: 'no-game' | 'game-over' | 'cooling-down' };
 
 export interface PeekSecret {
