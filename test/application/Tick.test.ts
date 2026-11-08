@@ -53,4 +53,14 @@ describe('Tick', () => {
 
     expect(response).toMatchObject({ kind: 'ticked', view: { status: 'won' } });
   });
+
+  it('shouldRejectGuess_afterTimeIsUp', () => {
+    const { clock, submitGuess, tick } = startedGame();
+    clock.advance(180000);
+    tick.execute();
+
+    const response = submitGuess.execute({ guess: ['red', 'yellow', 'green', 'blue'] });
+
+    expect(response).toEqual({ kind: 'rejected', reason: 'game-over' });
+  });
 });
