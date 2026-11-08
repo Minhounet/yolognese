@@ -1,7 +1,8 @@
 import { restoreLife } from '../domain/game';
-import { ItemKind, isItemShown } from '../domain/items';
+import { distractUntil } from '../domain/guardian';
+import { ItemKind, SMOKE_BLIND_MS, isItemShown } from '../domain/items';
 import { toGameView } from './GameMapper';
-import { Clock, GameRepository } from './ports';
+import { Clock, GameRepository, Session } from './ports';
 import { GameView } from './views';
 
 export interface CollectItemCommand {
@@ -28,11 +29,21 @@ export class CollectItemImpl implements CollectItem {
       return { kind: 'rejected', reason: 'no-game' };
     }
     const { item, itemAt } = session;
-    if (item === undefined || itemAt === undefined || !isItemShown(itemAt, this.clock.now())) {
+    const now = this.clock.now();
+    if (item === undefined || itemAt === undefined || !isItemShown(itemAt, now)) {
       return { kind: 'rejected', reason: 'no-item' };
     }
-    const game = restoreLife(session.game);
-    this.repository.save({ ...session, game, item: undefined, itemCollected: true });
+    const { game, guardian } = this.effectOf(item.kind, session, now);
+    this.repository.save({ ...session, game, guardian, item: undefined, itemCollected: true });
     return { kind: 'collected', item: item.kind, view: toGameView(game) };
+  }
+
+  private effectOf(kind: ItemKind, session: Session, now: number): Pick<Session, 'game' | 'guardian'> {
+    switch (kind) {
+      case 'food':
+        return { game: restoreLife(session.game), guardian: session.guardian };
+      case 'smoke':
+        return { game: session.game, guardian: distractUntil(now + SMOKE_BLIND_MS) };
+    }
   }
 }

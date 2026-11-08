@@ -6,7 +6,9 @@ export const ITEM_SPOT_SPAN = 101;
 const MIN_ITEM_DELAY_MS = 8000;
 const ITEM_SHOWN_MS = 4000;
 
-export const ITEM_KINDS = ['food'] as const;
+export const SMOKE_BLIND_MS = 4000;
+
+export const ITEM_KINDS = ['food', 'smoke'] as const;
 
 export type ItemKind = (typeof ITEM_KINDS)[number];
 
