@@ -1,6 +1,6 @@
 import { Game, hiddenPegs, restoreLife, revealPeg } from '../domain/game';
 import { blindUntil } from '../domain/guardian';
-import { GIFT_KINDS, HOURGLASS_BONUS_MS, ItemKind, SMOKE_BLIND_MS, isItemShown } from '../domain/items';
+import { GIFT_KINDS, GiftKind, HOURGLASS_BONUS_MS, ItemKind, SMOKE_BLIND_MS, isItemShown } from '../domain/items';
 import { toGameView } from './GameMapper';
 import { Clock, GameRepository, RandomSource, Session } from './ports';
 import { GameView } from './views';
@@ -10,7 +10,12 @@ export interface CollectItemCommand {
 }
 
 export type CollectItemResponse =
-  | { readonly kind: 'collected'; readonly item: ItemKind; readonly view: GameView }
+  | {
+      readonly kind: 'collected';
+      readonly item: ItemKind;
+      readonly gift?: GiftKind;
+      readonly view: GameView;
+    }
   | { readonly kind: 'rejected'; readonly reason: 'no-game' | 'no-item' };
 
 export interface CollectItem {
@@ -34,12 +39,13 @@ export class CollectItemImpl implements CollectItem {
     if (item === undefined || itemAt === undefined || !isItemShown(itemAt, now)) {
       return { kind: 'rejected', reason: 'no-item' };
     }
-    const affected = this.effectOf(item.kind, session, now);
+    const received = item.kind === 'present' ? this.drawGift() : item.kind;
+    const affected = this.effectOf(received, session, now);
     this.repository.save({ ...affected, item: undefined, itemCollected: true });
-    return { kind: 'collected', item: item.kind, view: toGameView(affected.game) };
+    return { kind: 'collected', item: item.kind, gift: item.kind === 'present' ? received : undefined, view: toGameView(affected.game) };
   }
 
-  private effectOf(kind: ItemKind, session: Session, now: number): Session {
+  private effectOf(kind: GiftKind, session: Session, now: number): Session {
     switch (kind) {
       case 'food':
         return { ...session, game: restoreLife(session.game) };
@@ -51,9 +57,11 @@ export class CollectItemImpl implements CollectItem {
         return { ...session, endsAt: session.endsAt + HOURGLASS_BONUS_MS };
       case 'charm':
         return { ...session, charmed: true };
-      case 'present':
-        return this.effectOf(GIFT_KINDS[this.random.nextInt(GIFT_KINDS.length)], session, now);
     }
+  }
+
+  private drawGift(): GiftKind {
+    return GIFT_KINDS[this.random.nextInt(GIFT_KINDS.length)];
   }
 
   private revealHiddenPeg(game: Game): Game {
