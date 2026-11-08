@@ -5,7 +5,7 @@
 - Mode: build
 - Yolo: on (see references/yolo.md of saiban-orchestrator)
 - Done: scaffold (Expo SDK 58, TypeScript), structural plan and ACs, AC1, AC2, AC3, AC4 verified; AC5 built and published, waiting for the phone check
-- Next: round 2, AC10..AC14 in the order of acceptance.md, in a fresh session (say: resume peek-a-code); also the user's look at the flip (AC6) and the feedback marks (AC9); then the user decides: merge, more features, or keep ideas
+- Next: AC10 (TDD run in progress, reds from 28), then AC11, AC12, AC14, AC13; also the user's look at the flip (AC6) and the feedback marks (AC9); then the user decides: merge, more features, or keep ideas
 - Files: docs/ticket/PEEK-1/, src/
 
 ## Start - scope and mode
@@ -116,4 +116,17 @@
 - Decided: AC10-AC14 written from the user's request; numbers (10 life, costs 1/2/2, 5 s cooldown, 3 min, items every 8-15 s for 4 s, attacks every 10-20 s with a 1 s warning, 3 lanes) and two extra items (hourglass, shield charm) chosen by the orchestrator; a Tick use case drives time-based rules so they stay test-driven
 - Decided: build in a fresh session: this one is long and costly per step (the user raised token cost)
 - Fixed: the AC9 edit had dropped the "## Discrepancies" heading of acceptance.md; restored
+- Asked user: no (yolo)
+
+## AC10 - TDD plan (session 3, resumed)
+- Decided: 5 reds, numbering continues at 28:
+  28 [AC10] shouldStartWithTenLife_whenGameStarts (StartGame) — the view shows life 10
+  29 [AC10] shouldLoseOneLife_whenGuessMisses (SubmitGuess) — a miss leaves life 9
+  30 [AC10] shouldLoseTwoLife_whenCaught (PeekSecret) — being caught leaves life 8
+  31 [AC10] shouldBeLost_whenCaughtWithTwoLifeLeft (PeekSecret) — 8 misses then caught: lost, life 0 (attempts would still be 1)
+  32 [AC10] shouldStopLifeAtZero_whenCaughtWithOneLifeLeft (PeekSecret) — 9 misses then caught: life 0, not -1
+  Planned refactor at the end (traced): attemptsLeft leaves the view and the domain; tests that read it are translated to life (same value: shouldCountAttemptsLeft -> duplicate of 29, removed; shouldBeLost_whenTenthGuessMisses and guard 13 read life; changed value under AC10: shouldCostOneAttempt_whenCaught superseded by 30, shouldLoseGame_whenCaughtOnLastAttempt superseded by 32, shouldKeepPenalty reads life 7 — a mutation shows it still fails without the save)
+  "Shown as a bar": browser check e2e/ac10.spec.js (no game rule; screen only)
+- dev: on (ticket with 5 ACs left, 5 tests)
+- Why: drive AC10 at the use-case level; each red fails under the minimal greens before it
 - Asked user: no (yolo)
