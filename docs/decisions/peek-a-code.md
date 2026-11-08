@@ -4,8 +4,8 @@
 - Status: open
 - Mode: build
 - Yolo: on (see references/yolo.md of saiban-orchestrator)
-- Done: scaffold (Expo SDK 58, TypeScript), structural plan and ACs, AC1-AC4, AC6-AC11 verified; AC5 waived (user)
-- Next: round 2 in progress: AC10, AC11 verified; next AC12, then AC14, AC13; also the user's look at the flip (AC6) and the feedback marks (AC9); then the user decides: merge, more features, or keep ideas
+- Done: scaffold (Expo SDK 58, TypeScript), structural plan and ACs, AC1-AC4, AC6-AC12 verified; AC5 waived (user)
+- Next: round 2 in progress: AC10, AC11, AC12 verified; next AC14, then AC13; also the user's look at the flip (AC6) and the feedback marks (AC9); then the user decides: merge, more features, or keep ideas
 - Expo: at every finish or pause, publish the update and give the user the Expo Go link (user, AC11): exp://u.expo.dev/90eceada-289a-4a45-b958-180a23ddedb8?channel-name=main&runtime-version=exposdk:58.0.0
 - Files: docs/ticket/PEEK-1/, src/
 
@@ -204,3 +204,13 @@
 - Decided: dev on, a fresh one (6+ tests)
 - Then: countdown bar and text on the screen, browser check e2e/ac12.spec.js
 - Asked user: no (yolo)
+
+## AC12 - run and review
+- Decided: greens 40, 41, 43, 44 by shonin-dev accepted; GREEN 42 changed before commit (life 0 -> the planned Game.timeUp); refactor 41 a counted super-green miss (green 41 copied a session only to narrow a type); refactor 43 one ticked response (duplication across greens 42/43); guards: new game restarts the clock (mutation: StartGame keeps endsAt), stays won after time-up (mutation: isLost ignores a win AND toStatus tests lost first; the commit names only the first, kenji-reviewer)
+- Decided: screen: Tick every 100 ms while playing, ⏳ bar with m:ss, "Time's up! The guardian wins." when lost at 0:00; the screen's GAME_DURATION_MS seeds the bar
+- Decided: kenji-reviewer, 4 minor: (1) guard 44's mutation under-stated -> corrected here and in retro; (2) Tick's no-game rejection untested -> open (as AC1); (3) the 3 minutes stated twice (Tick and GameScreen) -> open, AC13's hourglass (+30 s) must carry the total in the Tick response: do it there; (4) deadline()/expired() hid their saves -> renamed deadlineStartingClock()/expireAndSave()
+- Super-green misses: 1 (refactor 41)
+- Deferred refinement notes: an expired game is saved again on every tick after time-up (idempotent; the screen stops ticking when the game is over)
+- Asked user: no (yolo)
+- Carry forward: Tick is where AC14 (attacks) and AC13 (items) go: add RandomSource to its constructor then; Tick's response should grow a view of the guardian (distracted / blind / attacking) and of items; AC13's hourglass needs the game's total time in the response (finding 3) and food needs max life in the view (AC10 finding 3); attacks must not run when the game is over
+
