@@ -19,7 +19,8 @@ interface Cooldown {
 export type PeekResponse =
   | ({ readonly kind: 'revealed'; readonly index: number; readonly color: Color } & Cooldown)
   | ({ readonly kind: 'caught'; readonly view: GameView } & Cooldown)
-  | { readonly kind: 'rejected'; readonly reason: 'no-game' | 'game-over' | 'cooling-down' };
+  | { readonly kind: 'rejected'; readonly reason: 'no-game' | 'game-over' }
+  | { readonly kind: 'rejected'; readonly reason: 'cooling-down'; readonly remainingMs: number };
 
 export interface PeekSecret {
   execute(command: PeekCommand): PeekResponse;
@@ -41,7 +42,7 @@ export class PeekSecretImpl implements PeekSecret {
     }
     const now = this.clock.now();
     if (now < session.peekReadyAt) {
-      return { kind: 'rejected', reason: 'cooling-down' };
+      return { kind: 'rejected', reason: 'cooling-down', remainingMs: session.peekReadyAt - now };
     }
     const coolingDown: Session = { ...session, peekReadyAt: now + PEEK_COOLDOWN_MS };
     if (!isDistracted(session.guardian, now)) {
