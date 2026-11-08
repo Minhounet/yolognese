@@ -124,4 +124,19 @@ describe('Tick', () => {
 
     expect(response).toMatchObject({ kind: 'ticked', view: { life: 10 } });
   });
+
+  it('shouldHitOnlyOnce_whenAttackLands', () => {
+    const { clock, tick } = startedGame([0, 2]);
+    tick.execute();
+    clock.advance(10000);
+    tick.execute();
+    clock.advance(1000);
+    tick.execute();
+    clock.advance(100);
+
+    const response = tick.execute();
+
+    expect(response).toMatchObject({ kind: 'ticked', view: { life: 8 } });
+    expect(response.kind === 'ticked' && response.attack).toBeUndefined();
+  });
 });
