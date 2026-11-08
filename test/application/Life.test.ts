@@ -24,4 +24,12 @@ describe('Life', () => {
 
     expect(response).toMatchObject({ kind: 'played', view: { life: 9 } });
   });
+
+  it('shouldKeepLife_whenGuessWins', () => {
+    const { submitGuess } = startGame();
+
+    const response = submitGuess.execute({ guess: ['red', 'yellow', 'green', 'blue'] });
+
+    expect(response).toMatchObject({ kind: 'played', view: { life: 10 } });
+  });
 });
