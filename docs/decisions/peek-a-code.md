@@ -180,3 +180,5 @@
 - Why it was missed: every peek check ran on Playwright's frozen clock (retro)
 - No skill: React Native screen
 - Asked user: no (yolo; the user reported the bug)
+- Decided: kenji-reviewer blocking on the fix: a colour change back during the closing half (a peek in the last 90 ms before the guardian looks back) was skipped and left the peg squeezed; fixed (the effect compares the last requested colour, not the shown one, and every change runs a whole flip), a check on a paused clock covers it (failed width 0 before, passes after); minor fixed: checks tagged [AC6], the open-state wait widened to 1 s
+
