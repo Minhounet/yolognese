@@ -3,6 +3,8 @@ import { toGameView } from './GameMapper';
 import { Clock, GameRepository } from './ports';
 import { GameView } from './views';
 
+const MIN_TIME_LEFT_MS = 0;
+
 export type TickResponse =
   | { readonly kind: 'ticked'; readonly view: GameView; readonly timeLeftMs: number }
   | { readonly kind: 'rejected'; readonly reason: 'no-game' };
@@ -22,8 +24,8 @@ export class TickImpl implements Tick {
     if (session === undefined) {
       return { kind: 'rejected', reason: 'no-game' };
     }
-    const timeLeftMs = session.endsAt - this.clock.now();
-    const game = timeLeftMs <= 0 ? timeUp(session.game) : session.game;
+    const timeLeftMs = Math.max(MIN_TIME_LEFT_MS, session.endsAt - this.clock.now());
+    const game = timeLeftMs === MIN_TIME_LEFT_MS ? timeUp(session.game) : session.game;
     return { kind: 'ticked', view: toGameView(game), timeLeftMs };
   }
 }
