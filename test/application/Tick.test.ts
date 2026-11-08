@@ -1,3 +1,4 @@
+import { DistractGuardianImpl } from '../../src/application/DistractGuardian';
 import { MoveShieldImpl } from '../../src/application/MoveShield';
 import { StartGameImpl } from '../../src/application/StartGame';
 import { SubmitGuessImpl } from '../../src/application/SubmitGuess';
@@ -16,6 +17,7 @@ function startedGame(attackRandom: readonly number[] = [0, 2]) {
     tick: new TickImpl(repository, clock, new ScriptedRandomSource(attackRandom)),
     submitGuess: new SubmitGuessImpl(repository),
     moveShield: new MoveShieldImpl(repository),
+    distractGuardian: new DistractGuardianImpl(repository, clock),
   };
 }
 
@@ -152,5 +154,17 @@ describe('Tick', () => {
     const response = tick.execute();
 
     expect(response).toMatchObject({ kind: 'ticked', attack: { lane: 2, landsInMs: 1000 } });
+  });
+
+  it('shouldNotAttack_whenGuardianIsDistracted', () => {
+    const { clock, distractGuardian, tick } = startedGame([0, 2]);
+    tick.execute();
+    clock.advance(9500);
+    distractGuardian.execute({ target: { x: 150, y: -60 } });
+    clock.advance(500);
+
+    const response = tick.execute();
+
+    expect(response.kind === 'ticked' && response.attack).toBeUndefined();
   });
 });
