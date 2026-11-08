@@ -139,4 +139,13 @@ describe('PeekSecret', () => {
 
     expect(response).toEqual({ kind: 'revealed', index: 1, color: 'yellow' });
   });
+
+  it('shouldRejectPeek_whenCaughtJustBefore', () => {
+    const { peekSecret } = startedGame();
+    peekSecret.execute({ index: 0 });
+
+    const response = peekSecret.execute({ index: 1 });
+
+    expect(response).toEqual({ kind: 'rejected', reason: 'cooling-down' });
+  });
 });
