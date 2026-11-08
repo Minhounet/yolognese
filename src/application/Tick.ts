@@ -34,9 +34,11 @@ export class TickImpl implements Tick {
     const game = attackHits ? penalise(timedGame) : timedGame;
     const attackAt = session.attackAt ?? scheduleAttackAt(now, this.random.nextInt(ATTACK_DELAY_SPREAD_MS));
     const attack = isAttackDue(attackAt, now) ? windUp(this.random.nextInt(LANE_COUNT)) : undefined;
-    const attackLandsAt = attack === undefined ? session.attackLandsAt : now + attack.landsInMs;
+    const nextAttackAt = attack === undefined ? attackAt : undefined;
+    const pendingLandsAt = attackLanded ? undefined : session.attackLandsAt;
+    const attackLandsAt = attack === undefined ? pendingLandsAt : now + attack.landsInMs;
     const attackLane = attack === undefined ? session.attackLane : attack.lane;
-    this.repository.save({ ...session, game, attackAt, attackLandsAt, attackLane });
+    this.repository.save({ ...session, game, attackAt: nextAttackAt, attackLandsAt, attackLane });
     return { kind: 'ticked', view: toGameView(game), timeLeftMs, attack };
   }
 }
