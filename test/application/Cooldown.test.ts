@@ -55,4 +55,14 @@ describe('Cooldown', () => {
 
     expect(response).toEqual({ kind: 'rejected', reason: 'cooling-down' });
   });
+
+  it('shouldStartCooldown_whenCaught', () => {
+    const { distractGuardian, peekSecret } = startedGame();
+    peekSecret.execute({ index: 0 });
+    distractGuardian.execute(AWAY);
+
+    const response = peekSecret.execute({ index: 1 });
+
+    expect(response).toEqual({ kind: 'rejected', reason: 'cooling-down' });
+  });
 });
