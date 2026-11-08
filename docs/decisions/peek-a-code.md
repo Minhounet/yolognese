@@ -153,3 +153,4 @@
 - Deviation from conception.md D-cooldown (smallest change): the responses carry cooldownMs (as DistractGuardian's remainingMs) instead of a cooldownRemainingMs in GameView, which would need the clock in the mapper; the Session holds peekReadyAt as planned
 - dev: on (6 tests, ticket with 4 ACs left); a fresh shonin-dev
 - Asked user: no (yolo)
+- Deviation (AC11, orchestrator in yolo): GREEN 34 tied the cooldown to time with a guessed 1000 ms (only "greater than 0" was forced); accepted, and the order swapped so the time is driven: red 35 shouldRejectPeek_justBeforeCooldownEnds (4999 ms: rejected, fails at 1000), then guard shouldAllowPeek_whenCooldownHasPassed (5000 ms, mutation: cooldown 1 ms long)
