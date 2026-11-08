@@ -34,6 +34,7 @@ export class TickImpl implements Tick {
     private readonly repository: GameRepository,
     private readonly clock: Clock,
     private readonly random: RandomSource,
+    private readonly itemRandom: RandomSource,
   ) {}
 
   execute(): TickResponse {

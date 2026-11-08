@@ -26,7 +26,7 @@ export function createUseCases(): UseCases {
     submitGuess: new SubmitGuessImpl(repository),
     distractGuardian: new DistractGuardianImpl(repository, clock),
     peekSecret: new PeekSecretImpl(repository, clock),
-    tick: new TickImpl(repository, clock, random),
+    tick: new TickImpl(repository, clock, random, random),
     moveShield: new MoveShieldImpl(repository),
   };
 }

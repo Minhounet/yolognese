@@ -7,14 +7,21 @@ import { InMemoryGameRepository } from '../../src/infrastructure/InMemoryGameRep
 import { FakeClock } from '../support/FakeClock';
 import { ScriptedRandomSource } from '../support/ScriptedRandomSource';
 
-// secret: red yellow green blue; attackRandom: the attack delay drawn at scheduling, then the lane at wind-up (cycling)
-function startedGame(attackRandom: readonly number[] = [0, 2]) {
+// secret: red yellow green blue; attackRandom: the attack delay drawn at scheduling, then the lane at wind-up (cycling);
+// itemRandom: the item delay drawn at scheduling, then its kind and spot x, y when it appears (cycling)
+// item kinds by index: 0 food, 1 smoke, 2 xray, 3 hourglass, 4 charm, 5 present
+function startedGame(attackRandom: readonly number[] = [0, 2], itemRandom: readonly number[] = [0, 0, 30, 70]) {
   const clock = new FakeClock();
   const repository = new InMemoryGameRepository();
   new StartGameImpl(new ScriptedRandomSource([0, 1, 2, 3]), repository, clock).execute();
   return {
     clock,
-    tick: new TickImpl(repository, clock, new ScriptedRandomSource(attackRandom)),
+    tick: new TickImpl(
+      repository,
+      clock,
+      new ScriptedRandomSource(attackRandom),
+      new ScriptedRandomSource(itemRandom),
+    ),
     submitGuess: new SubmitGuessImpl(repository),
     moveShield: new MoveShieldImpl(repository),
     distractGuardian: new DistractGuardianImpl(repository, clock),
@@ -166,5 +173,15 @@ describe('Tick', () => {
     const response = tick.execute();
 
     expect(response.kind === 'ticked' && response.attack).toBeUndefined();
+  });
+
+  it('shouldShowItem_whenItemTimeComes', () => {
+    const { clock, tick } = startedGame([20000, 0], [0, 0, 30, 70]);
+    tick.execute();
+    clock.advance(8000);
+
+    const response = tick.execute();
+
+    expect(response).toMatchObject({ kind: 'ticked', item: { kind: 'food', spot: { x: 30, y: 70 } } });
   });
 });
