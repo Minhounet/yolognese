@@ -6,6 +6,7 @@ import { Clock, GameRepository } from './ports';
 import { GameView } from './views';
 
 const PEEK_COOLDOWN_MS = 5000;
+const NO_COOLDOWN_MS = 0;
 
 export interface PeekCommand {
   readonly index: number;
@@ -49,13 +50,13 @@ export class PeekSecretImpl implements PeekSecret {
       this.repository.save({ ...session, game, peekReadyAt });
       return { kind: 'caught', view: toGameView(game), cooldownMs: PEEK_COOLDOWN_MS };
     }
-    const revealedReadyAt = isBlind(session.guardian, now) ? session.peekReadyAt : peekReadyAt;
-    this.repository.save({ ...session, peekReadyAt: revealedReadyAt });
+    const cooldownMs = isBlind(session.guardian, now) ? NO_COOLDOWN_MS : PEEK_COOLDOWN_MS;
+    this.repository.save({ ...session, peekReadyAt: now + cooldownMs });
     return {
       kind: 'revealed',
       index: command.index,
       color: session.game.secret[command.index],
-      cooldownMs: PEEK_COOLDOWN_MS,
+      cooldownMs,
     };
   }
 }
