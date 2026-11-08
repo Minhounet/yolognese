@@ -28,4 +28,12 @@ describe('PeekSecret', () => {
 
     expect(response).toEqual({ kind: 'revealed', index: 2, color: 'green' });
   });
+
+  it('shouldBeCaught_whenPeekingWhileWatched', () => {
+    const { peekSecret } = startedGame();
+
+    const response = peekSecret.execute({ index: 2 });
+
+    expect(response).toMatchObject({ kind: 'caught' });
+  });
 });
