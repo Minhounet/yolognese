@@ -27,4 +27,10 @@ describe('isShake', () => {
 
     expect(isShake(readings)).toBe(false);
   });
+
+  it('shouldDetectShake_whenBurstFollowsLoneJolt', () => {
+    const readings = [jolt(0), still(800), jolt(1500), jolt(1700), jolt(1900)];
+
+    expect(isShake(readings)).toBe(true);
+  });
 });
