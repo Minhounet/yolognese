@@ -1,5 +1,6 @@
 import { COLORS, Code } from '../domain/color';
 import { newGame } from '../domain/game';
+import { WATCHING } from '../domain/guardian';
 import { toGameView } from './GameMapper';
 import { GameRepository, RandomSource } from './ports';
 import { GameView } from './views';
@@ -16,7 +17,7 @@ export class StartGameImpl implements StartGame {
 
   execute(): GameView {
     const game = newGame(this.drawSecret());
-    this.repository.save({ game });
+    this.repository.save({ game, guardian: WATCHING });
     return toGameView(game);
   }
 

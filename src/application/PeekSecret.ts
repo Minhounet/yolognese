@@ -1,4 +1,5 @@
 import { Color } from '../domain/color';
+import { toGameView } from './GameMapper';
 import { Clock, GameRepository } from './ports';
 import { GameView } from './views';
 
@@ -25,6 +26,9 @@ export class PeekSecretImpl implements PeekSecret {
     const session = this.repository.load();
     if (session === undefined) {
       return { kind: 'rejected', reason: 'no-game' };
+    }
+    if (!session.guardian.distracted) {
+      return { kind: 'caught', view: toGameView(session.game) };
     }
     return { kind: 'revealed', index: command.index, color: session.game.secret[command.index] };
   }

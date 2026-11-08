@@ -1,4 +1,5 @@
 import { Game } from '../domain/game';
+import { Guardian } from '../domain/guardian';
 
 export interface RandomSource {
   nextInt(maxExclusive: number): number;
@@ -10,6 +11,7 @@ export interface Clock {
 
 export interface Session {
   readonly game: Game;
+  readonly guardian: Guardian;
 }
 
 export interface GameRepository {
