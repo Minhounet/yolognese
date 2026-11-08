@@ -105,4 +105,14 @@ describe('PeekSecret', () => {
 
     expect(response).toMatchObject({ kind: 'played', view: { life: 7 } });
   });
+
+  it('shouldRejectPeek_whenPeekedJustBefore', () => {
+    const { distractGuardian, peekSecret } = startedGame();
+    distractGuardian.execute(AWAY);
+    peekSecret.execute({ index: 0 });
+
+    const response = peekSecret.execute({ index: 1 });
+
+    expect(response).toEqual({ kind: 'rejected', reason: 'cooling-down' });
+  });
 });

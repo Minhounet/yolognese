@@ -139,3 +139,17 @@
 - Deferred refinement notes: untested generalization — the clamp at 0 lives only in penalise; an attack hit (AC14) needs it too
 - Asked user: no (yolo)
 - Carry forward: AC11 extends PeekSecret (cooldown before the caught/revealed branch) and the Session (peekReadyAt); AC14's attack hit reuses a life loss with the clamp; AC13's food needs maxLife in the view (minor 3)
+
+## AC11 - TDD plan
+- Decided: through PeekSecret, numbering from 34:
+  34 [AC11] shouldRejectPeek_whenPeekedJustBefore — a revealed peek, then another at once: rejected 'cooling-down'
+  35 [AC11] shouldAllowPeek_whenCooldownHasPassed — 5000 ms after a peek, distracted again: revealed
+  (guard) shouldRejectPeek_justBeforeCooldownEnds — 4999 ms after: rejected (mutation: cooldown 1 ms short)
+  36 [AC11] shouldRejectPeek_whenCaughtJustBefore — caught, then a peek at once: rejected, not caught again
+  (guard) shouldCostNothing_whenPeekRejectedDuringCooldown — caught then rejected: a miss afterwards leaves life 7 (mutation: a rejected peek costs life)
+  37 [AC11] shouldStartCooldown_whenPeekRevealed — the revealed response carries cooldownMs 5000 (the screen's bar)
+  38 [AC11] shouldStartCooldown_whenCaught — the caught response carries cooldownMs 5000
+  "Shown as a bar refilling": browser check e2e/ac11.spec.js
+- Deviation from conception.md D-cooldown (smallest change): the responses carry cooldownMs (as DistractGuardian's remainingMs) instead of a cooldownRemainingMs in GameView, which would need the clock in the mapper; the Session holds peekReadyAt as planned
+- dev: on (6 tests, ticket with 4 ACs left); a fresh shonin-dev
+- Asked user: no (yolo)
