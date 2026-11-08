@@ -16,6 +16,8 @@ function startGame() {
   };
 }
 
+const MISS = { guess: ['purple', 'purple', 'orange', 'orange'] } as const;
+
 describe('Life', () => {
   it('shouldStartWithTenLife_whenGameStarts', () => {
     const { view } = startGame();
@@ -45,5 +47,14 @@ describe('Life', () => {
     const response = peekSecret.execute({ index: 0 });
 
     expect(response).toMatchObject({ kind: 'caught', view: { life: 8 } });
+  });
+
+  it('shouldBeLost_whenCaughtWithTwoLifeLeft', () => {
+    const { submitGuess, peekSecret } = startGame();
+    Array.from({ length: 8 }).forEach(() => submitGuess.execute(MISS));
+
+    const response = peekSecret.execute({ index: 0 });
+
+    expect(response).toMatchObject({ kind: 'caught', view: { status: 'lost', life: 0 } });
   });
 });
