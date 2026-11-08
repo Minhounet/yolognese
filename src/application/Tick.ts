@@ -1,3 +1,4 @@
+import { timeUp } from '../domain/game';
 import { toGameView } from './GameMapper';
 import { Clock, GameRepository } from './ports';
 import { GameView } from './views';
@@ -21,10 +22,8 @@ export class TickImpl implements Tick {
     if (session === undefined) {
       return { kind: 'rejected', reason: 'no-game' };
     }
-    return {
-      kind: 'ticked',
-      view: toGameView(session.game),
-      timeLeftMs: session.endsAt - this.clock.now(),
-    };
+    const timeLeftMs = session.endsAt - this.clock.now();
+    const game = timeLeftMs <= 0 ? timeUp(session.game) : session.game;
+    return { kind: 'ticked', view: toGameView(game), timeLeftMs };
   }
 }

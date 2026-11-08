@@ -59,6 +59,10 @@ export function penalise(game: Game): Game {
   return { ...game, life };
 }
 
+export function timeUp(game: Game): Game {
+  return { ...game, life: MIN_LIFE };
+}
+
 export function isWon(game: Game): boolean {
   return game.turns.some((turn) => cracksCode(game, turn));
 }
