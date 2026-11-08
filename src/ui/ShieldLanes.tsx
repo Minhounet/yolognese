@@ -1,4 +1,4 @@
-import { ComponentRef, useMemo, useRef, useState } from 'react';
+import { ComponentRef, useEffect, useMemo, useRef, useState } from 'react';
 import { LayoutChangeEvent, PanResponder, Pressable, StyleSheet, Text, View } from 'react-native';
 import { THEME } from './theme';
 
@@ -61,10 +61,18 @@ export function ShieldLanes({ shieldLane, warningLane, onMove, onMeasured }: Shi
     [],
   );
 
+  const measureGround = () =>
+    ground.current?.measureInWindow((x, y, measuredWidth) => onMeasured?.({ x, y, width: measuredWidth }));
+
   const measure = (event: LayoutChangeEvent) => {
     setWidth(event.nativeEvent.layout.width);
-    ground.current?.measureInWindow((x, y, measuredWidth) => onMeasured?.({ x, y, width: measuredWidth }));
+    measureGround();
   };
+
+  // the screen above the ground grows and shrinks (notes, bars): measure again when a meatball is thrown
+  useEffect(() => {
+    if (warningLane !== undefined) measureGround();
+  }, [warningLane]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const tapLane = (lane: number) => {
     setCentreX(laneCentre(lane, width));

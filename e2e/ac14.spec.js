@@ -7,10 +7,10 @@ async function tapLane(page, lane) {
   await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
 }
 
-async function waitForWarning(page) {
+async function waitForWarning(page, stepMs = 1000) {
   const warning = page.getByTestId('attack-warning');
-  for (let second = 0; second < 21 && !(await warning.isVisible()); second += 1) {
-    await page.clock.runFor(1000);
+  for (let waited = 0; waited < 21000 && !(await warning.isVisible()); waited += stepMs) {
+    await page.clock.runFor(stepMs);
   }
   await expect(warning).toBeVisible();
   const label = await warning.getAttribute('aria-label');
@@ -70,15 +70,24 @@ test('AC14: tapping the shield moves nothing else: the guardian keeps watching',
 test('AC15: the meatball falls from the guardian down to the player\'s zone, and takes 2.5 s', async ({ page }) => {
   await page.clock.install();
   await page.goto('/');
-  const lane = await waitForWarning(page);
+  await page.clock.runFor(9500); // the first attack comes 10 s at the earliest
+  const lane = await waitForWarning(page, 100); // seen within 100 ms of the throw
   const meatball = page.getByTestId('meatball');
   await expect(meatball).toBeVisible();
   const start = await meatball.boundingBox();
+  const guardian = await page.getByTestId('guardian').boundingBox();
+  expect(start.y).toBeLessThan(guardian.y + guardian.height); // it leaves from the guardian
   await page.clock.runFor(1500);
   const middle = await meatball.boundingBox();
   expect(middle.y).toBeGreaterThan(start.y); // falling down the screen
   await expect(page.getByTestId('attack-result')).not.toHaveText(/Hit|Blocked/); // still in the air after 1.5 s
-  await page.clock.runFor(1200);
+  await page.clock.runFor(700);
+  const low = await meatball.boundingBox();
+  const target = await page.getByTestId(`lane-${lane}`).boundingBox();
+  expect(low.x + low.width / 2).toBeGreaterThan(target.x); // over its lane, near the ground
+  expect(low.x + low.width / 2).toBeLessThan(target.x + target.width);
+  expect(low.y + low.height).toBeGreaterThan(target.y - target.height * 2);
+  await page.clock.runFor(500);
   await expect(page.getByTestId('attack-result')).toHaveText(lane === 1 ? '🛡️ Blocked!' : '💥 Hit by a meatball! −2 life');
   await expect(page.getByTestId('meatball')).toHaveCount(0);
 });
@@ -90,4 +99,21 @@ test('AC15: the player\'s zone (shield and life bar) is at the bottom of the scr
   expect(zone.y).toBeGreaterThan(guess.y);
   await expect(page.getByTestId('player-zone').getByTestId('life')).toBeVisible();
   await expect(page.getByTestId('player-zone').getByTestId('shield')).toBeVisible();
+});
+
+test('AC15: the shield follows the finger smoothly, between the lanes too', async ({ page }) => {
+  await page.goto('/');
+  const shield = page.getByTestId('shield');
+  const box = await shield.boundingBox();
+  const startX = box.x + box.width / 2;
+  const y = box.y + box.height / 2;
+
+  await page.mouse.move(startX, y);
+  await page.mouse.down();
+  await page.mouse.move(startX + 30, y, { steps: 6 }); // less than half a lane: a snapping shield would not move
+
+  const moved = await shield.boundingBox();
+  expect(moved.x + moved.width / 2).toBeGreaterThan(startX + 20);
+  expect(moved.x + moved.width / 2).toBeLessThan(startX + 40);
+  await page.mouse.up();
 });
