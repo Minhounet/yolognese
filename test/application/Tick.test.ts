@@ -326,4 +326,16 @@ describe('Tick', () => {
 
     expect(response).toMatchObject({ kind: 'revealed', index: 0, color: 'red' });
   });
+
+  it('shouldNotStartCooldown_whenPeekingWhileBlind', () => {
+    const { clock, collectItem, peekSecret, tick } = startedGame([30000, 0], [0, 1, 30, 70]);
+    tick.execute();
+    clock.advance(8000);
+    collectShownItem(tick, collectItem);
+    peekSecret.execute({ index: 0 });
+
+    const response = peekSecret.execute({ index: 1 });
+
+    expect(response).toMatchObject({ kind: 'revealed', index: 1, color: 'yellow' });
+  });
 });
