@@ -62,4 +62,14 @@ describe('Tick', () => {
 
     expect(response).toEqual({ kind: 'rejected', reason: 'game-over' });
   });
+
+  it('shouldNotGoBelowZero_whenTimeIsPast', () => {
+    const { clock, tick } = startedGame();
+    tick.execute();
+    clock.advance(200000);
+
+    const response = tick.execute();
+
+    expect(response).toMatchObject({ kind: 'ticked', timeLeftMs: 0 });
+  });
 });
