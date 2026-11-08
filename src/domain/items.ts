@@ -24,6 +24,10 @@ export function isItemShown(itemAt: number, now: number): boolean {
   return itemAt <= now && now < itemAt + ITEM_SHOWN_MS;
 }
 
+export function isItemGone(itemAt: number, now: number): boolean {
+  return itemAt + ITEM_SHOWN_MS <= now;
+}
+
 export function appear(kindIndex: number, x: number, y: number): Item {
   return { id: 0, kind: ITEM_KINDS[kindIndex], spot: { x, y } };
 }

@@ -16,6 +16,7 @@ import {
   ITEM_SPOT_SPAN,
   Item,
   appear,
+  isItemGone,
   isItemShown,
   scheduleItemAt,
 } from '../domain/items';
@@ -58,11 +59,18 @@ export class TickImpl implements Tick {
     const landing = this.landing(session, now);
     const game = landing.hits ? penalise(timedGame) : timedGame;
     const attackState = this.windUpIfDue(session, now, landing.pendingLandsAt);
-    const itemAt = session.itemAt ?? scheduleItemAt(now, this.itemRandom.nextInt(ITEM_DELAY_SPREAD_MS));
+    const itemAt = this.itemAtFor(session, now);
     const shown = isItemShown(itemAt, now) && !session.itemCollected;
     const item = shown ? (session.item ?? this.showItem()) : undefined;
     this.repository.save({ ...session, ...attackState.stored, itemAt, item, game });
     return { kind: 'ticked', view: toGameView(game), timeLeftMs, attack: attackState.attack, item };
+  }
+
+  private itemAtFor(session: Session, now: number): number {
+    const scheduled = session.itemAt;
+    return scheduled === undefined || isItemGone(scheduled, now)
+      ? scheduleItemAt(now, this.itemRandom.nextInt(ITEM_DELAY_SPREAD_MS))
+      : scheduled;
   }
 
   private showItem(): Item {
