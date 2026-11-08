@@ -86,4 +86,13 @@ describe('PeekSecret', () => {
 
     expect(response).toEqual({ kind: 'rejected', reason: 'game-over' });
   });
+
+  it('shouldKeepPenalty_whenGuessingAfterBeingCaught', () => {
+    const { peekSecret, submitGuess } = startedGame();
+    peekSecret.execute({ index: 2 });
+
+    const response = submitGuess.execute({ guess: ['purple', 'purple', 'orange', 'orange'] });
+
+    expect(response).toMatchObject({ kind: 'played', view: { attemptsLeft: 8 } });
+  });
 });
