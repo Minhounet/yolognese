@@ -1,4 +1,5 @@
 import { Color } from '../domain/color';
+import { isDistracted } from '../domain/guardian';
 import { toGameView } from './GameMapper';
 import { Clock, GameRepository } from './ports';
 import { GameView } from './views';
@@ -27,7 +28,7 @@ export class PeekSecretImpl implements PeekSecret {
     if (session === undefined) {
       return { kind: 'rejected', reason: 'no-game' };
     }
-    if (!session.guardian.distracted) {
+    if (!isDistracted(session.guardian, this.clock.now())) {
       return { kind: 'caught', view: toGameView(session.game) };
     }
     return { kind: 'revealed', index: command.index, color: session.game.secret[command.index] };
