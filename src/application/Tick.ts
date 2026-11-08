@@ -26,6 +26,7 @@ export class TickImpl implements Tick {
     }
     const timeLeftMs = Math.max(MIN_TIME_LEFT_MS, session.endsAt - this.clock.now());
     const game = timeLeftMs === MIN_TIME_LEFT_MS ? timeUp(session.game) : session.game;
+    this.repository.save({ ...session, game });
     return { kind: 'ticked', view: toGameView(game), timeLeftMs };
   }
 }
