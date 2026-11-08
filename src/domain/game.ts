@@ -66,6 +66,10 @@ export function restoreLife(game: Game): Game {
   return { ...game, life: Math.min(MAX_LIFE, game.life + LIFE_RESTORED_BY_FOOD) };
 }
 
+export function hiddenPegs(game: Game): readonly number[] {
+  return game.secret.map((_, index) => index).filter((index) => !game.revealed.includes(index));
+}
+
 export function revealPeg(game: Game, index: number): Game {
   return { ...game, revealed: [...game.revealed, index] };
 }

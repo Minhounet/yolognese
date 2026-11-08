@@ -1,4 +1,4 @@
-import { restoreLife, revealPeg } from '../domain/game';
+import { Game, hiddenPegs, restoreLife, revealPeg } from '../domain/game';
 import { blindUntil } from '../domain/guardian';
 import { ItemKind, SMOKE_BLIND_MS, isItemShown } from '../domain/items';
 import { toGameView } from './GameMapper';
@@ -46,10 +46,12 @@ export class CollectItemImpl implements CollectItem {
       case 'smoke':
         return { game: session.game, guardian: blindUntil(now + SMOKE_BLIND_MS) };
       case 'xray':
-        return {
-          game: revealPeg(session.game, this.random.nextInt(session.game.secret.length)),
-          guardian: session.guardian,
-        };
+        return { game: this.revealHiddenPeg(session.game), guardian: session.guardian };
     }
+  }
+
+  private revealHiddenPeg(game: Game): Game {
+    const hidden = hiddenPegs(game);
+    return revealPeg(game, hidden[this.random.nextInt(hidden.length)]);
   }
 }
