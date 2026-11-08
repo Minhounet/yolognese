@@ -4,6 +4,14 @@ import { InMemoryGameRepository } from '../../src/infrastructure/InMemoryGameRep
 import { ScriptedRandomSource } from '../support/ScriptedRandomSource';
 
 describe('StartGame', () => {
+  it('shouldStartWithTenLife_whenGameStarts', () => {
+    const startGame = new StartGameImpl(new ScriptedRandomSource([0, 1, 2, 3]), new InMemoryGameRepository());
+
+    const view = startGame.execute();
+
+    expect(view).toMatchObject({ life: 10 });
+  });
+
   it('shouldStartFreshGame_whenStartedAgain', () => {
     const repository = new InMemoryGameRepository();
     const startGame = new StartGameImpl(new ScriptedRandomSource([0, 1, 2, 3]), repository);
