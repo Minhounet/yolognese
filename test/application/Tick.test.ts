@@ -253,4 +253,16 @@ describe('Tick', () => {
 
     expect(response).toEqual({ kind: 'rejected', reason: 'no-item' });
   });
+
+  it('shouldKeepSameItem_whileShown', () => {
+    const { clock, tick } = startedGame([20000, 0], [0, 0, 30, 70]);
+    tick.execute();
+    clock.advance(8000);
+    tick.execute();
+    clock.advance(100);
+
+    const response = tick.execute();
+
+    expect(response).toMatchObject({ kind: 'ticked', item: { kind: 'food', spot: { x: 30, y: 70 } } });
+  });
 });
