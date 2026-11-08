@@ -1,4 +1,4 @@
-import { Clock, GameRepository } from './ports';
+import { Clock, GameRepository, Session } from './ports';
 import { toGameView } from './GameMapper';
 import { GameView } from './views';
 
@@ -23,6 +23,16 @@ export class TickImpl implements Tick {
     if (session === undefined) {
       return { kind: 'rejected', reason: 'no-game' };
     }
-    return { kind: 'ticked', timeLeftMs: GAME_DURATION_MS, view: toGameView(session.game) };
+    const { endsAt } = this.withDeadline(session);
+    return { kind: 'ticked', timeLeftMs: endsAt - this.clock.now(), view: toGameView(session.game) };
+  }
+
+  private withDeadline(session: Session): Session & { readonly endsAt: number } {
+    if (session.endsAt !== undefined) {
+      return { ...session, endsAt: session.endsAt };
+    }
+    const started = { ...session, endsAt: this.clock.now() + GAME_DURATION_MS };
+    this.repository.save(started);
+    return started;
   }
 }
