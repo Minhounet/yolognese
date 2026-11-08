@@ -1,5 +1,5 @@
 import { restoreLife } from '../domain/game';
-import { distractUntil } from '../domain/guardian';
+import { blindUntil } from '../domain/guardian';
 import { ItemKind, SMOKE_BLIND_MS, isItemShown } from '../domain/items';
 import { toGameView } from './GameMapper';
 import { Clock, GameRepository, Session } from './ports';
@@ -43,7 +43,7 @@ export class CollectItemImpl implements CollectItem {
       case 'food':
         return { game: restoreLife(session.game), guardian: session.guardian };
       case 'smoke':
-        return { game: session.game, guardian: distractUntil(now + SMOKE_BLIND_MS) };
+        return { game: session.game, guardian: blindUntil(now + SMOKE_BLIND_MS) };
     }
   }
 }

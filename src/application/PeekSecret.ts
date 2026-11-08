@@ -1,6 +1,6 @@
 import { Color } from '../domain/color';
 import { isOver, penalise } from '../domain/game';
-import { isDistracted } from '../domain/guardian';
+import { isBlind, isDistracted } from '../domain/guardian';
 import { toGameView } from './GameMapper';
 import { Clock, GameRepository } from './ports';
 import { GameView } from './views';
@@ -49,7 +49,8 @@ export class PeekSecretImpl implements PeekSecret {
       this.repository.save({ ...session, game, peekReadyAt });
       return { kind: 'caught', view: toGameView(game), cooldownMs: PEEK_COOLDOWN_MS };
     }
-    this.repository.save({ ...session, peekReadyAt });
+    const revealedReadyAt = isBlind(session.guardian, now) ? session.peekReadyAt : peekReadyAt;
+    this.repository.save({ ...session, peekReadyAt: revealedReadyAt });
     return {
       kind: 'revealed',
       index: command.index,
