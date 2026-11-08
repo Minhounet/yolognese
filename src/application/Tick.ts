@@ -23,16 +23,17 @@ export class TickImpl implements Tick {
     if (session === undefined) {
       return { kind: 'rejected', reason: 'no-game' };
     }
-    const { endsAt } = this.withDeadline(session);
-    return { kind: 'ticked', timeLeftMs: endsAt - this.clock.now(), view: toGameView(session.game) };
+    const timeLeftMs = this.deadline(session) - this.clock.now();
+    return { kind: 'ticked', timeLeftMs, view: toGameView(session.game) };
   }
 
-  private withDeadline(session: Session): Session & { readonly endsAt: number } {
+  /** The game's end; the first tick of a game sets it. */
+  private deadline(session: Session): number {
     if (session.endsAt !== undefined) {
-      return { ...session, endsAt: session.endsAt };
+      return session.endsAt;
     }
-    const started = { ...session, endsAt: this.clock.now() + GAME_DURATION_MS };
-    this.repository.save(started);
-    return started;
+    const endsAt = this.clock.now() + GAME_DURATION_MS;
+    this.repository.save({ ...session, endsAt });
+    return endsAt;
   }
 }
