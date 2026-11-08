@@ -5,7 +5,7 @@
 - Mode: build
 - Yolo: on (see references/yolo.md of saiban-orchestrator)
 - Done: scaffold (Expo SDK 58, TypeScript), structural plan and ACs, AC1-AC4, AC6-AC12 and AC14 verified, AC5 waived
-- Next: AC13 (reds from 48), the last AC; also the user's look at the flip (AC6) and the feedback marks (AC9); then the user decides: merge, more features, or keep ideas
+- Next: AC13 in progress — red 62 shouldRevealStillHiddenPeg_whenXrayCollectedAgain is committed and failing; its GREEN is next (the shonin-dev of this run stopped on the account's 5-hour usage limit before writing it). Then the plan's remaining reds (hourglass, charm x2, present, the landing outcome), refactor of the item state, the screen (items, blind guardian, x-rayed pegs, charm) with e2e/ac13.spec.js, kenji-reviewer, Finish (verdict, report). Also the user's look at the flip (AC6), the feedback marks (AC9), the bars (AC10, AC11), time's-up (AC12), the shield drag (AC14)
 - Files: docs/ticket/PEEK-1/, src/
 
 ## Start - scope and mode
@@ -235,3 +235,4 @@
 - Plan change (AC13): red 57 shouldShowAnotherItem_afterOneIsCollected (a collected item also leaves: the next one comes a new delay after the tick that sees it gone)
 - Deviation (AC13): green 58 picked 5 s of smoke (invented); set to the plan's 4 s before commit, so shouldSeeAgain_afterFourSecondsOfSmoke will likely pass on write (guard)
 - Plan change (AC13): red 60 shouldReportNoCooldown_whenPeekingWhileBlind (a blind peek still told the screen to refill the bar); shouldSeeAgain and shouldNotAttack_whenGuardianIsBlind passed on write: guards 59
+- Paused (AC13): the account's 5-hour usage limit stopped the run's shonin-dev at green 62 (resets 20:30 UTC). Reds 48-62 so far, greens 48-61 committed; guards 59 (two); plan changes logged above. Resume: say "resume peek-a-code"; a fresh shonin-dev takes green 62 (the old one's context is heavy).
