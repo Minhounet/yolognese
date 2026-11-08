@@ -4,6 +4,7 @@ export const MAX_LIFE = 10;
 const STARTING_LIFE = MAX_LIFE;
 const LIFE_LOST_PER_MISS = 1;
 const LIFE_LOST_WHEN_CAUGHT = 2;
+const LIFE_LOST_WHEN_PUNCHED = 1;
 const LIFE_RESTORED_BY_FOOD = 3;
 const MIN_LIFE = 0;
 
@@ -60,6 +61,10 @@ export function play(game: Game, guess: Code): Game {
 export function penalise(game: Game): Game {
   const life = Math.max(MIN_LIFE, game.life - LIFE_LOST_WHEN_CAUGHT);
   return { ...game, life };
+}
+
+export function punch(game: Game): Game {
+  return { ...game, life: game.life - LIFE_LOST_WHEN_PUNCHED };
 }
 
 export function restoreLife(game: Game): Game {
