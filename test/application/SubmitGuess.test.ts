@@ -117,6 +117,14 @@ describe('SubmitGuess', () => {
     expect(response).toMatchObject({ kind: 'played', view: { life: 9 } });
   });
 
+  it('shouldKeepLife_whenGuessWins', () => {
+    const submitGuess = startedGame(RED_YELLOW_GREEN_BLUE);
+
+    const response = submitGuess.execute({ guess: ['red', 'yellow', 'green', 'blue'] });
+
+    expect(response).toMatchObject({ kind: 'played', view: { life: 10 } });
+  });
+
   it('shouldBeLost_whenTenthGuessMisses', () => {
     const submitGuess = startedGame(RED_YELLOW_GREEN_BLUE);
     const miss = { guess: ['purple', 'purple', 'orange', 'orange'] } as const;

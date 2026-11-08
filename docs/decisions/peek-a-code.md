@@ -130,3 +130,4 @@
 - dev: on (ticket with 5 ACs left, 5 tests)
 - Why: drive AC10 at the use-case level; each red fails under the minimal greens before it
 - Asked user: no (yolo)
+- Deviation (AC10, approved by the orchestrator in yolo): shonin-dev's GREEN 29 spared a winning guess from losing life, ahead of any test (rule 5); cut back to an unconditional cost before commit. Red 30 shouldKeepLife_whenGuessWins added ("a guess that does not win costs 1"); the plan's 30-32 become 31-33.
