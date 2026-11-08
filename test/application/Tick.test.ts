@@ -457,4 +457,17 @@ describe('Tick', () => {
 
     expect(response).toMatchObject({ kind: 'ticked', view: { life: 8 } });
   });
+
+  it('shouldGiveAnotherItem_whenPresentCollected', () => {
+    const { clock, collectItem, peekSecret, tick } = startedGame([30000, 0], [0, 5, 30, 70], [0]);
+    tick.execute();
+    peekSecret.execute({ index: 0 });
+    clock.advance(5000);
+    peekSecret.execute({ index: 0 });
+    clock.advance(3000);
+
+    const response = collectShownItem(tick, collectItem);
+
+    expect(response).toMatchObject({ kind: 'collected', item: 'present', view: { life: 9 } });
+  });
 });
