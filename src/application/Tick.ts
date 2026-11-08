@@ -60,7 +60,7 @@ export class TickImpl implements Tick {
     const game = landing.hits ? penalise(timedGame) : timedGame;
     const attackState = this.windUpIfDue(session, now, landing.pendingLandsAt);
     const itemState = this.itemOnShow(session, now);
-    this.repository.save({ ...session, ...attackState.stored, ...itemState, game });
+    this.repository.save({ ...session, ...attackState.stored, ...itemState, game, charmed: landing.charmed });
     return { kind: 'ticked', view: toGameView(game), timeLeftMs, attack: attackState.attack, item: itemState.item };
   }
 
@@ -90,6 +90,7 @@ export class TickImpl implements Tick {
     return {
       hits: landed && !isBlocked(session.attackLane, session.shieldLane) && !session.charmed,
       pendingLandsAt: landed ? undefined : session.attackLandsAt,
+      charmed: session.charmed === true && !landed,
     };
   }
 
