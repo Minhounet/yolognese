@@ -15,4 +15,10 @@ describe('isShake', () => {
 
     expect(isShake(readings)).toBe(true);
   });
+
+  it('shouldNotDetectShake_whenJoltsAreTooFarApart', () => {
+    const readings = [jolt(0), still(500), jolt(900), still(1200), jolt(1600)];
+
+    expect(isShake(readings)).toBe(false);
+  });
 });
