@@ -18,6 +18,15 @@ type Draft = readonly (Color | undefined)[];
 const EMPTY_DRAFT: Draft = [undefined, undefined, undefined, undefined];
 const PEEK_SHOWN_MS = 400;
 const CAUGHT_SHOWN_MS = 1500;
+const TICK_MS = 100;
+const MS_PER_SECOND = 1000;
+const SECONDS_PER_MINUTE = 60;
+
+function countdown(timeLeftMs: number): string {
+  const seconds = Math.ceil(timeLeftMs / MS_PER_SECOND);
+  const minutes = Math.floor(seconds / SECONDS_PER_MINUTE);
+  return `${minutes}:${String(seconds % SECONDS_PER_MINUTE).padStart(2, '0')}`;
+}
 
 function isComplete(draft: Draft): draft is Code {
   return draft.every((color) => color !== undefined);
@@ -49,6 +58,18 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
   const [peeked, setPeeked] = useState<{ readonly index: number; readonly color: Color } | undefined>();
   const [caught, setCaught] = useState(false);
   const [cooldown, setCooldown] = useState({ startedAt: 0, cooldownMs: 0 });
+  const [timeLeftMs, setTimeLeftMs] = useState<number | undefined>(undefined);
+
+  useEffect(() => {
+    if (!playing) return undefined;
+    const timer = setInterval(() => {
+      const response = useCases.tick.execute();
+      if (response.kind !== 'ticked') return;
+      setTimeLeftMs(response.timeLeftMs);
+      if (response.view.status !== 'playing') setView(response.view);
+    }, TICK_MS);
+    return () => clearInterval(timer);
+  }, [playing, useCases]);
   const [puffs, setPuffs] = useState<readonly { readonly id: number; readonly at: Point }[]>([]);
   const nextPuff = useRef(0);
 
@@ -118,6 +139,7 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
     setView(useCases.startGame.execute());
     setDraft(EMPTY_DRAFT);
     setCooldown({ startedAt: 0, cooldownMs: 0 });
+    setTimeLeftMs(undefined);
   };
 
   return (
@@ -135,7 +157,10 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
         })}
       </View>
       <Text testID="status" style={[styles.status, caught && styles.caught]}>
-        {caught ? 'Caught peeking! −2 life' : STATUS_TEXT[view.status]}
+        {caught ? 'Caught peeking! −2 life' : timeLeftMs === 0 && view.status === 'lost' ? "Time's up! The guardian wins." : STATUS_TEXT[view.status]}
+      </Text>
+      <Text testID="timer" accessibilityLabel="time left" style={styles.timer}>
+        ⏱️ {timeLeftMs === undefined ? "–:––" : countdown(timeLeftMs)}
       </Text>
       <LifeBar life={view.life} />
       {playing && <CooldownBar startedAt={cooldown.startedAt} cooldownMs={cooldown.cooldownMs} />}
@@ -195,5 +220,6 @@ const styles = StyleSheet.create({
   button: { backgroundColor: THEME.sauce, borderRadius: 24, paddingHorizontal: 32, paddingVertical: 12, marginTop: 8 },
   disabled: { opacity: 0.4 },
   caught: { color: THEME.sauce, fontWeight: 'bold' },
+  timer: { color: THEME.ink, fontSize: 16, fontWeight: 'bold', fontVariant: ['tabular-nums'] },
   buttonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
 });
