@@ -73,4 +73,15 @@ describe('Tick', () => {
 
     expect(response).toMatchObject({ kind: 'ticked', attack: { lane: 2, landsInMs: 1000 } });
   });
+
+  it('shouldNotWarn_beforeAttackTime', () => {
+    const { clock, tick } = startedGame([0, 2]);
+    tick.execute();
+    clock.advance(9999);
+
+    const response = tick.execute();
+
+    expect(response.kind === 'ticked' && response.attack).toBeUndefined();
+  });
+
 });
