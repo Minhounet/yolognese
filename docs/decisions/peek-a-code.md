@@ -1,11 +1,11 @@
 # Decision log: peek-a-code
 
 ## Resume
-- Status: open
+- Status: done
 - Mode: build
 - Yolo: on (see references/yolo.md of saiban-orchestrator)
-- Done: scaffold (Expo SDK 58, TypeScript), structural plan and ACs, AC1-AC4, AC6-AC12 and AC14 verified, AC5 waived
-- Next: AC13 in progress — red 62 shouldRevealStillHiddenPeg_whenXrayCollectedAgain is committed and failing; its GREEN is next (the shonin-dev of this run stopped on the account's 5-hour usage limit before writing it). Then the plan's remaining reds (hourglass, charm x2, present, the landing outcome), refactor of the item state, the screen (items, blind guardian, x-rayed pegs, charm) with e2e/ac13.spec.js, kenji-reviewer, Finish (verdict, report). Also the user's look at the flip (AC6), the feedback marks (AC9), the bars (AC10, AC11), time's-up (AC12), the shield drag (AC14)
+- Done: scaffold, plan and ACs; AC1-AC4 and AC6-AC14 verified, AC5 waived (user); round 2 published to the feat-peek-a-code channel
+- Next: the user's look on the phone (flip AC6, marks AC9, bars AC10-AC11, time's up AC12, items AC13, shield drag AC14); then merge (a pull request, not opened), more features, or keep ideas
 - Files: docs/ticket/PEEK-1/, src/
 
 ## Start - scope and mode
@@ -241,3 +241,20 @@
 - Review fix (AC13, blocking): red 71 shouldStayBlind_whenPointingDuringSmoke (a tap during the smoke replaced the blindness with a 1.5 s distraction)
 - Review fix (AC13, minor): red 72 shouldRejectCollect_whenGameIsOver (food on a lost game brought it back to life)
 - Review fix (AC13, minor): red 73 shouldRevealNothingMore_whenEveryPegIsRevealed (an x-ray with no hidden peg pushed undefined into revealed)
+
+## AC13 - run and review
+- Decided: reds 48-73 by the orchestrator, greens by two shonin-devs (the first stopped on the usage limit at green 62); several invented tuning values reset to the plan's before commit (delay spread, spot span, smoke 4 s); refactors 51 (start at full life), 57 (item step grouped), 60 (caught branch owns its cooldown), 70 (wrapped); screen: ItemSprite, smoke over the guardian, x-rayed pegs, charm line, outcome read from Tick
+- Decided: kenji-reviewer, 1 blocking (a tap during the smoke replaced the blindness) -> red 71, fixed; minors fixed: collect after the game (red 72), x-ray with no hidden peg (red 73), the life bar reads maxLife; re-review PASS; open minors: the screen times the smoke (SMOKE_SHOWN_MS) and guesses blind/charmed from the collect response, CollectItem ignores the item id (always 0), the CollectItem tests live in Tick.test.ts, game-over and all-revealed unit-tested only
+- Super-green misses: 0
+- Deferred refinement notes: untested generalizations — a collect between time up and the next tick is accepted (D-timer deviation of AC12); a second charm or smoke does not stack; a point while only distracted restarts the 1.5 s
+- Asked user: no (yolo)
+- Carry forward: none (last AC)
+
+## Finish - round 2
+- Verdict: NOT GUILTY: AC10-AC14 verified (AC1-AC4, AC6-AC9 still verified, AC5 waived), last runs green (82 unit tests, tsc clean, 26 browser checks), no blocking finding or discrepancy open, all committed and pushed; EAS Update published (group 95147022)
+- Waiting for you: the look and feel on the phone (confirmations, not counts); merging the branch (a pull request, outward-facing, not opened)
+- Keep: e2e/support.js runForBlockingAttacks and the Math.random-per-check pattern (fix one draw index per browser check) — generic to any game with random events checked by Playwright; lives in e2e/
+- Improvements:
+  1. saiban-orchestrator / shonin-dev: the dev invented tuning values five times (delays, spans, smoke length) the tests could not pin. Add to the dev prompt rule: "Name only values the failing test forces; a value the test cannot tell apart (a random bound, a duration longer than the test runs) is the caller's: leave a TODO-free named constant only if the plan gives its value, else ask in your report."
+  2. igiari-tdd audit-tdd-history.sh: in a Node project its worktree has no node_modules, so every red reads "no failure line" and the final build fails; link the checkout's node_modules (or run an install command given with --setup-cmd) before re-running.
+  3. kenji-reviewer prompt in saiban-orchestrator: name the skill paths "to Read with your file tool, not a Skill tool" when the skills are not installed (the AC12 review admitted it had not read them).

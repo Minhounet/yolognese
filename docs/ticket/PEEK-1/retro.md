@@ -26,3 +26,7 @@
 - AC14: the random attacks broke the long browser checks (AC12's 3 minutes, AC4's loss loop): meatballs hit at random. A shared e2e/support.js runs the clock while moving the shield to each warned lane, as a player would. Lane clicks under page.clock hang (the "stable" wait again): taps where the lane is.
 - AC14: a real bug found by the flaky AC4 check: a tap on the shield passed through to the scene and distracted the guardian, so the next peek was safe. The shield now takes its own taps; pinned by "tapping the shield moves nothing else".
 - AC14: GREEN 43 built the random schedule ahead of reds 44-45 with invented tuning; they became guards. ScriptedRandomSource ignores its bound, so no test pins a spread (attack delay) or a lane count.
+- AC13: the dev agents kept inventing tuning values the tests could not pin (ScriptedRandomSource ignores bounds): each was reset to the plan's value before commit, and some planned reds then passed on write and became guards.
+- AC13: the first dev stopped on the account's 5-hour usage limit; the run was paused with its Resume block and taken over by a fresh dev at green 62.
+- AC13: a red assertion passed with the bug present (toEqual ignored an extra undefined array slot); rewritten as a length check before commit.
+- AC13: browser checks of random items fix Math.random per check (addInitScript), so every draw lands on one index: one item kind per check.

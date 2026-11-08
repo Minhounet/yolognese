@@ -3,6 +3,9 @@
 A code-breaking game with a twist: a meatball guardian watches the hidden
 code. Point somewhere (or shake your phone) and its eyes follow, then peek at
 a hidden peg while it looks away. You have a life bar of 10: a missed guess costs 1, getting caught costs 2.
+After a peek you wait 5 s (the cooldown bar), and a game lasts 3 minutes. The guardian throws meatballs:
+drag the shield to the lane it aims at. Tap the items that pop up: 🍝 food, 💨 smoke bomb, 👓 x-ray,
+⏳ hourglass, 🍀 shield charm, 🎁 present.
 
 Built in yolo mode with the aixlper skills; design and acceptance criteria
 in `docs/ticket/PEEK-1/`, decisions in `docs/decisions/peek-a-code.md`.
