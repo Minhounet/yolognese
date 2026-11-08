@@ -12,6 +12,8 @@ import { THEME } from './theme';
 type Draft = readonly (Color | undefined)[];
 
 const EMPTY_DRAFT: Draft = [undefined, undefined, undefined, undefined];
+const PEEK_SHOWN_MS = 700;
+const CAUGHT_SHOWN_MS = 1500;
 
 function isComplete(draft: Draft): draft is Code {
   return draft.every((color) => color !== undefined);
@@ -40,6 +42,29 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
   const guardianCentre = useRef<Point>({ x: 0, y: 0 });
   const guardianRef = useRef<ComponentRef<typeof View>>(null);
   const remainingMs = useRef(0);
+  const [peeked, setPeeked] = useState<{ readonly index: number; readonly color: Color } | undefined>();
+  const [caught, setCaught] = useState(false);
+
+  useEffect(() => {
+    if (peeked === undefined) return undefined;
+    const timer = setTimeout(() => setPeeked(undefined), PEEK_SHOWN_MS);
+    return () => clearTimeout(timer);
+  }, [peeked]);
+
+  useEffect(() => {
+    if (!caught) return undefined;
+    const timer = setTimeout(() => setCaught(false), CAUGHT_SHOWN_MS);
+    return () => clearTimeout(timer);
+  }, [caught]);
+
+  const peek = (index: number) => {
+    const response = useCases.peekSecret.execute({ index });
+    if (response.kind === 'revealed') setPeeked({ index, color: response.color });
+    if (response.kind === 'caught') {
+      setView(response.view);
+      setCaught(true);
+    }
+  };
 
   useEffect(() => {
     if (gaze === undefined) return undefined;
@@ -82,12 +107,22 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
         <Guardian gaze={gaze} />
       </View>
       <View style={styles.row} testID="secret">
-        {(view.secret ?? EMPTY_DRAFT).map((color, slot) => (
-          <Peg key={slot} testID={`secret-${slot}`} color={color} hidden={view.secret === undefined} />
-        ))}
+        {(view.secret ?? EMPTY_DRAFT).map((color, slot) => {
+          const shown = view.secret === undefined && peeked?.index === slot ? peeked.color : color;
+          return (
+            <Peg
+              key={slot}
+              testID={`secret-${slot}`}
+              color={shown}
+              hidden={shown === undefined}
+              onPress={playing ? () => peek(slot) : undefined}
+            />
+          );
+        })}
       </View>
-      <Text testID="status" style={styles.status}>
-        {STATUS_TEXT[view.status]} {playing ? `· ${view.attemptsLeft} attempts left` : ''}
+      <Text testID="status" style={[styles.status, caught && styles.caught]}>
+        {caught ? 'Caught peeking! −1 attempt' : STATUS_TEXT[view.status]}
+        {playing ? ` · ${view.attemptsLeft} attempts left` : ''}
       </Text>
       <ScrollView style={styles.board} contentContainerStyle={styles.boardContent}>
         {view.turns.map((turn, index) => (
@@ -140,5 +175,6 @@ const styles = StyleSheet.create({
   controls: { alignItems: 'center', marginTop: 8 },
   button: { backgroundColor: THEME.sauce, borderRadius: 24, paddingHorizontal: 32, paddingVertical: 12, marginTop: 8 },
   disabled: { opacity: 0.4 },
+  caught: { color: THEME.sauce, fontWeight: 'bold' },
   buttonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
 });
