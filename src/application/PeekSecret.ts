@@ -18,7 +18,7 @@ export type PeekResponse =
       readonly color: Color;
       readonly cooldownMs: number;
     }
-  | { readonly kind: 'caught'; readonly view: GameView }
+  | { readonly kind: 'caught'; readonly view: GameView; readonly cooldownMs: number }
   | { readonly kind: 'rejected'; readonly reason: 'no-game' | 'game-over' | 'cooling-down' };
 
 export interface PeekSecret {
@@ -47,7 +47,7 @@ export class PeekSecretImpl implements PeekSecret {
     if (!isDistracted(session.guardian, now)) {
       const game = penalise(session.game);
       this.repository.save({ ...session, game, peekReadyAt });
-      return { kind: 'caught', view: toGameView(game) };
+      return { kind: 'caught', view: toGameView(game), cooldownMs: PEEK_COOLDOWN_MS };
     }
     this.repository.save({ ...session, peekReadyAt });
     return {
