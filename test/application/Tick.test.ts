@@ -495,4 +495,18 @@ describe('Tick', () => {
 
     expect(response).toMatchObject({ kind: 'ticked', landed: 'blocked' });
   });
+
+  it('shouldReportBlocked_whenCharmStopsAttack', () => {
+    const { clock, collectItem, tick } = startedGame([0, 2], [0, 4, 30, 70]);
+    tick.execute();
+    clock.advance(8000);
+    collectShownItem(tick, collectItem);
+    clock.advance(2000);
+    tick.execute();
+    clock.advance(1000);
+
+    const response = tick.execute();
+
+    expect(response).toMatchObject({ kind: 'ticked', landed: 'blocked' });
+  });
 });
