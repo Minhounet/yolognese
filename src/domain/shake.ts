@@ -17,6 +17,8 @@ const JOLTS_FOR_SHAKE = 3;
 
 export function isShake(readings: readonly Reading[]): boolean {
   const joltTimes = readings.filter(isJolt).map(({ at }) => at);
-  const spread = Math.max(...joltTimes) - Math.min(...joltTimes);
-  return joltTimes.length >= JOLTS_FOR_SHAKE && spread <= SHAKE_WINDOW_MS;
+  return joltTimes.some((firstJoltAt, index) => {
+    const lastJoltAt = joltTimes[index + JOLTS_FOR_SHAKE - 1];
+    return lastJoltAt !== undefined && lastJoltAt - firstJoltAt <= SHAKE_WINDOW_MS;
+  });
 }
