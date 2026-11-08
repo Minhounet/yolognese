@@ -6,6 +6,12 @@ export interface Reading {
   readonly at: number;
 }
 
+const JOLT_THRESHOLD_G = 2;
+
+const magnitude = ({ x, y, z }: Reading): number => Math.sqrt(x * x + y * y + z * z);
+
+const isJolt = (reading: Reading): boolean => magnitude(reading) > JOLT_THRESHOLD_G;
+
 export function isShake(readings: readonly Reading[]): boolean {
-  return false;
+  return readings.some(isJolt);
 }
