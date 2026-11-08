@@ -72,4 +72,15 @@ describe('Tick', () => {
 
     expect(response).toMatchObject({ kind: 'ticked', timeLeftMs: 0 });
   });
+
+  it('shouldStartFreshCountdown_whenNewGameStarted', () => {
+    const { clock, startGame, tick } = startedGame();
+    tick.execute();
+    clock.advance(100000);
+    startGame.execute();
+
+    const response = tick.execute();
+
+    expect(response).toMatchObject({ kind: 'ticked', timeLeftMs: 180000 });
+  });
 });
