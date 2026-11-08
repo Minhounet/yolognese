@@ -40,14 +40,17 @@ function countMisplaced(game: Game, guess: Code): number {
   return countSharedColours(game.secret, guess) - countExact(game, guess);
 }
 
+function cracksCode(game: Game, turn: Turn): boolean {
+  return turn.exact === game.secret.length;
+}
+
 export function play(game: Game, guess: Code): Game {
   const turn: Turn = {
     guess,
     exact: countExact(game, guess),
     misplaced: countMisplaced(game, guess),
   };
-  const isMiss = turn.exact !== game.secret.length;
-  const life = isMiss ? game.life - LIFE_LOST_PER_MISS : game.life;
+  const life = cracksCode(game, turn) ? game.life : game.life - LIFE_LOST_PER_MISS;
   return { ...game, turns: [...game.turns, turn], life };
 }
 
@@ -56,7 +59,7 @@ export function penalise(game: Game): Game {
 }
 
 export function isWon(game: Game): boolean {
-  return game.turns.some(({ exact }) => exact === game.secret.length);
+  return game.turns.some((turn) => cracksCode(game, turn));
 }
 
 export function attemptsLeft(game: Game): number {
