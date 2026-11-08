@@ -1,6 +1,7 @@
 import { StartGameImpl } from '../../src/application/StartGame';
 import { SubmitGuess, SubmitGuessImpl } from '../../src/application/SubmitGuess';
 import { InMemoryGameRepository } from '../../src/infrastructure/InMemoryGameRepository';
+import { FakeClock } from '../support/FakeClock';
 import { ScriptedRandomSource } from '../support/ScriptedRandomSource';
 
 // secret indexes into COLORS: red=0 yellow=1 green=2 blue=3 purple=4 orange=5
@@ -8,7 +9,7 @@ const RED_YELLOW_GREEN_BLUE = [0, 1, 2, 3];
 
 function startedGame(secretIndexes: readonly number[]): SubmitGuess {
   const repository = new InMemoryGameRepository();
-  new StartGameImpl(new ScriptedRandomSource(secretIndexes), repository).execute();
+  new StartGameImpl(new ScriptedRandomSource(secretIndexes), repository, new FakeClock()).execute();
   return new SubmitGuessImpl(repository);
 }
 

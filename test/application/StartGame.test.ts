@@ -1,11 +1,12 @@
 import { StartGameImpl } from '../../src/application/StartGame';
 import { SubmitGuessImpl } from '../../src/application/SubmitGuess';
 import { InMemoryGameRepository } from '../../src/infrastructure/InMemoryGameRepository';
+import { FakeClock } from '../support/FakeClock';
 import { ScriptedRandomSource } from '../support/ScriptedRandomSource';
 
 describe('StartGame', () => {
   it('shouldStartWithTenLife_whenGameStarts', () => {
-    const startGame = new StartGameImpl(new ScriptedRandomSource([0, 1, 2, 3]), new InMemoryGameRepository());
+    const startGame = new StartGameImpl(new ScriptedRandomSource([0, 1, 2, 3]), new InMemoryGameRepository(), new FakeClock());
 
     const view = startGame.execute();
 
@@ -14,7 +15,7 @@ describe('StartGame', () => {
 
   it('shouldStartFreshGame_whenStartedAgain', () => {
     const repository = new InMemoryGameRepository();
-    const startGame = new StartGameImpl(new ScriptedRandomSource([0, 1, 2, 3]), repository);
+    const startGame = new StartGameImpl(new ScriptedRandomSource([0, 1, 2, 3]), repository, new FakeClock());
     const submitGuess = new SubmitGuessImpl(repository);
     startGame.execute();
     submitGuess.execute({ guess: ['red', 'yellow', 'green', 'blue'] });

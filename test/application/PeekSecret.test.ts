@@ -10,7 +10,7 @@ import { ScriptedRandomSource } from '../support/ScriptedRandomSource';
 function startedGame() {
   const clock = new FakeClock();
   const repository = new InMemoryGameRepository();
-  new StartGameImpl(new ScriptedRandomSource([0, 1, 2, 3]), repository).execute();
+  new StartGameImpl(new ScriptedRandomSource([0, 1, 2, 3]), repository, clock).execute();
   return {
     clock,
     distractGuardian: new DistractGuardianImpl(repository, clock),

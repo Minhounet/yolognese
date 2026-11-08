@@ -162,3 +162,14 @@
 - Deferred refinement notes: untested generalization — the revealed path's cooldown is proven in the browser only by its label, not its refill
 - Asked user: no (yolo)
 - Carry forward: AC12 adds endsAt to the Session and a time check first in every use case; the Tick use case (AC12 or AC13/14) can return the remaining cooldown and time so the screen stops reading Date.now (minor 6)
+
+## AC12 - TDD plan
+- Decided: the countdown needs time to pass with no player action, so the Tick use case (conception.md round 2) starts here: Tick(GameRepository, Clock), RandomSource joins at AC13/14 when it is needed; StartGame gets the Clock to store endsAt (constructor change, made in red 39 as its stub, every test construction passes a FakeClock: traced)
+  39 [AC12] shouldCountDownTimeLeft_whenTicked — 1 s after the start, timeLeftMs 179000
+  40 [AC12] shouldBeLost_whenTimeIsUp — 180 s after the start: status lost, secret shown
+  41 [AC12] shouldStopTimeAtZero_whenTimeIsUp — 200 s after: timeLeftMs 0
+  42 [AC12] shouldStayWon_whenTimeRunsOutAfterWinning — a won game is not lost by the clock
+  "Shown as a countdown": browser check e2e/ac12.spec.js
+- Deviation from D-timer (smallest change that keeps its intent): Tick, called by the screen every 100 ms, is the one judge of time and stores the lost game; the other use cases then reject as for any finished game, instead of each reading the clock first (a guess can still land within 100 ms after time is up)
+- dev: on (4 tests, 3 ACs left); a fresh shonin-dev
+- Asked user: no (yolo)
