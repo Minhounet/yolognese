@@ -196,3 +196,4 @@
 - dev: on (7 tests, 2 ACs left); a fresh shonin-dev
 - Asked user: no (yolo)
 - Deviation (AC14, orchestrator in yolo): GREEN 43 scheduled the attack on a random delay ahead of reds 44-45, with invented tuning (5 s + up to 5 s); the tuning was set to the plan's (10 s + nextInt(10001)) before commit, so 44 and 45 pass on write and become guards with mutation checks (44: minimum delay 1 ms short; 45: the drawn delay ignored). ScriptedRandomSource ignores the bound it is given, so the spread (10001) is not pinned by any test: open
+- Plan change (AC14): red 46 shouldHitOnlyOnce_whenAttackLands added (green 44 left the landing in place, so a meatball kept hitting on every tick: a real bug the plan missed); the plan's 48-49 become 47 shouldAttackAgain_afterLanding and 48 shouldNotAttack_whenGuardianIsDistracted
