@@ -126,7 +126,7 @@ Order: AC10, AC11, AC12, AC14, AC13; then AC15 (user, after playing); then AC16,
 
 ## AC14: The guardian attacks, the shield protects
 - Source: "Treat the opponent like an ennemy, he can attack us and we must use a shield to protect (you can drag the shield)."
-- Interpretation: every 10 to 20 s the guardian throws a meatball at one of 3 lanes along the bottom; it falls for 2.5 s (amended by AC15, was "a 1 s warning") while its lane is marked; if the shield, which follows the player's finger left and right along the bottom (amended by AC15, was "drags left and right"), is not in that lane when it lands, the player loses 2 life; the guardian does not attack while blind or distracted
+- Interpretation: every 10 to 20 s the guardian throws a meatball at one of 3 lanes along the bottom; it falls for 1.5 s (amended by AC15 then AC16, was "a 1 s warning"), its lane no longer marked (AC16); if the shield, which follows the player's finger left and right along the bottom (amended by AC15, was "drags left and right"), is not in that lane when it lands, the player loses 2 life; the guardian does not attack while blind or distracted
 - Questions: none
 - Covered by: D-attack (round 2)
 - Evidence: reds 43-47 — Tick.shouldWarnOfAttack_whenAttackTimeComes, shouldHitPlayer_whenShieldIsNotInLane, shouldBlockAttack_whenShieldIsInLane, shouldHitOnlyOnce_whenAttackLands, shouldNotAttack_whenGuardianIsDistracted (guards shouldNotWarn_beforeAttackTime, shouldWaitRandomDelay_beforeAttacking, shouldAttackAgain_afterLanding are not evidence); full build `npx jest && npx tsc --noEmit`: 54 passed, tsc clean. Screen: browser checks e2e/ac14.spec.js "the guardian winds up on a lane, and the shield in that lane blocks the meatball", "a meatball landing outside the shield costs 2 life", "the shield can be dragged from lane to lane", "tapping the shield moves nothing else: the guardian keeps watching", passed on the web build (19 passed, twice). Not attacking while distracted: unit test only. A tap on a lane also moves the shield (not asked; the checks use it because a drag under the fake clock hangs; the drag is checked without it). "Blind" comes with AC13. kenji-reviewer: 4 minor, none blocking; the feel of the drag on the phone, by the user, pending
@@ -145,24 +145,24 @@ Order: AC10, AC11, AC12, AC14, AC13; then AC15 (user, after playing); then AC16,
 - Interpretation: the meatball falls in 1.5 s (was 2.5 s) and its lane is no longer marked; the player reads it from the falling meatball (amends AC14 and AC15)
 - Questions: none
 - Covered by: D-attack (wind-up 1500 ms), the screen
-- Evidence:
-- Status: designed
+- Evidence: red 75 (shouldWarnOfAttack_whenAttackTimeComes expects landsInMs 1500); browser checks e2e/ac16-ac18.spec.js "AC16: no target is shown where the meatball will land" and e2e/ac14.spec.js "AC15: the meatball falls ... and takes 1.5 s"; full build 85 passed, tsc clean; e2e 32 passed (twice); kenji-reviewer PASS
+- Status: verified
 
 ## AC17: A tap on a peg is a peek, never a distraction (user, round 4)
 - Source: "We cannot be caught when cheating (i tap and the peg self flip back itself)."
 - Interpretation: tapping a hidden peg while the guardian watches gets the player caught; on the phone the same tap also reached the scene and distracted the guardian first (reading of the orchestrator: not reproducible on the web build), so a tap on a peg, the controls, the items or the shield never distracts
 - Questions: none (the cause on the phone is an assumption, to confirm by the user)
 - Covered by: the screen (GameScreen)
-- Evidence:
-- Status: designed
+- Evidence: already met on the web build: e2e/ac16-ac18.spec.js "AC17: tapping a peg while the guardian watches gets you caught, and never distracts it" passed, and it passed before the fix too, so it does not prove the fix. The fix (taps inside the pegs, controls, items and shield never distract, src/ui/GameScreen.tsx touchedControl) is defensive and unproven on the phone; side effect: a scene tap within 600 ms after a control touch does not distract. Manual check by the user, pending: with the guardian watching, tap a hidden peg: "Caught peeking! −2 life", the peg stays hidden
+- Status: designed (pending the user's phone check)
 
 ## AC18: Distracting can fail, and the guardian punches (user, round 4)
 - Source: "sometimes, distracting should fail and in place you can be attacked by a punch for example."
 - Interpretation: one distraction in four fails: the guardian keeps watching and punches the player for 1 life
 - Questions: none
 - Covered by: D-guardian (DistractGuardian draws luck from a RandomSource)
-- Evidence:
-- Status: designed
+- Evidence: red 76 DistractGuardian.shouldPunchPlayer_whenDistractionFails, red 77 shouldNotPunch_whenGameIsOver, guard 76 PeekSecret.shouldBeCaught_whenPeekingAfterBeingPunched; browser check e2e/ac16-ac18.spec.js "AC18: pointing fails: the guardian keeps watching and punches for 1 life" (luck fixed to 0); full build 85 passed. The rate one in four is the plan's value and is pinned by no test (ScriptedRandomSource ignores bounds); kenji-reviewer: minor notes only
+- Status: verified
 
 ## Discrepancies
 

@@ -32,3 +32,6 @@
 - AC13: browser checks of random items fix Math.random per check (addInitScript), so every draw lands on one index: one item kind per check.
 - acceptance.md lost its "## Discrepancies" heading again during round 2 edits (a script appended after "None."); restored in round 3, and an insertion keyed on that heading misplaced AC15 until fixed
 - Round 3: the AC6 and AC13 browser checks read the peg's label, which changed even while the peg was squeezed to 0 width: the user saw the bug, the checks did not. They now assert visibility (toBeVisible treats a zero-width box as hidden).
+- Round 4: the user saw every peek succeed on the phone; the web build catches a peek correctly, so the cause is a guess (the tap reaching the scene too). The fix is defensive and its check passes with or without it: AC17 waits for the user's phone check.
+- Round 4: random items could appear over the pegs, so a tap meant for a peg picked up the item (a flaky AC4 check showed it); items now stay below the secret row.
+- Round 4: AC18's random punch would make every check that distracts fail one time in four; the composition root takes a fixed luck draw from globalThis.yologneseLuck, set by e2e/fixtures.js (always fooled unless a check asks otherwise).

@@ -4,8 +4,8 @@
 - Status: open
 - Mode: build
 - Yolo: on (see references/yolo.md of saiban-orchestrator)
-- Done: scaffold, plan and ACs; AC1-AC4 and AC6-AC15 verified, AC5 waived (user); round 3 published to the feat-peek-a-code channel
-- Next: round 4 (user): AC16 faster fall without target, AC18 failed distraction and punch, AC17 a peg tap never distracts
+- Done: scaffold, plan and ACs; AC1-AC4, AC6-AC16 and AC18 verified, AC5 waived (user); AC17 waits for the user's phone check; round 4 published to the feat-peek-a-code channel
+- Next: the user's phone check of AC17 (tap a hidden peg while watched: caught), and the look of the rest; then merge (a pull request, not opened), more features, or tuning
 - Files: docs/ticket/PEEK-1/, src/
 
 ## Start - scope and mode
@@ -277,3 +277,9 @@
 - Decided: DistractGuardian gets a RandomSource (luck); the composition root takes a fixed luck draw from globalThis.yologneseLuck when a check sets it, else Math.random: the browser checks that distract set it to "always fooled", the AC18 check to "never" (a configuration seam in the composition root, not a branch in the rules)
 - Decided: TDD reds from 75 (AC16 changed requirement, AC18 through DistractGuardian), dev: on, a fresh shonin-dev
 - Asked user: no (yolo)
+
+## Round 4 - run and review
+- Decided: red 75 (changed requirement 1.5 s), green 75; red 76 (stub: luck port), green 76 (luck bound set to the plan's 4 before commit), guard 76 (mutation: a punch distracts anyway), red 77, green 77 by a fresh shonin-dev; screen: no 🎯, the punch line, control taps never distract, items below the pegs (one covered a peg in a check); checks: e2e/fixtures.js fixes the luck through the composition root, lanes read from the falling meatball, retimed to 1.5 s
+- Decided: kenji-reviewer, no blocking, 7 minor: AC17's check passes without the fix -> AC17 left unverified for the user's phone check; the 1-in-4 rate unpinned -> said in acceptance.md; AC14 amended by AC16; retro written; stale comment fixed; punch has no floor (unreachable: isOver first) -> open
+- Asked user: no (yolo)
+- Verdict: GUILTY, 1 count: AC17 not proven: its fix answers a phone-only behaviour the web build does not show; the user's check decides

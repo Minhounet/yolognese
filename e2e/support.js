@@ -1,5 +1,5 @@
 // Shared by checks that run the game clock for long (AC14's attacks would otherwise hit at random).
-const STEP_MS = 900; // under the 1 s warning, so every attack is seen before it lands
+const STEP_MS = 900; // under the 1.5 s fall, so every attack is seen before it lands
 
 /** Runs the clock for `ms`, moving the shield to every lane the guardian warns of, as a player would. */
 async function runForBlockingAttacks(page, ms) {
