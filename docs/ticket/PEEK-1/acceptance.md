@@ -23,7 +23,7 @@ Interpretation is the orchestrator's (yolo), logged in the decision log.
   shows the secret; a new game can be started.
 - Questions: none
 - Covered by: D-rules, D-structure (StartGame, SubmitGuess, GameMapper)
-- Evidence: won / lost / rejects guesses / secret shown at the end / hidden while playing: test/application/SubmitGuess.test.ts reds 6-13 (shouldBeWon_whenGuessEqualsSecret, shouldKeepPlaying_whenGuessMisses, shouldCountAttemptsLeft_whenGuessPlayed, shouldBeLost_whenTenthGuessMisses, shouldRejectGuess_whenGameIsOver, shouldRejectGuess_whenGameIsLost, shouldRevealSecret_whenGameIsOver, shouldHideSecret_whenPlaying), full build 15 passed, tsc clean. "A new game can be started": no red possible (StartGame already saves a new game); guard 13 is not evidence (kenji-reviewer, blocking) — proven instead by the browser check e2e/ac1-ac2.spec.js "AC2: losing reveals the secret, and a new game starts fresh", passed on the web build (Pixel 7 viewport)
+- Evidence: won / lost / rejects guesses / secret shown at the end / hidden while playing: test/application/SubmitGuess.test.ts reds 6-13 (shouldBeWon_whenGuessEqualsSecret, shouldKeepPlaying_whenGuessMisses, shouldCountAttemptsLeft_whenGuessPlayed, shouldBeLost_whenTenthGuessMisses, shouldRejectGuess_whenGameIsOver, shouldRejectGuess_whenGameIsLost, shouldRevealSecret_whenGameIsOver, shouldHideSecret_whenPlaying), full build 15 passed, tsc clean. "A new game can be started": no red possible (StartGame already saves a new game); guard 13 is not evidence (kenji-reviewer, blocking) — proven instead by the browser check e2e/ac1-ac2.spec.js "AC2: losing reveals the secret, and a new game starts fresh", passed on the web build (Pixel 7 viewport). Round 2 (AC10): attempts became life; shouldCountAttemptsLeft_whenGuessPlayed removed (same case as red 29), shouldBeLost_whenTenthGuessMisses and guard 13 read life; the browser check reads the life bar — still passing
 - Status: verified
 
 ## AC3: Point to distract the guardian
@@ -43,7 +43,7 @@ Interpretation is the orchestrator's (yolo), logged in the decision log.
   attempt (which can lose the game); a finished game rejects peeks.
 - Questions: none
 - Covered by: D-peek, D-structure (PeekSecret)
-- Evidence: test/application/PeekSecret.test.ts reds — shouldRevealColour_whenPeekingWhileDistracted, shouldBeCaught_whenPeekingWhileWatched, shouldBeCaught_whenPeekingAfterDistractionEnds, shouldCostOneAttempt_whenCaught, shouldRejectPeek_whenGameIsOver, shouldKeepPenalty_whenGuessingAfterBeingCaught (guards 18 and 19 are not evidence); full build 25 passed, tsc clean. "Which can lose the game": browser check e2e/ac4.spec.js "getting caught on every attempt loses the game, which then rejects peeks"; with "a peek while the guardian looks away shows the colour briefly", "a peek while the guardian watches is caught and costs one attempt", "a peek after the guardian looks back is caught": all passed on the web build, Playwright clock
+- Evidence: test/application/PeekSecret.test.ts reds — shouldRevealColour_whenPeekingWhileDistracted, shouldBeCaught_whenPeekingWhileWatched, shouldBeCaught_whenPeekingAfterDistractionEnds, shouldCostOneAttempt_whenCaught, shouldRejectPeek_whenGameIsOver, shouldKeepPenalty_whenGuessingAfterBeingCaught (guards 18 and 19 are not evidence); full build 25 passed, tsc clean. "Which can lose the game": browser check e2e/ac4.spec.js "getting caught on every attempt loses the game, which then rejects peeks"; with "a peek while the guardian looks away shows the colour briefly", "a peek while the guardian watches is caught and costs one attempt", "a peek after the guardian looks back is caught": all passed on the web build, Playwright clock. Round 2 (AC10) changed the cost to 2 life: shouldCostOneAttempt_whenCaught and guard 19 superseded by reds 31-33 (removed), shouldKeepPenalty_whenGuessingAfterBeingCaught renamed shouldKeepLifeLost_whenGuessingAfterBeingCaught (life 7, mutation checked); browser checks read the life bar — still passing
 - Status: verified
 
 ## AC5: Shake to distract
@@ -97,8 +97,8 @@ Order: AC10, AC11, AC12, AC14, AC13 (AC11-AC14 spend or restore life; AC13's ite
 - Interpretation: the player starts with 10 life points, shown as a bar; a guess that does not win costs 1, being caught peeking costs 2; at 0 the game is lost (replaces attempts: AC2's "10 attempts" and AC4's "costs one attempt" now read through life)
 - Questions: none
 - Covered by: D-life (round 2)
-- Evidence:
-- Status: designed
+- Evidence: reds 28-33 — StartGame.shouldStartWithTenLife_whenGameStarts, SubmitGuess.shouldLoseOneLife_whenGuessMisses, SubmitGuess.shouldKeepLife_whenGuessWins, PeekSecret.shouldLoseTwoLife_whenCaught, PeekSecret.shouldBeLost_whenCaughtWithTwoLifeLeft, PeekSecret.shouldStopLifeAtZero_whenCaughtWithOneLifeLeft; full build `npx jest && npx tsc --noEmit`: 34 passed, tsc clean. "Shown as a bar": browser check e2e/ac10.spec.js "AC10: the life bar starts full, a missed guess costs 1 and being caught costs 2" passed on the web build (12 passed). The bar's fill is not machine-checked (the check reads its label): the look, by the user, pending; kenji-reviewer: 5 minor, none blocking
+- Status: verified
 
 ## AC11: Cheat cooldown bar
 - Source: "Before cheating again there must be a cooling bar."

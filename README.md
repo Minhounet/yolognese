@@ -2,7 +2,7 @@
 
 A code-breaking game with a twist: a meatball guardian watches the hidden
 code. Point somewhere (or shake your phone) and its eyes follow, then peek at
-a hidden peg while it looks away. Get caught and you lose an attempt.
+a hidden peg while it looks away. You have a life bar of 10: a missed guess costs 1, getting caught costs 2.
 
 Built in yolo mode with the aixlper skills; design and acceptance criteria
 in `docs/ticket/PEEK-1/`, decisions in `docs/decisions/peek-a-code.md`.

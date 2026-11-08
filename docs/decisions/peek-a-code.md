@@ -4,8 +4,8 @@
 - Status: open
 - Mode: build
 - Yolo: on (see references/yolo.md of saiban-orchestrator)
-- Done: scaffold (Expo SDK 58, TypeScript), structural plan and ACs, AC1, AC2, AC3, AC4 verified; AC5 built and published, waiting for the phone check
-- Next: AC10 (TDD run in progress, reds from 28), then AC11, AC12, AC14, AC13; also the user's look at the flip (AC6) and the feedback marks (AC9); then the user decides: merge, more features, or keep ideas
+- Done: scaffold (Expo SDK 58, TypeScript), structural plan and ACs, AC1-AC4, AC6-AC10 verified, AC5 waived
+- Next: AC11 (reds from 34), then AC12, AC12, AC14, AC13; also the user's look at the flip (AC6) and the feedback marks (AC9); then the user decides: merge, more features, or keep ideas
 - Files: docs/ticket/PEEK-1/, src/
 
 ## Start - scope and mode
@@ -131,3 +131,11 @@
 - Why: drive AC10 at the use-case level; each red fails under the minimal greens before it
 - Asked user: no (yolo)
 - Deviation (AC10, approved by the orchestrator in yolo): shonin-dev's GREEN 29 spared a winning guess from losing life, ahead of any test (rule 5); cut back to an unconditional cost before commit. Red 30 shouldKeepLife_whenGuessWins added ("a guess that does not win costs 1"); the plan's 30-32 become 31-33.
+
+## AC10 - run and review
+- Decided: reds 28-33 by the orchestrator, greens by one shonin-dev; green 29 cut back (deviation above); refactor 30 one cracksCode rule (make-room: duplication with isWon), refactor 33 attempts replaced by life (planned, every test change traced); life bar on the screen (LifeBar), checks read life
+- Decided: kenji-reviewer, 5 minor: (1) the AC10 check skipped when the random secret was all red -> it starts a new game until the guess misses; (2) the bar's fill is not machine-checked -> said in acceptance.md, the look is the user's; (3) the UI repeats max life 10 and "−2 life" -> open, carried to AC13 (food caps life at the max: the view gets maxLife then); (4) low-life colour no AC asked for -> removed; heart icon and count kept (no behaviour); (5) README said "lose an attempt" -> updated, acceptance.md AC2/AC4 evidence notes the round-2 change
+- Super-green misses: 0 (refactors 30 and 33 are make-room and the planned removal)
+- Deferred refinement notes: untested generalization — the clamp at 0 lives only in penalise; an attack hit (AC14) needs it too
+- Asked user: no (yolo)
+- Carry forward: AC11 extends PeekSecret (cooldown before the caught/revealed branch) and the Session (peekReadyAt); AC14's attack hit reuses a life loss with the clamp; AC13's food needs maxLife in the view (minor 3)
