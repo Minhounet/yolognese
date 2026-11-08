@@ -18,6 +18,7 @@ export interface Session {
   readonly attackAt?: number;
   readonly itemAt?: number;
   readonly item?: Item;
+  readonly itemCollected?: boolean;
   readonly attackLandsAt?: number;
   readonly attackLane?: number;
   readonly shieldLane?: number;

@@ -32,7 +32,7 @@ export class CollectItemImpl implements CollectItem {
       return { kind: 'rejected', reason: 'no-item' };
     }
     const game = restoreLife(session.game);
-    this.repository.save({ ...session, game, item: undefined });
+    this.repository.save({ ...session, game, item: undefined, itemCollected: true });
     return { kind: 'collected', item: item.kind, view: toGameView(game) };
   }
 }

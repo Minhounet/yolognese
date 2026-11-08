@@ -59,7 +59,8 @@ export class TickImpl implements Tick {
     const game = landing.hits ? penalise(timedGame) : timedGame;
     const attackState = this.windUpIfDue(session, now, landing.pendingLandsAt);
     const itemAt = session.itemAt ?? scheduleItemAt(now, this.itemRandom.nextInt(ITEM_DELAY_SPREAD_MS));
-    const item = isItemShown(itemAt, now) ? (session.item ?? this.showItem()) : undefined;
+    const shown = isItemShown(itemAt, now) && !session.itemCollected;
+    const item = shown ? (session.item ?? this.showItem()) : undefined;
     this.repository.save({ ...session, ...attackState.stored, itemAt, item, game });
     return { kind: 'ticked', view: toGameView(game), timeLeftMs, attack: attackState.attack, item };
   }
