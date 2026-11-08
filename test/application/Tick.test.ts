@@ -362,4 +362,15 @@ describe('Tick', () => {
 
     expect(response.kind === 'ticked' && response.attack).toBeUndefined();
   });
+
+  it('shouldReportNoCooldown_whenPeekingWhileBlind', () => {
+    const { clock, collectItem, peekSecret, tick } = startedGame([30000, 0], [0, 1, 30, 70]);
+    tick.execute();
+    clock.advance(8000);
+    collectShownItem(tick, collectItem);
+
+    const response = peekSecret.execute({ index: 0 });
+
+    expect(response).toMatchObject({ kind: 'revealed', cooldownMs: 0 });
+  });
 });

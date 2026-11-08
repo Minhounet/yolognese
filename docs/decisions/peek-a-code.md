@@ -234,3 +234,4 @@
 - Order change (AC13): the plan's shouldShowAnotherItem_afterOneLeaves moved up to red 56 (the item state grows flags while nothing reschedules; with the respawn in place the refactor can reshape it)
 - Plan change (AC13): red 57 shouldShowAnotherItem_afterOneIsCollected (a collected item also leaves: the next one comes a new delay after the tick that sees it gone)
 - Deviation (AC13): green 58 picked 5 s of smoke (invented); set to the plan's 4 s before commit, so shouldSeeAgain_afterFourSecondsOfSmoke will likely pass on write (guard)
+- Plan change (AC13): red 60 shouldReportNoCooldown_whenPeekingWhileBlind (a blind peek still told the screen to refill the bar); shouldSeeAgain and shouldNotAttack_whenGuardianIsBlind passed on write: guards 59
