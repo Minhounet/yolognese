@@ -4,6 +4,7 @@ const MAX_ATTEMPTS = 10;
 const STARTING_LIFE = 10;
 const LIFE_LOST_PER_MISS = 1;
 const LIFE_LOST_WHEN_CAUGHT = 2;
+const MIN_LIFE = 0;
 
 export interface Turn {
   readonly guess: Code;
@@ -56,7 +57,8 @@ export function play(game: Game, guess: Code): Game {
 }
 
 export function penalise(game: Game): Game {
-  return { ...game, penalties: game.penalties + 1, life: game.life - LIFE_LOST_WHEN_CAUGHT };
+  const life = Math.max(MIN_LIFE, game.life - LIFE_LOST_WHEN_CAUGHT);
+  return { ...game, penalties: game.penalties + 1, life };
 }
 
 export function isWon(game: Game): boolean {
