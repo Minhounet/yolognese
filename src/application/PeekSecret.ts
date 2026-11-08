@@ -5,7 +5,7 @@ import { toGameView } from './GameMapper';
 import { Clock, GameRepository } from './ports';
 import { GameView } from './views';
 
-const PEEK_COOLDOWN_MS = 1000;
+const PEEK_COOLDOWN_MS = 5000;
 
 export interface PeekCommand {
   readonly index: number;
