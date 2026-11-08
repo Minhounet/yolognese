@@ -1,6 +1,6 @@
 import { Game, hiddenPegs, restoreLife, revealPeg } from '../domain/game';
 import { blindUntil } from '../domain/guardian';
-import { HOURGLASS_BONUS_MS, ItemKind, SMOKE_BLIND_MS, isItemShown } from '../domain/items';
+import { GIFT_KINDS, HOURGLASS_BONUS_MS, ItemKind, SMOKE_BLIND_MS, isItemShown } from '../domain/items';
 import { toGameView } from './GameMapper';
 import { Clock, GameRepository, RandomSource, Session } from './ports';
 import { GameView } from './views';
@@ -51,6 +51,8 @@ export class CollectItemImpl implements CollectItem {
         return { ...session, endsAt: session.endsAt + HOURGLASS_BONUS_MS };
       case 'charm':
         return { ...session, charmed: true };
+      case 'present':
+        return this.effectOf(GIFT_KINDS[this.random.nextInt(GIFT_KINDS.length)], session, now);
     }
   }
 
