@@ -6,14 +6,15 @@ import { InMemoryGameRepository } from '../../src/infrastructure/InMemoryGameRep
 import { FakeClock } from '../support/FakeClock';
 import { ScriptedRandomSource } from '../support/ScriptedRandomSource';
 
-// secret: red yellow green blue
+// secret: red yellow green blue; the guardian's luck draw: 1 is fooled (0 sees through it)
+const FOOLED = 1;
 function startedGame() {
   const clock = new FakeClock();
   const repository = new InMemoryGameRepository();
   new StartGameImpl(new ScriptedRandomSource([0, 1, 2, 3]), repository, clock).execute();
   return {
     clock,
-    distractGuardian: new DistractGuardianImpl(repository, clock),
+    distractGuardian: new DistractGuardianImpl(repository, clock, new ScriptedRandomSource([FOOLED])),
     peekSecret: new PeekSecretImpl(repository, clock),
     submitGuess: new SubmitGuessImpl(repository),
   };

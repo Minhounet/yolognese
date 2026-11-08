@@ -4,10 +4,14 @@ import { InMemoryGameRepository } from '../../src/infrastructure/InMemoryGameRep
 import { FakeClock } from '../support/FakeClock';
 import { ScriptedRandomSource } from '../support/ScriptedRandomSource';
 
-function startedGame(clock: FakeClock): DistractGuardian {
+// the guardian's luck draw: 1 is fooled, 0 sees through it
+const FOOLED = 1;
+const SEES_THROUGH = 0;
+
+function startedGame(clock: FakeClock, luck: readonly number[] = [FOOLED]): DistractGuardian {
   const repository = new InMemoryGameRepository();
   new StartGameImpl(new ScriptedRandomSource([0, 1, 2, 3]), repository, clock).execute();
-  return new DistractGuardianImpl(repository, clock);
+  return new DistractGuardianImpl(repository, clock, new ScriptedRandomSource(luck));
 }
 
 describe('DistractGuardian', () => {
@@ -25,5 +29,13 @@ describe('DistractGuardian', () => {
     const response = distractGuardian.execute({ target: { x: 120, y: -40 } });
 
     expect(response).toMatchObject({ kind: 'distracted', view: { remainingMs: 1500 } });
+  });
+
+  it('shouldPunchPlayer_whenDistractionFails', () => {
+    const distractGuardian = startedGame(new FakeClock(), [SEES_THROUGH]);
+
+    const response = distractGuardian.execute({ target: { x: 120, y: -40 } });
+
+    expect(response).toMatchObject({ kind: 'punched', view: { life: 9 } });
   });
 });

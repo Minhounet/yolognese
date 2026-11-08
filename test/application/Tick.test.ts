@@ -31,7 +31,7 @@ function startedGame(
     ),
     submitGuess: new SubmitGuessImpl(repository),
     moveShield: new MoveShieldImpl(repository),
-    distractGuardian: new DistractGuardianImpl(repository, clock),
+    distractGuardian: new DistractGuardianImpl(repository, clock, new ScriptedRandomSource([1])),
     collectItem: new CollectItemImpl(repository, clock, new ScriptedRandomSource(collectRandom)),
     peekSecret: new PeekSecretImpl(repository, clock),
   };
