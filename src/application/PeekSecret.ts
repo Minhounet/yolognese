@@ -40,7 +40,7 @@ export class PeekSecretImpl implements PeekSecret {
     }
     if (!isDistracted(session.guardian, now)) {
       const game = penalise(session.game);
-      this.repository.save({ ...session, game });
+      this.repository.save({ ...session, game, peekReadyAt: now + PEEK_COOLDOWN_MS });
       return { kind: 'caught', view: toGameView(game) };
     }
     this.repository.save({ ...session, peekReadyAt: now + PEEK_COOLDOWN_MS });
