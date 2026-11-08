@@ -12,7 +12,7 @@ export interface PeekCommand {
 export type PeekResponse =
   | { readonly kind: 'revealed'; readonly index: number; readonly color: Color }
   | { readonly kind: 'caught'; readonly view: GameView }
-  | { readonly kind: 'rejected'; readonly reason: 'no-game' | 'game-over' };
+  | { readonly kind: 'rejected'; readonly reason: 'no-game' | 'game-over' | 'cooling-down' };
 
 export interface PeekSecret {
   execute(command: PeekCommand): PeekResponse;
