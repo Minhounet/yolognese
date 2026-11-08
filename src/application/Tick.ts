@@ -1,5 +1,8 @@
 import { Clock, GameRepository } from './ports';
+import { toGameView } from './GameMapper';
 import { GameView } from './views';
+
+const GAME_DURATION_MS = 180000;
 
 export type TickResponse =
   | { readonly kind: 'ticked'; readonly timeLeftMs: number; readonly view: GameView }
@@ -16,6 +19,10 @@ export class TickImpl implements Tick {
   ) {}
 
   execute(): TickResponse {
-    return { kind: 'rejected', reason: 'no-game' };
+    const session = this.repository.load();
+    if (session === undefined) {
+      return { kind: 'rejected', reason: 'no-game' };
+    }
+    return { kind: 'ticked', timeLeftMs: GAME_DURATION_MS, view: toGameView(session.game) };
   }
 }
