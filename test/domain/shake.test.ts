@@ -21,4 +21,10 @@ describe('isShake', () => {
 
     expect(isShake(readings)).toBe(false);
   });
+
+  it('shouldNotDetectShake_whenOnlyTwoJolts', () => {
+    const readings = [still(0), jolt(100), still(200), jolt(300)];
+
+    expect(isShake(readings)).toBe(false);
+  });
 });
