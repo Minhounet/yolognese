@@ -67,6 +67,14 @@ describe('PeekSecret', () => {
     expect(response).toMatchObject({ kind: 'caught', view: { attemptsLeft: 9 } });
   });
 
+  it('shouldLoseTwoLife_whenCaught', () => {
+    const { peekSecret } = startedGame();
+
+    const response = peekSecret.execute({ index: 2 });
+
+    expect(response).toMatchObject({ kind: 'caught', view: { life: 8 } });
+  });
+
   it('shouldLoseGame_whenCaughtOnLastAttempt', () => {
     const { peekSecret, submitGuess } = startedGame();
     const miss = { guess: ['purple', 'purple', 'orange', 'orange'] } as const;
