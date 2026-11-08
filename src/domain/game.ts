@@ -1,5 +1,6 @@
 import { Code, COLORS, Color } from './color';
 
+export const MAX_LIFE = 10;
 const STARTING_LIFE = 10;
 const LIFE_LOST_PER_MISS = 1;
 const LIFE_LOST_WHEN_CAUGHT = 2;
@@ -61,7 +62,7 @@ export function penalise(game: Game): Game {
 }
 
 export function restoreLife(game: Game): Game {
-  return { ...game, life: game.life + LIFE_RESTORED_BY_FOOD };
+  return { ...game, life: Math.min(MAX_LIFE, game.life + LIFE_RESTORED_BY_FOOD) };
 }
 
 export function timeUp(game: Game): Game {

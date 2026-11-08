@@ -12,6 +12,7 @@ export type GameStatus = 'playing' | 'won' | 'lost';
 export interface GameView {
   readonly status: GameStatus;
   readonly life: number;
+  readonly maxLife: number;
   readonly secret?: Code;
   readonly turns: readonly TurnView[];
 }
