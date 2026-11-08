@@ -293,4 +293,20 @@ describe('Tick', () => {
 
     expect(response).toMatchObject({ kind: 'ticked', item: { kind: 'food' } });
   });
+
+  it('shouldShowAnotherItem_afterOneIsCollected', () => {
+    const { clock, collectItem, tick } = startedGame([30000, 0], [0, 0, 30, 70]);
+    tick.execute();
+    clock.advance(8000);
+    const shown = tick.execute();
+    const id = shown.kind === 'ticked' && shown.item !== undefined ? shown.item.id : -1;
+    collectItem.execute({ id });
+    clock.advance(100);
+    tick.execute();
+    clock.advance(8000);
+
+    const response = tick.execute();
+
+    expect(response).toMatchObject({ kind: 'ticked', item: { kind: 'food' } });
+  });
 });
