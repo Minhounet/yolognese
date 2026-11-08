@@ -46,4 +46,14 @@ describe('PeekSecret', () => {
 
     expect(response).toMatchObject({ kind: 'caught' });
   });
+
+  it('shouldRevealColour_justBeforeDistractionEnds', () => {
+    const { clock, distractGuardian, peekSecret } = startedGame();
+    distractGuardian.execute(AWAY);
+    clock.advance(1499);
+
+    const response = peekSecret.execute({ index: 0 });
+
+    expect(response).toEqual({ kind: 'revealed', index: 0, color: 'red' });
+  });
 });
