@@ -251,7 +251,7 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
       <Text testID="timer" accessibilityLabel="time left" style={styles.timer}>
         ⏱️ {timeLeftMs === undefined ? "–:––" : countdown(timeLeftMs)}
       </Text>
-      <LifeBar life={view.life} />
+      <LifeBar life={view.life} maxLife={view.maxLife} />
       {playing && <CooldownBar startedAt={cooldown.startedAt} cooldownMs={cooldown.cooldownMs} />}
       <FeedbackLegend />
       {playing && (
