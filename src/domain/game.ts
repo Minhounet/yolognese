@@ -1,6 +1,5 @@
 import { Code, COLORS, Color } from './color';
 
-const MAX_ATTEMPTS = 10;
 const STARTING_LIFE = 10;
 const LIFE_LOST_PER_MISS = 1;
 const LIFE_LOST_WHEN_CAUGHT = 2;
@@ -15,12 +14,11 @@ export interface Turn {
 export interface Game {
   readonly secret: Code;
   readonly turns: readonly Turn[];
-  readonly penalties: number;
   readonly life: number;
 }
 
 export function newGame(secret: Code): Game {
-  return { secret, turns: [], penalties: 0, life: STARTING_LIFE };
+  return { secret, turns: [], life: STARTING_LIFE };
 }
 
 function countExact(game: Game, guess: Code): number {
@@ -58,15 +56,11 @@ export function play(game: Game, guess: Code): Game {
 
 export function penalise(game: Game): Game {
   const life = Math.max(MIN_LIFE, game.life - LIFE_LOST_WHEN_CAUGHT);
-  return { ...game, penalties: game.penalties + 1, life };
+  return { ...game, life };
 }
 
 export function isWon(game: Game): boolean {
   return game.turns.some((turn) => cracksCode(game, turn));
-}
-
-export function attemptsLeft(game: Game): number {
-  return MAX_ATTEMPTS - game.turns.length - game.penalties;
 }
 
 export function isLost(game: Game): boolean {

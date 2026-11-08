@@ -59,14 +59,6 @@ describe('PeekSecret', () => {
     expect(response).toEqual({ kind: 'revealed', index: 0, color: 'red' });
   });
 
-  it('shouldCostOneAttempt_whenCaught', () => {
-    const { peekSecret } = startedGame();
-
-    const response = peekSecret.execute({ index: 2 });
-
-    expect(response).toMatchObject({ kind: 'caught', view: { attemptsLeft: 9 } });
-  });
-
   it('shouldLoseTwoLife_whenCaught', () => {
     const { peekSecret } = startedGame();
 
@@ -95,16 +87,6 @@ describe('PeekSecret', () => {
     expect(response).toMatchObject({ kind: 'caught', view: { life: 0 } });
   });
 
-  it('shouldLoseGame_whenCaughtOnLastAttempt', () => {
-    const { peekSecret, submitGuess } = startedGame();
-    const miss = { guess: ['purple', 'purple', 'orange', 'orange'] } as const;
-    Array.from({ length: 9 }).forEach(() => submitGuess.execute(miss));
-
-    const response = peekSecret.execute({ index: 2 });
-
-    expect(response).toMatchObject({ kind: 'caught', view: { status: 'lost', attemptsLeft: 0 } });
-  });
-
   it('shouldRejectPeek_whenGameIsOver', () => {
     const { distractGuardian, peekSecret, submitGuess } = startedGame();
     submitGuess.execute({ guess: ['red', 'yellow', 'green', 'blue'] });
@@ -115,12 +97,12 @@ describe('PeekSecret', () => {
     expect(response).toEqual({ kind: 'rejected', reason: 'game-over' });
   });
 
-  it('shouldKeepPenalty_whenGuessingAfterBeingCaught', () => {
+  it('shouldKeepLifeLost_whenGuessingAfterBeingCaught', () => {
     const { peekSecret, submitGuess } = startedGame();
     peekSecret.execute({ index: 2 });
 
     const response = submitGuess.execute({ guess: ['purple', 'purple', 'orange', 'orange'] });
 
-    expect(response).toMatchObject({ kind: 'played', view: { attemptsLeft: 8 } });
+    expect(response).toMatchObject({ kind: 'played', view: { life: 7 } });
   });
 });

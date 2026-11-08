@@ -24,7 +24,7 @@ describe('StartGame', () => {
 
     expect(response).toMatchObject({
       kind: 'played',
-      view: { status: 'playing', attemptsLeft: 9, turns: [{ exact: 0, misplaced: 0 }] },
+      view: { status: 'playing', life: 9, turns: [{ exact: 0, misplaced: 0 }] },
     });
   });
 });

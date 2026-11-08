@@ -129,7 +129,7 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
       </View>
       <Text testID="status" style={[styles.status, caught && styles.caught]}>
         {caught ? 'Caught peeking! −1 attempt' : STATUS_TEXT[view.status]}
-        {playing ? ` · ${view.attemptsLeft} attempts left` : ''}
+        {playing ? ` · ${view.life} life left` : ''}
       </Text>
       <FeedbackLegend />
       <ScrollView style={styles.board} contentContainerStyle={styles.boardContent}>
