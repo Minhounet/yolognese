@@ -72,7 +72,14 @@ pegs, exact / misplaced feedback), not a copy of a commercial game.
     InMemoryGameRepository → the four use cases, handed to App.
 ```
 
-## Open questions
+### Round 2 (AC10-AC14): decisions, approved by the orchestrator in yolo
+
+- D-life: Game holds `life` (start 10, max 10) instead of counting attempts; costs: miss 1, caught 2, attack hit 2; lost at 0. The view shows `life`, not `attemptsLeft`.
+- D-cooldown: the Session holds `peekReadyAt`; PeekSecret rejects ('cooling-down') before it; the view gives `cooldownRemainingMs` for the bar.
+- D-timer: the Session holds `endsAt` (start + 180 s); every use case checks the clock first: past it, the game is lost ('time-up').
+- D-items and D-attack need time to pass with no player action, so a new use case `Tick` (constructor(GameRepository, Clock, RandomSource)), called by the screen every 100 ms, spawns and expires items and resolves attacks; `CollectItem` (item id) applies an item; `MoveShield` (lane 0-2) stores the shield lane. Item kinds and attack timings are pure domain (src/domain/items.ts, src/domain/attack.ts); randomness only through RandomSource, time only through Clock, so every rule is test-driven with the scripted random source and the fake clock.
+- The shield drag is UI (a PanResponder snapping to the nearest lane) calling MoveShield; the screen shows the life bar, cooldown bar, countdown, items and the attack warning from the views.
+
 
 - None blocking. The exact tuning (1500 ms, shake threshold) may change
   after the user tries it on the phone.

@@ -87,5 +87,50 @@ Interpretation is the orchestrator's (yolo), logged in the decision log.
 - Evidence: browser checks still green (11 passed; AC1's feedback check reads the same labels); look on the phone: by the user, pending
 - Status: verified
 
+## Round 2 (user, during the yolo run): the guardian becomes an enemy
+
+Source for AC10-AC14, verbatim: "I would like to change the try count. It should be a life bar. Before cheating again there must be a cooling bar. Being caught decrease the count bar. We must have a time limit for the game. Now an random item can be display on the screen. If "present" it will be a random thing. I suggest the following items, some food to regain life. Smoke bomb to blind the enemy. Etc.. if you have more idea. A "x ray glass" to see a peg randomly. Treat the opponent like an ennemy, he can attack us and we must use a shield to protect (you can drag the shield)."
+Order: AC10, AC11, AC12, AC14, AC13 (AC11-AC14 spend or restore life; AC13's items act on AC11, AC12 and AC14)
+
+## AC10: Life bar instead of attempts
+- Source: "change the try count. It should be a life bar ... Being caught decrease the count bar."
+- Interpretation: the player starts with 10 life points, shown as a bar; a guess that does not win costs 1, being caught peeking costs 2; at 0 the game is lost (replaces attempts: AC2's "10 attempts" and AC4's "costs one attempt" now read through life)
+- Questions: none
+- Covered by: D-life (round 2)
+- Evidence:
+- Status: designed
+
+## AC11: Cheat cooldown bar
+- Source: "Before cheating again there must be a cooling bar."
+- Interpretation: after a peek (revealed or caught), peeking is unavailable for 5 s, shown as a bar refilling; a peek during the cooldown is rejected and costs nothing
+- Questions: none
+- Covered by: D-cooldown (round 2)
+- Evidence:
+- Status: designed
+
+## AC12: Time limit
+- Source: "We must have a time limit for the game."
+- Interpretation: a game lasts 3 minutes, shown as a countdown; at 0 the game is lost and the secret shown
+- Questions: none
+- Covered by: D-timer (round 2)
+- Evidence:
+- Status: designed
+
+## AC13: Random items
+- Source: "an random item can be display on the screen. If "present" it will be a random thing ... food to regain life. Smoke bomb to blind the enemy ... A "x ray glass" to see a peg randomly."
+- Interpretation: every 8 to 15 s an item appears at a random spot for 4 s; tapping it collects it: 🍝 food +3 life (up to 10); 💨 smoke bomb: the guardian is blind for 4 s (peeks are safe and do not start the cooldown); 👓 x-ray glasses: one random still-hidden peg is revealed for the rest of the game; ⏳ hourglass +30 s on the clock (orchestrator's idea); 🛡️ shield charm: the next attack is blocked whatever the shield's position (orchestrator's idea); 🎁 present: one of the others at random
+- Questions: none
+- Covered by: D-items (round 2)
+- Evidence:
+- Status: designed
+
+## AC14: The guardian attacks, the shield protects
+- Source: "Treat the opponent like an ennemy, he can attack us and we must use a shield to protect (you can drag the shield)."
+- Interpretation: every 10 to 20 s the guardian winds up (a 1 s warning showing the lane it aims at, one of 3 lanes along the bottom) and throws a meatball; if the shield, which the player drags left and right along the bottom, is not in that lane when it lands, the player loses 2 life; the guardian does not attack while blind or distracted
+- Questions: none
+- Covered by: D-attack (round 2)
+- Evidence:
+- Status: designed
+
 
 None.

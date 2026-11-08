@@ -5,7 +5,7 @@
 - Mode: build
 - Yolo: on (see references/yolo.md of saiban-orchestrator)
 - Done: scaffold (Expo SDK 58, TypeScript), structural plan and ACs, AC1, AC2, AC3, AC4 verified; AC5 built and published, waiting for the phone check
-- Next: the user's look at the flip (AC6) and the green/yellow dots (AC9) on the phone, then the user decides: merge, more features, or keep ideas
+- Next: round 2, AC10..AC14 in the order of acceptance.md, in a fresh session (say: resume peek-a-code); also the user's look at the flip (AC6) and the feedback marks (AC9); then the user decides: merge, more features, or keep ideas
 - Files: docs/ticket/PEEK-1/, src/
 
 ## Start - scope and mode
@@ -111,3 +111,9 @@
 - Decided (user, orchestrator agreed): feedback dots green (right place) and yellow (wrong place), white-ringed to tell them from pegs, plus a legend
 - Asked user: yes
 - Verdict now: NOT GUILTY pending nothing but the user's look on the phone (AC6 feel, AC9 look are confirmations, not counts: their checks pass)
+
+## Round 2 - the guardian becomes an enemy (user)
+- Decided: AC10-AC14 written from the user's request; numbers (10 life, costs 1/2/2, 5 s cooldown, 3 min, items every 8-15 s for 4 s, attacks every 10-20 s with a 1 s warning, 3 lanes) and two extra items (hourglass, shield charm) chosen by the orchestrator; a Tick use case drives time-based rules so they stay test-driven
+- Decided: build in a fresh session: this one is long and costly per step (the user raised token cost)
+- Fixed: the AC9 edit had dropped the "## Discrepancies" heading of acceptance.md; restored
+- Asked user: no (yolo)
