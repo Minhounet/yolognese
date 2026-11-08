@@ -34,7 +34,6 @@ export class PeekSecretImpl implements PeekSecret {
     }
     if (!isDistracted(session.guardian, this.clock.now())) {
       const game = penalise(session.game);
-      this.repository.save({ ...session, game });
       return { kind: 'caught', view: toGameView(game) };
     }
     return { kind: 'revealed', index: command.index, color: session.game.secret[command.index] };
