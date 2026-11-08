@@ -32,6 +32,12 @@ function startedGame(attackRandom: readonly number[] = [0, 2], itemRandom: reado
   };
 }
 
+function collectShownItem(tick: ReturnType<typeof startedGame>['tick'], collectItem: ReturnType<typeof startedGame>['collectItem']) {
+  const shown = tick.execute();
+  const id = shown.kind === 'ticked' && shown.item !== undefined ? shown.item.id : -1;
+  return collectItem.execute({ id });
+}
+
 describe('Tick', () => {
   it('shouldCountDownTimeLeft_whenTicked', () => {
     const { clock, tick } = startedGame();
@@ -308,5 +314,16 @@ describe('Tick', () => {
     const response = tick.execute();
 
     expect(response).toMatchObject({ kind: 'ticked', item: { kind: 'food' } });
+  });
+
+  it('shouldBlindGuardian_whenSmokeCollected', () => {
+    const { clock, collectItem, peekSecret, tick } = startedGame([30000, 0], [0, 1, 30, 70]);
+    tick.execute();
+    clock.advance(8000);
+    collectShownItem(tick, collectItem);
+
+    const response = peekSecret.execute({ index: 0 });
+
+    expect(response).toMatchObject({ kind: 'revealed', index: 0, color: 'red' });
   });
 });
