@@ -6,6 +6,7 @@
 - Yolo: on (see references/yolo.md of saiban-orchestrator)
 - Done: scaffold (Expo SDK 58, TypeScript), structural plan and ACs, AC1-AC4, AC6-AC11 verified; AC5 waived (user)
 - Next: round 2 in progress: AC10, AC11 verified; next AC12, then AC14, AC13; also the user's look at the flip (AC6) and the feedback marks (AC9); then the user decides: merge, more features, or keep ideas
+- Expo: at every finish or pause, publish the update and give the user the Expo Go link (user, AC11): exp://u.expo.dev/90eceada-289a-4a45-b958-180a23ddedb8?channel-name=feat-peek-a-code&runtime-version=exposdk:58.0.0
 - Files: docs/ticket/PEEK-1/, src/
 
 ## Start - scope and mode
@@ -169,3 +170,7 @@
 - Deferred refinement notes: none
 - Asked user: no (yolo)
 - Carry forward: AC12's Tick will return a view every 100 ms: the cooldown (and the guardian's distraction) could move into it then, replacing the screen's own timers; the browser checks pause the page clock (ac11.spec.js) when a timed value is asserted; AC12's time-up must also reject peeks
+
+## User preference - the Expo link every time
+- Decided (user): "Each time you finish give the expo url": every finish or pause publishes the EAS update and ends with the Expo Go link; written in the Resume block so a fresh session keeps it
+- Asked user: yes
