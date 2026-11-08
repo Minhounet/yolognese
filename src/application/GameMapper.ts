@@ -10,6 +10,7 @@ export function toGameView(game: Game): GameView {
   return {
     status: toStatus(game),
     attemptsLeft: attemptsLeft(game),
+    life: game.life,
     secret: isOver(game) ? game.secret : undefined,
     turns: game.turns.map(({ guess, exact, misplaced }) => ({ guess, exact, misplaced })),
   };

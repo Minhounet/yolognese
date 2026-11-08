@@ -1,6 +1,7 @@
 import { Code, COLORS, Color } from './color';
 
 const MAX_ATTEMPTS = 10;
+const STARTING_LIFE = 10;
 
 export interface Turn {
   readonly guess: Code;
@@ -12,10 +13,11 @@ export interface Game {
   readonly secret: Code;
   readonly turns: readonly Turn[];
   readonly penalties: number;
+  readonly life: number;
 }
 
 export function newGame(secret: Code): Game {
-  return { secret, turns: [], penalties: 0 };
+  return { secret, turns: [], penalties: 0, life: STARTING_LIFE };
 }
 
 function countExact(game: Game, guess: Code): number {
