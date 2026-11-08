@@ -227,4 +227,17 @@ describe('Tick', () => {
 
     expect(response).toMatchObject({ kind: 'collected', view: { life: 10, maxLife: 10 } });
   });
+
+  it('shouldRejectCollect_whenItemIsGone', () => {
+    const { clock, collectItem, tick } = startedGame([20000, 0], [0, 0, 30, 70]);
+    tick.execute();
+    clock.advance(8000);
+    const shown = tick.execute();
+    const id = shown.kind === 'ticked' && shown.item !== undefined ? shown.item.id : -1;
+    clock.advance(4000);
+
+    const response = collectItem.execute({ id });
+
+    expect(response).toEqual({ kind: 'rejected', reason: 'no-item' });
+  });
 });
