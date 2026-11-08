@@ -53,7 +53,7 @@ Interpretation is the orchestrator's (yolo), logged in the decision log.
 - Questions: none
 - Covered by: D-guardian, D-structure (isShake, useShake, DistractGuardian)
 - Evidence: supports only — test/domain/shake.test.ts: shouldNotDetectShake_whenPhoneIsStill, shouldDetectShake_whenThreeJoltsWithinOneSecond, shouldNotDetectShake_whenJoltsAreTooFarApart, shouldNotDetectShake_whenOnlyTwoJolts, shouldDetectShake_whenBurstFollowsLoneJolt, shouldNotDetectShake_whenOneLongBump (full build 31 passed, tsc clean). The AC itself needs a manual check on the phone (no accelerometer on the web build): pending, by the user — (1) shake the phone three times quickly: the guardian looks away; (2) one hard bump: it does not
-- Status: designed
+- Status: waived (shaking opens Expo Go's developer menu, so the gesture cannot work in Expo Go; the screen hook is removed, the tested isShake rule is kept for a standalone build; decided by the user)
 
 ## AC6: Quick flip with an animation
 - Source: "When flipping back the peg there is a delay, can you check that ? And a better animation could cool during flipping." (user, added during the yolo run)
@@ -79,6 +79,13 @@ Interpretation is the orchestrator's (yolo), logged in the decision log.
 - Evidence: e2e/ac6-ac8.spec.js "AC8: hitting the screen raises a puff of dust where it was hit, which fades", passed on the web build
 - Status: verified
 
-## Discrepancies
+## AC9: Feedback colours people already know
+- Source: "I dont think that the black white display is intuitive. Green should be right. Yellow can be misplaced." (user, added during the yolo run)
+- Interpretation: right colour in the right place is a green dot, right colour in the wrong place a yellow dot (white-ringed, so they don't read as pegs), with a legend under the status line
+- Questions: none
+- Covered by: src/ui/Feedback.tsx (Feedback, FeedbackLegend)
+- Evidence: browser checks still green (11 passed; AC1's feedback check reads the same labels); look on the phone: by the user, pending
+- Status: verified
+
 
 None.

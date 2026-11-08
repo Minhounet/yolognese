@@ -4,20 +4,17 @@ import { GameView } from '../application/views';
 import { UseCases } from '../compositionRoot';
 import { COLORS, Code, Color } from '../domain/color';
 import { Point } from '../domain/point';
-import { Feedback } from './Feedback';
+import { Feedback, FeedbackLegend } from './Feedback';
 import { Guardian } from './Guardian';
 import { DustPuff } from './DustPuff';
 import { Peg } from './Peg';
 import { SecretPeg } from './SecretPeg';
-import { useShake } from './useShake';
 import { THEME } from './theme';
 
 type Draft = readonly (Color | undefined)[];
 
 const EMPTY_DRAFT: Draft = [undefined, undefined, undefined, undefined];
 const PEEK_SHOWN_MS = 400;
-/** Where the guardian looks after a shake: dizzy, up and to the side. */
-const SHAKEN_LOOK: Point = { x: -100, y: -60 };
 const CAUGHT_SHOWN_MS = 1500;
 
 function isComplete(draft: Draft): draft is Code {
@@ -104,8 +101,6 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
 
   const removePuff = useCallback((id: number) => setPuffs((current) => current.filter((puff) => puff.id !== id)), []);
 
-  useShake(() => distractTowards(SHAKEN_LOOK));
-
   const submit = () => {
     if (!isComplete(draft)) return;
     const response = useCases.submitGuess.execute({ guess: draft });
@@ -136,6 +131,7 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
         {caught ? 'Caught peeking! −1 attempt' : STATUS_TEXT[view.status]}
         {playing ? ` · ${view.attemptsLeft} attempts left` : ''}
       </Text>
+      <FeedbackLegend />
       <ScrollView style={styles.board} contentContainerStyle={styles.boardContent}>
         {view.turns.map((turn, index) => (
           <View key={index} style={styles.row} testID={`turn-${index}`}>

@@ -5,7 +5,7 @@
 - Mode: build
 - Yolo: on (see references/yolo.md of saiban-orchestrator)
 - Done: scaffold (Expo SDK 58, TypeScript), structural plan and ACs, AC1, AC2, AC3, AC4 verified; AC5 built and published, waiting for the phone check
-- Next: the user's phone checks (AC5 shake, AC6 feel of the flip), then the user decides: merge, more features, or keep ideas
+- Next: the user's look at the flip (AC6) and the green/yellow dots (AC9) on the phone, then the user decides: merge, more features, or keep ideas
 - Files: docs/ticket/PEEK-1/, src/
 
 ## Start - scope and mode
@@ -105,3 +105,9 @@
 - Decided: three screen-only ACs (flip, dazed eyes, dust), no TDD (no game rule), one browser check each; one kenji-reviewer pass for the three instead of one per AC (the user asked to save tokens: logged as a deviation from the per-AC review)
 - Decided: kenji-reviewer blocking: the loss check failed after the flip (already fixed before the review read it: tap where the element is); minor fixed: a mid-turn check, both pupils, dust gone by 500 ms; open: the feel of the flip on the phone (HUMAN)
 - Asked user: no (yolo)
+
+## AC5 waived, AC9 added - by the user
+- Decided (user): remove the shake: in Expo Go a shake opens the developer menu. useShake and its wiring removed; isShake and its tests kept (Keep entry stands) for a standalone build
+- Decided (user, orchestrator agreed): feedback dots green (right place) and yellow (wrong place), white-ringed to tell them from pegs, plus a legend
+- Asked user: yes
+- Verdict now: NOT GUILTY pending nothing but the user's look on the phone (AC6 feel, AC9 look are confirmations, not counts: their checks pass)
