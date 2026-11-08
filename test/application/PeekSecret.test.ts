@@ -148,4 +148,14 @@ describe('PeekSecret', () => {
 
     expect(response).toEqual({ kind: 'rejected', reason: 'cooling-down' });
   });
+
+  it('shouldCostNothing_whenPeekRejectedDuringCooldown', () => {
+    const { peekSecret, submitGuess } = startedGame();
+    peekSecret.execute({ index: 0 });
+    peekSecret.execute({ index: 1 });
+
+    const response = submitGuess.execute({ guess: ['purple', 'purple', 'orange', 'orange'] });
+
+    expect(response).toMatchObject({ kind: 'played', view: { life: 7 } });
+  });
 });
