@@ -519,4 +519,18 @@ describe('Tick', () => {
 
     expect(response).toMatchObject({ kind: 'collected', item: 'present', gift: 'smoke' });
   });
+
+  it('shouldStayBlind_whenPointingDuringSmoke', () => {
+    const { clock, collectItem, distractGuardian, peekSecret, tick } = startedGame([30000, 0], [0, 1, 30, 70]);
+    tick.execute();
+    clock.advance(8000);
+    collectShownItem(tick, collectItem);
+    clock.advance(100);
+    distractGuardian.execute({ target: { x: 150, y: -60 } });
+    clock.advance(2000);
+
+    const response = peekSecret.execute({ index: 0 });
+
+    expect(response).toMatchObject({ kind: 'revealed', cooldownMs: 0 });
+  });
 });
