@@ -75,4 +75,13 @@ describe('Cooldown', () => {
 
     expect(response).toMatchObject({ kind: 'played', view: { life: 7 } });
   });
+
+  it('shouldReportCooldown_whenRevealed', () => {
+    const { distractGuardian, peekSecret } = startedGame();
+    distractGuardian.execute(AWAY);
+
+    const response = peekSecret.execute({ index: 0 });
+
+    expect(response).toMatchObject({ kind: 'revealed', cooldownRemainingMs: 5000 });
+  });
 });
