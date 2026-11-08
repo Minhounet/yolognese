@@ -482,4 +482,17 @@ describe('Tick', () => {
 
     expect(response).toMatchObject({ kind: 'ticked', landed: 'hit' });
   });
+
+  it('shouldReportBlocked_whenShieldStopsAttack', () => {
+    const { clock, moveShield, tick } = startedGame([0, 2]);
+    tick.execute();
+    clock.advance(10000);
+    tick.execute();
+    moveShield.execute({ lane: 2 });
+    clock.advance(1000);
+
+    const response = tick.execute();
+
+    expect(response).toMatchObject({ kind: 'ticked', landed: 'blocked' });
+  });
 });
