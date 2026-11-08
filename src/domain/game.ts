@@ -17,10 +17,11 @@ export interface Game {
   readonly secret: Code;
   readonly turns: readonly Turn[];
   readonly life: number;
+  readonly revealed: readonly number[];
 }
 
 export function newGame(secret: Code): Game {
-  return { secret, turns: [], life: STARTING_LIFE };
+  return { secret, turns: [], life: STARTING_LIFE, revealed: [] };
 }
 
 function countExact(game: Game, guess: Code): number {
@@ -63,6 +64,10 @@ export function penalise(game: Game): Game {
 
 export function restoreLife(game: Game): Game {
   return { ...game, life: Math.min(MAX_LIFE, game.life + LIFE_RESTORED_BY_FOOD) };
+}
+
+export function revealPeg(game: Game, index: number): Game {
+  return { ...game, revealed: [...game.revealed, index] };
 }
 
 export function timeUp(game: Game): Game {

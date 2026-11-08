@@ -1,5 +1,5 @@
 import { Point } from '../domain/point';
-import { Code } from '../domain/color';
+import { Code, Color } from '../domain/color';
 
 export interface TurnView {
   readonly guess: Code;
@@ -9,10 +9,16 @@ export interface TurnView {
 
 export type GameStatus = 'playing' | 'won' | 'lost';
 
+export interface RevealedPegView {
+  readonly index: number;
+  readonly color: Color;
+}
+
 export interface GameView {
   readonly status: GameStatus;
   readonly life: number;
   readonly maxLife: number;
+  readonly revealed: readonly RevealedPegView[];
   readonly secret?: Code;
   readonly turns: readonly TurnView[];
 }

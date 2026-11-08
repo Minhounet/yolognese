@@ -11,6 +11,7 @@ export function toGameView(game: Game): GameView {
     status: toStatus(game),
     life: game.life,
     maxLife: MAX_LIFE,
+    revealed: game.revealed.map((index) => ({ index, color: game.secret[index] })),
     secret: isOver(game) ? game.secret : undefined,
     turns: game.turns.map(({ guess, exact, misplaced }) => ({ guess, exact, misplaced })),
   };

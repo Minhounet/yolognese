@@ -8,7 +8,7 @@ const ITEM_SHOWN_MS = 4000;
 
 export const SMOKE_BLIND_MS = 4000;
 
-export const ITEM_KINDS = ['food', 'smoke'] as const;
+export const ITEM_KINDS = ['food', 'smoke', 'xray'] as const;
 
 export type ItemKind = (typeof ITEM_KINDS)[number];
 
