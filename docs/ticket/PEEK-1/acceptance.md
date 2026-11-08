@@ -81,7 +81,7 @@ Interpretation is the orchestrator's (yolo), logged in the decision log.
 
 ## AC9: Feedback colours people already know
 - Source: "I dont think that the black white display is intuitive. Green should be right. Yellow can be misplaced." (user, added during the yolo run)
-- Interpretation: right colour in the right place is a green dot, right colour in the wrong place a yellow dot (white-ringed, so they don't read as pegs), with a legend under the status line
+- Interpretation: right colour in the right place is a green dot, right colour in the wrong place a yellow dot (white-ringed, so they don't read as pegs), with a legend under the status line; the four dots in one line beside the guess, not a 2×2 square (user)
 - Questions: none
 - Covered by: src/ui/Feedback.tsx (Feedback, FeedbackLegend)
 - Evidence: browser checks still green (11 passed; AC1's feedback check reads the same labels); look on the phone: by the user, pending

@@ -37,7 +37,7 @@ export function FeedbackLegend() {
 }
 
 const styles = StyleSheet.create({
-  grid: { width: 36, flexDirection: 'row', flexWrap: 'wrap', marginLeft: 8 },
+  grid: { flexDirection: 'row', alignItems: 'center', marginLeft: 8 },
   dot: { width: 12, height: 12, borderRadius: 6, margin: 3, borderWidth: 1, borderColor: '#0003' },
   exact: { backgroundColor: RIGHT_PLACE, borderColor: '#fff', borderWidth: 2 },
   misplaced: { backgroundColor: WRONG_PLACE, borderColor: '#fff', borderWidth: 2 },
