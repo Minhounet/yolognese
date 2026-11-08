@@ -11,10 +11,11 @@ export interface Turn {
 export interface Game {
   readonly secret: Code;
   readonly turns: readonly Turn[];
+  readonly penalties: number;
 }
 
 export function newGame(secret: Code): Game {
-  return { secret, turns: [] };
+  return { secret, turns: [], penalties: 0 };
 }
 
 function countExact(game: Game, guess: Code): number {
@@ -45,12 +46,16 @@ export function play(game: Game, guess: Code): Game {
   return { ...game, turns: [...game.turns, turn] };
 }
 
+export function penalise(game: Game): Game {
+  return { ...game, penalties: game.penalties + 1 };
+}
+
 export function isWon(game: Game): boolean {
   return game.turns.some(({ exact }) => exact === game.secret.length);
 }
 
 export function attemptsLeft(game: Game): number {
-  return MAX_ATTEMPTS - game.turns.length;
+  return MAX_ATTEMPTS - game.turns.length - game.penalties;
 }
 
 export function isLost(game: Game): boolean {
