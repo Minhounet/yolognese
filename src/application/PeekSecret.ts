@@ -38,12 +38,13 @@ export class PeekSecretImpl implements PeekSecret {
     if (now < session.peekReadyAt) {
       return { kind: 'rejected', reason: 'cooling-down' };
     }
+    const peekReadyAt = now + PEEK_COOLDOWN_MS;
     if (!isDistracted(session.guardian, now)) {
       const game = penalise(session.game);
-      this.repository.save({ ...session, game });
+      this.repository.save({ ...session, game, peekReadyAt });
       return { kind: 'caught', view: toGameView(game) };
     }
-    this.repository.save({ ...session, peekReadyAt: now + PEEK_COOLDOWN_MS });
+    this.repository.save({ ...session, peekReadyAt });
     return { kind: 'revealed', index: command.index, color: session.game.secret[command.index] };
   }
 }
