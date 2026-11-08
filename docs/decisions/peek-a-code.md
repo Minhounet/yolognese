@@ -4,8 +4,8 @@
 - Status: open
 - Mode: build
 - Yolo: on (see references/yolo.md of saiban-orchestrator)
-- Done: scaffold (Expo SDK 58, TypeScript), structural plan and ACs, AC1-AC4, AC6-AC12 verified, AC5 waived
-- Next: AC14 (reds from 43), then AC13; also the user's look at the flip (AC6) and the feedback marks (AC9); then the user decides: merge, more features, or keep ideas
+- Done: scaffold (Expo SDK 58, TypeScript), structural plan and ACs, AC1-AC4, AC6-AC12 and AC14 verified, AC5 waived
+- Next: AC13 (reds from 48), the last AC; also the user's look at the flip (AC6) and the feedback marks (AC9); then the user decides: merge, more features, or keep ideas
 - Files: docs/ticket/PEEK-1/, src/
 
 ## Start - scope and mode
@@ -197,3 +197,12 @@
 - Asked user: no (yolo)
 - Deviation (AC14, orchestrator in yolo): GREEN 43 scheduled the attack on a random delay ahead of reds 44-45, with invented tuning (5 s + up to 5 s); the tuning was set to the plan's (10 s + nextInt(10001)) before commit, so 44 and 45 pass on write and become guards with mutation checks (44: minimum delay 1 ms short; 45: the drawn delay ignored). ScriptedRandomSource ignores the bound it is given, so the spread (10001) is not pinned by any test: open
 - Plan change (AC14): red 46 shouldHitOnlyOnce_whenAttackLands added (green 44 left the landing in place, so a meatball kept hitting on every tick: a real bug the plan missed); the plan's 48-49 become 47 shouldAttackAgain_afterLanding and 48 shouldNotAttack_whenGuardianIsDistracted
+
+## AC14 - run and review
+- Decided: reds 43-47 by the orchestrator, greens by a fresh shonin-dev (green 43 retuned before commit, see deviation); refactor 47 split Tick into landing and wind-up steps; screen: ShieldLanes (drag, or tap a lane), the warning target, the outcome line; long browser checks block attacks through e2e/support.js
+- Decided: a bug found while fixing the checks: a tap on the shield reached the scene and distracted the guardian -> fixed, pinned by a browser check
+- Decided: kenji-reviewer, 4 minor, open: (1) the UI tells hit from blocked by comparing life and timing the landing with Date.now, which can mislabel a hit as "Blocked!" by a few ms -> carried to AC13: Tick returns the landing's outcome (a red there); (2) the UI repeats rule numbers (−2, 3 lanes) -> with AC10 minor 3, at AC13; (3) the attack spread and lane count are not pinned (ScriptedRandomSource ignores bounds) -> open; (4) tapping a lane moves the shield, not asked -> said in acceptance.md, kept
+- Super-green misses: 0 (refactor 47 is a clarity pattern on a method grown over cycles 43-47)
+- Deferred refinement notes: untested generalizations — attacks still land on a finished game; MoveShield takes any lane number and works after the game; a distracted guardian postpones the wind-up rather than skipping it; hit and caught share penalise (both 2)
+- Asked user: no (yolo)
+- Carry forward: AC13 extends Tick (spawn and expire items with RandomSource, the landing outcome in the response), adds CollectItem; the smoke bomb makes the guardian blind (no attack, safe peeks without cooldown); food needs maxLife; the shield charm blocks the next attack whatever the lane; the hourglass moves endsAt

@@ -129,8 +129,8 @@ Order: AC10, AC11, AC12, AC14, AC13 (AC11-AC14 spend or restore life; AC13's ite
 - Interpretation: every 10 to 20 s the guardian winds up (a 1 s warning showing the lane it aims at, one of 3 lanes along the bottom) and throws a meatball; if the shield, which the player drags left and right along the bottom, is not in that lane when it lands, the player loses 2 life; the guardian does not attack while blind or distracted
 - Questions: none
 - Covered by: D-attack (round 2)
-- Evidence:
-- Status: designed
+- Evidence: reds 43-47 — Tick.shouldWarnOfAttack_whenAttackTimeComes, shouldHitPlayer_whenShieldIsNotInLane, shouldBlockAttack_whenShieldIsInLane, shouldHitOnlyOnce_whenAttackLands, shouldNotAttack_whenGuardianIsDistracted (guards shouldNotWarn_beforeAttackTime, shouldWaitRandomDelay_beforeAttacking, shouldAttackAgain_afterLanding are not evidence); full build `npx jest && npx tsc --noEmit`: 54 passed, tsc clean. Screen: browser checks e2e/ac14.spec.js "the guardian winds up on a lane, and the shield in that lane blocks the meatball", "a meatball landing outside the shield costs 2 life", "the shield can be dragged from lane to lane", "tapping the shield moves nothing else: the guardian keeps watching", passed on the web build (19 passed, twice). Not attacking while distracted: unit test only. A tap on a lane also moves the shield (not asked; the checks use it because a drag under the fake clock hangs; the drag is checked without it). "Blind" comes with AC13. kenji-reviewer: 4 minor, none blocking; the feel of the drag on the phone, by the user, pending
+- Status: verified
 
 
 None.
