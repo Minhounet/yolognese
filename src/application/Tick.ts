@@ -1,6 +1,6 @@
 import { timeUp } from '../domain/game';
 import { toGameView } from './GameMapper';
-import { Clock, GameRepository } from './ports';
+import { Clock, GameRepository, RandomSource } from './ports';
 import { GameView } from './views';
 
 const MIN_TIME_LEFT_MS = 0;
@@ -17,6 +17,7 @@ export class TickImpl implements Tick {
   constructor(
     private readonly repository: GameRepository,
     private readonly clock: Clock,
+    private readonly random: RandomSource,
   ) {}
 
   execute(): TickResponse {

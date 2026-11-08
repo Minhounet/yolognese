@@ -182,3 +182,16 @@
 - Deferred refinement notes: untested generalizations — Tick saves on every call; PeekSecret and DistractGuardian after time up are covered only by isOver (PeekSecret) or not at all (DistractGuardian)
 - Asked user: no (yolo)
 - Carry forward: AC14 extends Tick (RandomSource for the attack timing and lane, the attack resolution) and adds MoveShield; the life loss on a hit needs the clamp (penalise holds it today); the view gains the attack warning and the shield lane
+
+## AC14 - TDD plan
+- Decided: through Tick (and MoveShield from 47), numbering from 43. Tick gets the RandomSource (constructor change in red 43 as its stub, traced). Randomness, fixed by the plan so tests can script it: the delay before an attack (10 s + nextInt(10001) ms) is drawn when it is scheduled, from the first tick; the lane (nextInt(3)) when the guardian winds up; the warning lasts 1000 ms
+  43 [AC14] shouldWarnOfAttack_whenAttackTimeComes — random delay 0, lane 2: 10 s after the first tick the response shows attack { lane 2, landsInMs 1000 }
+  44 [AC14] shouldNotWarn_beforeAttackTime — 9999 ms after: no attack
+  45 [AC14] shouldWaitRandomDelay_beforeAttacking — delay 10000: still no attack at 19999 ms
+  46 [AC14] shouldHitPlayer_whenShieldIsNotInLane — the meatball lands in lane 2, the shield is elsewhere: life 8
+  47 [AC14] shouldBlockAttack_whenShieldIsInLane — MoveShield to lane 2 before it lands: life 10 (MoveShield use case: moved | rejected('no-game'))
+  48 [AC14] shouldAttackAgain_afterLanding — the next warning comes a new random delay after the landing
+  49 [AC14] shouldNotAttack_whenGuardianIsDistracted — distracted when the attack time comes: no warning
+  "Drag the shield", the warning and the throw on screen: browser checks e2e/ac14.spec.js (blocked and hit)
+- dev: on (7 tests, 2 ACs left); a fresh shonin-dev
+- Asked user: no (yolo)

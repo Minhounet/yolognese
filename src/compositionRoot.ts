@@ -18,11 +18,12 @@ export interface UseCases {
 export function createUseCases(): UseCases {
   const repository = new InMemoryGameRepository();
   const clock = new SystemClock();
+  const random = new MathRandomSource();
   return {
-    startGame: new StartGameImpl(new MathRandomSource(), repository, clock),
+    startGame: new StartGameImpl(random, repository, clock),
     submitGuess: new SubmitGuessImpl(repository),
     distractGuardian: new DistractGuardianImpl(repository, clock),
     peekSecret: new PeekSecretImpl(repository, clock),
-    tick: new TickImpl(repository, clock),
+    tick: new TickImpl(repository, clock, random),
   };
 }

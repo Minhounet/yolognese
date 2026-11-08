@@ -5,12 +5,12 @@ import { InMemoryGameRepository } from '../../src/infrastructure/InMemoryGameRep
 import { FakeClock } from '../support/FakeClock';
 import { ScriptedRandomSource } from '../support/ScriptedRandomSource';
 
-// secret: red yellow green blue
-function startedGame() {
+// secret: red yellow green blue; attackRandom: the attack delay drawn at scheduling, then the lane at wind-up (cycling)
+function startedGame(attackRandom: readonly number[] = [0, 2]) {
   const clock = new FakeClock();
   const repository = new InMemoryGameRepository();
   new StartGameImpl(new ScriptedRandomSource([0, 1, 2, 3]), repository, clock).execute();
-  return { clock, tick: new TickImpl(repository, clock), submitGuess: new SubmitGuessImpl(repository) };
+  return { clock, tick: new TickImpl(repository, clock, new ScriptedRandomSource(attackRandom)), submitGuess: new SubmitGuessImpl(repository) };
 }
 
 describe('Tick', () => {
@@ -62,5 +62,15 @@ describe('Tick', () => {
     const response = submitGuess.execute({ guess: ['red', 'yellow', 'green', 'blue'] });
 
     expect(response).toEqual({ kind: 'rejected', reason: 'game-over' });
+  });
+
+  it('shouldWarnOfAttack_whenAttackTimeComes', () => {
+    const { clock, tick } = startedGame([0, 2]);
+    tick.execute();
+    clock.advance(10000);
+
+    const response = tick.execute();
+
+    expect(response).toMatchObject({ kind: 'ticked', attack: { lane: 2, landsInMs: 1000 } });
   });
 });
