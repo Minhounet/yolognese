@@ -37,4 +37,18 @@ describe('Tick', () => {
 
     expect(response).toMatchObject({ kind: 'ticked', timeLeftMs: 120000 });
   });
+
+  it('shouldLoseAndRevealSecret_whenTimeRunsOut', () => {
+    const { clock, tick } = startedGame();
+    tick.execute();
+    clock.advance(180000);
+
+    const response = tick.execute();
+
+    expect(response).toMatchObject({
+      kind: 'ticked',
+      timeLeftMs: 0,
+      view: { status: 'lost', secret: ['red', 'yellow', 'green', 'blue'] },
+    });
+  });
 });
