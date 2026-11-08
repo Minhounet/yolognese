@@ -35,3 +35,33 @@ test('AC4: a peek while the guardian watches is caught and costs one attempt', a
   await expect(page.getByTestId('status')).toContainText('9 attempts left');
   await expect(peg).toHaveAttribute('aria-label', HIDDEN);
 });
+
+test('AC4: a peek after the guardian looks back is caught', async ({ page }) => {
+  await page.clock.install();
+  await page.goto('/');
+  await distract(page);
+  await page.clock.runFor(1600);
+
+  await page.getByTestId('secret-1').tap();
+
+  await expect(page.getByTestId('status')).toContainText('Caught peeking');
+});
+
+test('AC4: getting caught on every attempt loses the game, which then rejects peeks', async ({ page }) => {
+  await page.clock.install();
+  await page.goto('/');
+  const peg = page.getByTestId('secret-0');
+  for (let caught = 1; caught <= 10; caught += 1) {
+    await peg.tap();
+    await expect(page.getByTestId('status')).toContainText(
+      caught < 10 ? `${10 - caught} attempts left` : 'Out of attempts',
+      { timeout: 2000 },
+    );
+    await page.clock.runFor(1600);
+  }
+
+  await expect(page.getByTestId('new-game')).toBeVisible();
+  await expect(peg).not.toHaveAttribute('aria-label', HIDDEN);
+  await peg.tap();
+  await expect(page.getByTestId('status')).toHaveText('Out of attempts. The guardian wins.');
+});
