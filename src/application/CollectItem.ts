@@ -42,7 +42,12 @@ export class CollectItemImpl implements CollectItem {
     const received = item.kind === 'present' ? this.drawGift() : item.kind;
     const affected = this.effectOf(received, session, now);
     this.repository.save({ ...affected, item: undefined, itemCollected: true });
-    return { kind: 'collected', item: item.kind, gift: item.kind === 'present' ? received : undefined, view: toGameView(affected.game) };
+    return {
+      kind: 'collected',
+      item: item.kind,
+      gift: item.kind === 'present' ? received : undefined,
+      view: toGameView(affected.game),
+    };
   }
 
   private effectOf(kind: GiftKind, session: Session, now: number): Session {
