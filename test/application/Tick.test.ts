@@ -439,4 +439,22 @@ describe('Tick', () => {
 
     expect(response).toMatchObject({ kind: 'ticked', view: { life: 10 } });
   });
+
+  it('shouldHitAgain_afterCharmWasUsed', () => {
+    const { clock, collectItem, tick } = startedGame([0, 2], [30000, 4, 30, 70]);
+    tick.execute();
+    clock.advance(38000);
+    collectShownItem(tick, collectItem);
+    clock.advance(10000);
+    tick.execute();
+    clock.advance(1000);
+    tick.execute();
+    clock.advance(10000);
+    tick.execute();
+    clock.advance(1000);
+
+    const response = tick.execute();
+
+    expect(response).toMatchObject({ kind: 'ticked', view: { life: 8 } });
+  });
 });
