@@ -14,6 +14,7 @@ export interface Session {
   readonly guardian: Guardian;
   readonly peekReadyAt: number;
   readonly endsAt: number;
+  readonly attackAt?: number;
 }
 
 export interface GameRepository {
