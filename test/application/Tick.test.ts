@@ -279,4 +279,18 @@ describe('Tick', () => {
 
     expect(response.kind === 'ticked' && response.item).toBeUndefined();
   });
+
+  it('shouldShowAnotherItem_afterOneLeaves', () => {
+    const { clock, tick } = startedGame([30000, 0], [0, 0, 30, 70]);
+    tick.execute();
+    clock.advance(8000);
+    tick.execute();
+    clock.advance(4000);
+    tick.execute();
+    clock.advance(8000);
+
+    const response = tick.execute();
+
+    expect(response).toMatchObject({ kind: 'ticked', item: { kind: 'food' } });
+  });
 });

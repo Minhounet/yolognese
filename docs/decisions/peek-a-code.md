@@ -231,3 +231,4 @@
 - Asked user: no (yolo)
 - Plan change (AC13): red 53 shouldRejectCollect_whenAlreadyCollected added (green 50 left a collected item in place: food could be eaten twice); the plan's 53-64 shift by one (54-65)
 - Plan change (AC13): red 54 shouldKeepSameItem_whileShown (Tick redraws the item on every tick of its 4 s) and red 55 shouldNotShowItem_afterItWasCollected (the next tick re-shows a collected item) added; the plan's later reds shift by two (smoke from 56)
+- Order change (AC13): the plan's shouldShowAnotherItem_afterOneLeaves moved up to red 56 (the item state grows flags while nothing reschedules; with the respawn in place the refactor can reshape it)
