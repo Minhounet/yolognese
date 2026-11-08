@@ -59,6 +59,8 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
   const [cooldown, setCooldown] = useState<CooldownState>({ until: 0, total: 1 });
   const [now, setNow] = useState(() => Date.now());
   const cooldownLeft = Math.max(0, cooldown.until - now);
+  const cooledPercent = Math.round(((cooldown.total - cooldownLeft) / cooldown.total) * 100);
+  const [coolingNotice, setCoolingNotice] = useState<number | undefined>(undefined);
 
   useEffect(() => {
     if (cooldownLeft === 0) return undefined;
@@ -99,7 +101,14 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
       setCaught(true);
       startCooldown(response.cooldownRemainingMs);
     }
+    if (response.kind === 'rejected' && response.reason === 'cooling-down') setCoolingNotice(response.remainingMs);
   };
+
+  useEffect(() => {
+    if (coolingNotice === undefined) return undefined;
+    const timer = setTimeout(() => setCoolingNotice(undefined), CAUGHT_SHOWN_MS);
+    return () => clearTimeout(timer);
+  }, [coolingNotice]);
 
   useEffect(() => {
     if (gaze === undefined) return undefined;
@@ -156,7 +165,11 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
         })}
       </View>
       <Text testID="status" style={[styles.status, caught && styles.caught]}>
-        {caught ? 'Caught peeking! −2 ❤️' : STATUS_TEXT[view.status]}
+        {caught
+          ? 'Caught peeking! −2 ❤️'
+          : coolingNotice !== undefined
+            ? `Still cooling down: ${Math.ceil(coolingNotice / 1000)} s`
+            : STATUS_TEXT[view.status]}
       </Text>
       <Bar testID="life" icon="❤️" value={view.life} max={MAX_LIFE} color={THEME.sauce} label={`life ${view.life} of ${MAX_LIFE}`} />
       <Bar
@@ -165,7 +178,7 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
         value={cooldown.total - cooldownLeft}
         max={cooldown.total}
         color={cooldownLeft === 0 ? THEME.ready : THEME.cooling}
-        label={cooldownLeft === 0 ? 'peek ready' : 'peek cooling down'}
+        label={cooldownLeft === 0 ? 'peek ready' : `peek ${cooledPercent}% cooled`}
       />
       <FeedbackLegend />
       <ScrollView style={styles.board} contentContainerStyle={styles.boardContent}>
