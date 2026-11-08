@@ -5,6 +5,8 @@ import { toGameView } from './GameMapper';
 import { GameRepository, RandomSource } from './ports';
 import { GameView } from './views';
 
+const PEEK_READY_AT_START = 0;
+
 export interface StartGame {
   execute(): GameView;
 }
@@ -17,7 +19,7 @@ export class StartGameImpl implements StartGame {
 
   execute(): GameView {
     const game = newGame(this.drawSecret());
-    this.repository.save({ game, guardian: WATCHING });
+    this.repository.save({ game, guardian: WATCHING, peekReadyAt: PEEK_READY_AT_START });
     return toGameView(game);
   }
 

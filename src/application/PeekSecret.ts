@@ -5,6 +5,8 @@ import { toGameView } from './GameMapper';
 import { Clock, GameRepository } from './ports';
 import { GameView } from './views';
 
+const PEEK_COOLDOWN_MS = 1000;
+
 export interface PeekCommand {
   readonly index: number;
 }
@@ -12,7 +14,7 @@ export interface PeekCommand {
 export type PeekResponse =
   | { readonly kind: 'revealed'; readonly index: number; readonly color: Color }
   | { readonly kind: 'caught'; readonly view: GameView }
-  | { readonly kind: 'rejected'; readonly reason: 'no-game' | 'game-over' };
+  | { readonly kind: 'rejected'; readonly reason: 'no-game' | 'game-over' | 'cooling-down' };
 
 export interface PeekSecret {
   execute(command: PeekCommand): PeekResponse;
@@ -32,11 +34,16 @@ export class PeekSecretImpl implements PeekSecret {
     if (isOver(session.game)) {
       return { kind: 'rejected', reason: 'game-over' };
     }
-    if (!isDistracted(session.guardian, this.clock.now())) {
+    const now = this.clock.now();
+    if (now < session.peekReadyAt) {
+      return { kind: 'rejected', reason: 'cooling-down' };
+    }
+    if (!isDistracted(session.guardian, now)) {
       const game = penalise(session.game);
       this.repository.save({ ...session, game });
       return { kind: 'caught', view: toGameView(game) };
     }
+    this.repository.save({ ...session, peekReadyAt: now + PEEK_COOLDOWN_MS });
     return { kind: 'revealed', index: command.index, color: session.game.secret[command.index] };
   }
 }
