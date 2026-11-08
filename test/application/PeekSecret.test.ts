@@ -75,6 +75,16 @@ describe('PeekSecret', () => {
     expect(response).toMatchObject({ kind: 'caught', view: { life: 8 } });
   });
 
+  it('shouldBeLost_whenCaughtWithTwoLifeLeft', () => {
+    const { peekSecret, submitGuess } = startedGame();
+    const miss = { guess: ['purple', 'purple', 'orange', 'orange'] } as const;
+    Array.from({ length: 8 }).forEach(() => submitGuess.execute(miss));
+
+    const response = peekSecret.execute({ index: 2 });
+
+    expect(response).toMatchObject({ kind: 'caught', view: { status: 'lost', life: 0 } });
+  });
+
   it('shouldLoseGame_whenCaughtOnLastAttempt', () => {
     const { peekSecret, submitGuess } = startedGame();
     const miss = { guess: ['purple', 'purple', 'orange', 'orange'] } as const;
