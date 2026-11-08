@@ -174,3 +174,9 @@
 ## User preference - the Expo link every time
 - Decided (user): "Each time you finish give the expo url": every finish or pause publishes the EAS update and ends with the Expo Go link; written in the Resume block so a fresh session keeps it
 - Asked user: yes
+
+## Bug - the peek vanishes (user, after AC11)
+- Decided: fixed before AC12 (it breaks the core of the game): SecretPeg no longer stops its animation in the effect cleanup (that stopped the opening half too); browser check at real speed, failing before the fix (width 0), passing after
+- Why it was missed: every peek check ran on Playwright's frozen clock (retro)
+- No skill: React Native screen
+- Asked user: no (yolo; the user reported the bug)

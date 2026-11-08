@@ -61,7 +61,7 @@ Interpretation is the orchestrator's (yolo), logged in the decision log.
 - Questions: none
 - Covered by: src/ui/SecretPeg.tsx, GameScreen (PEEK_SHOWN_MS 400, flip back on the guardian's return)
 - Evidence: e2e/ac6-ac8.spec.js "AC6: a peeked peg flips back within half a second" (squeezed mid-turn, shown at 200 ms, hidden at 600 ms) and "AC6: a peeked peg flips back as soon as the guardian looks back", passed on the web build, Playwright clock; the feel of the animation on the phone: by the user, pending
-- Status: verified
+- Status: verified (reopened by the user after AC11: the peeked peg vanished and never showed its colour on the phone; a flip bug, fixed, proven at real speed by e2e/peek-realtime.spec.js "Peek at real speed: the peeked peg stays on screen, shows its colour, then turns back", 15 passed on the web build; the phone look: by the user, pending)
 
 ## AC7: Dazed eye colours
 - Source: "Color could change during watching away (for the eyes)." (user, added during the yolo run)
