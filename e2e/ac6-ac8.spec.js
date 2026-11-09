@@ -2,6 +2,11 @@
 // Time is driven by Playwright's clock, never by a sleep.
 const { test, expect } = require('./fixtures');
 
+async function tapAt(page, locator) {
+  const box = await locator.boundingBox();
+  await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
+}
+
 const HIDDEN = 'hidden peg';
 const INK = '#3b2314';
 
@@ -11,7 +16,7 @@ async function distract(page) {
   await expect(page.getByTestId('guardian')).toHaveAttribute('aria-label', 'guardian looking away');
 }
 
-test('AC6: a peeked peg flips back within half a second', async ({ page }) => {
+test('AC6: a peeked peg turns over with an animation, and turns back when the player taps it (AC20)', async ({ page }) => {
   await page.clock.install();
   await page.goto('/');
   const peg = page.getByTestId('secret-1');
@@ -26,23 +31,28 @@ test('AC6: a peeked peg flips back within half a second', async ({ page }) => {
   await expect(peg).not.toHaveAttribute('aria-label', HIDDEN);
   await expect(peg).toBeVisible(); // turned over and open, not left squeezed
 
-  await page.clock.runFor(400);
-  await expect(peg).toHaveAttribute('aria-label', HIDDEN);
+  await page.clock.runFor(600);
+  await expect(peg).not.toHaveAttribute('aria-label', HIDDEN); // no automatic flip back
+  await tapAt(page, peg);
   await page.clock.runFor(200);
+  await expect(peg).toHaveAttribute('aria-label', HIDDEN);
   expect(await width()).toBeGreaterThan(open * 0.9); // back to its full size once hidden again
+  await expect(page.getByTestId('life')).toHaveAttribute('aria-label', 'Life 10 of 10');
 });
 
-test('AC6: a peeked peg flips back as soon as the guardian looks back', async ({ page }) => {
+test('AC20: a peg left up when the guardian looks back gets the player caught', async ({ page }) => {
   await page.clock.install();
   await page.goto('/');
   const peg = page.getByTestId('secret-1');
   await distract(page);
-  await page.clock.runFor(1400);
-
   await peg.tap();
-  await page.clock.runFor(200);
+  await expect(peg).not.toHaveAttribute('aria-label', HIDDEN);
+
+  await page.clock.runFor(1700); // the distraction ends: the guardian looks back
 
   await expect(page.getByTestId('guardian')).toHaveAttribute('aria-label', 'guardian watching');
+  await expect(page.getByTestId('status')).toContainText('Caught peeking');
+  await expect(page.getByTestId('life')).toHaveAttribute('aria-label', 'Life 8 of 10');
   await expect(peg).toHaveAttribute('aria-label', HIDDEN);
 });
 

@@ -20,7 +20,6 @@ import { THEME } from './theme';
 type Draft = readonly (Color | undefined)[];
 
 const EMPTY_DRAFT: Draft = [undefined, undefined, undefined, undefined];
-const PEEK_SHOWN_MS = 400;
 const CAUGHT_SHOWN_MS = 1500;
 const TICK_MS = 100;
 const MIDDLE_LANE = 1;
@@ -163,6 +162,11 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
         });
       }
       setItem(response.item);
+      if (pegUpRef.current !== undefined && response.view.pegUp === undefined) {
+        pegUpRef.current = undefined; // the guardian looked back with the peg still up: caught
+        setPeeked(undefined);
+        setCaught(true);
+      }
       setView(response.view);
     }, TICK_MS);
     return () => clearInterval(timer);
@@ -171,20 +175,19 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
   const nextPuff = useRef(0);
 
   useEffect(() => {
-    if (gaze === undefined) setPeeked(undefined);
-  }, [gaze]);
-
-  useEffect(() => {
-    if (peeked === undefined) return undefined;
-    const timer = setTimeout(() => setPeeked(undefined), PEEK_SHOWN_MS);
-    return () => clearTimeout(timer);
-  }, [peeked]);
-
-  useEffect(() => {
     if (!caught) return undefined;
     const timer = setTimeout(() => setCaught(false), CAUGHT_SHOWN_MS);
     return () => clearTimeout(timer);
   }, [caught]);
+
+  // the peg the player turned up stays up until they tap it again (AC20); the game catches one left up
+  const pegUpRef = useRef<number | undefined>(undefined);
+
+  const flipBack = (index: number) => {
+    useCases.hidePeg.execute({ index });
+    pegUpRef.current = undefined;
+    setPeeked(undefined);
+  };
 
   const peek = (index: number) => {
     const response = useCases.peekSecret.execute({ index });
@@ -194,7 +197,10 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
     if (response.kind === 'rejected' && response.reason === 'cooling-down' && response.punch !== undefined) {
       throwPunch(response.punch);
     }
-    if (response.kind === 'revealed') setPeeked({ index, color: response.color });
+    if (response.kind === 'revealed') {
+      setPeeked({ index, color: response.color });
+      pegUpRef.current = index;
+    }
     if (response.kind === 'caught') {
       setView(response.view);
       setCaught(true);
@@ -276,10 +282,10 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
       <View style={styles.row} testID="secret" onTouchStart={touchedControl}>
         {(view.secret ?? EMPTY_DRAFT).map((color, slot) => {
           const xrayed = view.revealed.find((peg) => peg.index === slot)?.color;
-          const shown = view.secret === undefined && peeked?.index === slot ? peeked.color : (color ?? xrayed);
-          return (
-            <SecretPeg key={slot} testID={`secret-${slot}`} color={shown} onPress={playing ? () => peek(slot) : undefined} />
-          );
+          const up = view.secret === undefined && peeked?.index === slot;
+          const shown = up ? peeked.color : (color ?? xrayed);
+          const onPress = up ? () => flipBack(slot) : () => peek(slot);
+          return <SecretPeg key={slot} testID={`secret-${slot}`} color={shown} onPress={playing ? onPress : undefined} />;
         })}
       </View>
       <Text testID="status" style={[styles.status, caught && styles.caught]}>

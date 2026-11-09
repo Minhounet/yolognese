@@ -18,7 +18,7 @@ async function distract(page) {
   await expect(page.getByTestId('guardian')).toHaveAttribute('aria-label', 'guardian looking away');
 }
 
-test('AC4: a peek while the guardian looks away shows the colour briefly', async ({ page }) => {
+test('AC4: a peek while the guardian looks away shows the colour (it stays up until tapped again, AC20)', async ({ page }) => {
   await page.clock.install();
   await page.goto('/');
   const peg = page.getByTestId('secret-2');
@@ -29,7 +29,7 @@ test('AC4: a peek while the guardian looks away shows the colour briefly', async
   await expect(peg).not.toHaveAttribute('aria-label', HIDDEN);
   await expect(page.getByTestId('life')).toHaveAttribute('aria-label', 'Life 10 of 10');
   await page.clock.runFor(800);
-  await expect(peg).toHaveAttribute('aria-label', HIDDEN);
+  await expect(peg).not.toHaveAttribute('aria-label', HIDDEN);
 });
 
 test('AC4: a peek while the guardian watches is caught and costs life', async ({ page }) => {
