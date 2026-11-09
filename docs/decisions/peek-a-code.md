@@ -7,6 +7,7 @@
 - Done: scaffold, plan and ACs; AC1-AC4, AC6-AC16 and AC18 verified, AC5 waived (user); AC17 waits for the user's phone check; round 4 published to the feat-peek-a-code channel
 - Next: the user's phone check of AC17 (tap a hidden peg while watched: caught), and the look of the rest; then merge (a pull request, not opened), more features, or tuning
 - Files: docs/ticket/PEEK-1/, src/
+- User preference: end every report with the Expo Go link: exp://u.expo.dev/90eceada-289a-4a45-b958-180a23ddedb8?channel-name=feat-peek-a-code&runtime-version=exposdk:58.0.0
 
 ## Start - scope and mode
 - Decided: build mode, yolo; ACs from the user's request (no ticket), ticket folder PEEK-1
@@ -283,3 +284,7 @@
 - Decided: kenji-reviewer, no blocking, 7 minor: AC17's check passes without the fix -> AC17 left unverified for the user's phone check; the 1-in-4 rate unpinned -> said in acceptance.md; AC14 amended by AC16; retro written; stale comment fixed; punch has no floor (unreachable: isOver first) -> open
 - Asked user: no (yolo)
 - Verdict: GUILTY, 1 count: AC17 not proven: its fix answers a phone-only behaviour the web build does not show; the user's check decides
+
+## User preference - the link in every report
+- Decided (user): "Don't forget the expo link each time": every report ends with the Expo Go link (also in the Resume block)
+- Asked user: yes
