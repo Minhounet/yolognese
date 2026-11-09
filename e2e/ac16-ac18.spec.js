@@ -30,15 +30,17 @@ test('AC17: tapping a peg while the guardian watches gets you caught, and never 
 test.describe('when the guardian sees through the trick', () => {
   test.use({ luck: 0 });
 
-  test('AC18: pointing fails: the guardian keeps watching and punches for 1 life', async ({ page }) => {
+  test('AC18: pointing fails: the guardian keeps watching and throws a punch, 1 life if not parried', async ({ page }) => {
     await page.clock.install();
     await page.goto('/');
     const box = await page.getByTestId('guardian').boundingBox();
 
     await page.touchscreen.tap(box.x + box.width + 120, box.y);
 
-    await expect(page.getByTestId('attack-result')).toHaveText('👊 The guardian saw through it! −1 life');
-    await expect(page.getByTestId('life')).toHaveAttribute('aria-label', 'Life 9 of 10');
     await expect(page.getByTestId('guardian')).toHaveAttribute('aria-label', 'guardian watching');
+    await expect(page.getByTestId('meatball')).toHaveAttribute('aria-label', 'punch falling on lane 0'); // luck 0: lane 0
+    await page.clock.runFor(800); // the shield stays in lane 1
+    await expect(page.getByTestId('attack-result')).toHaveText('👊 Punched! −1 life');
+    await expect(page.getByTestId('life')).toHaveAttribute('aria-label', 'Life 9 of 10');
   });
 });

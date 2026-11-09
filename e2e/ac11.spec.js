@@ -7,7 +7,7 @@ async function tapAt(page, locator) {
   await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
 }
 
-test('AC11: after a peek the cooldown bar refills for 5 s, and a peek meanwhile is refused at no cost', async ({ page }) => {
+test('AC11: after a peek the cooldown bar refills for 5 s, and a peek meanwhile is refused (its punch parried, nothing lost)', async ({ page }) => {
   await page.clock.install();
   await page.goto('/');
   const cooldown = page.getByTestId('cooldown');
@@ -19,8 +19,11 @@ test('AC11: after a peek the cooldown bar refills for 5 s, and a peek meanwhile 
   await expect(cooldown).toHaveAttribute('aria-label', 'Peek cooling down');
 
   await page.clock.runFor(2000);
-  await tapAt(page, page.getByTestId('secret-1')); // still cooling: refused, no cost
+  await tapAt(page, page.getByTestId('secret-1')); // still cooling: refused, and a punch comes (AC19)
   await expect(cooldown).toHaveAttribute('aria-valuenow', /^[3-5]\d$/); // refilling, about 40 %
+  const fist = page.getByTestId('meatball');
+  const lane = (await fist.getAttribute('aria-label')).slice(-1);
+  await tapAt(page, page.getByTestId(`lane-${lane}`)); // parried: the refused peek itself costs nothing
   await page.clock.runFor(2800);
   await expect(cooldown).toHaveAttribute('aria-label', 'Peek cooling down');
   await expect(life).toHaveAttribute('aria-label', 'Life 8 of 10');
