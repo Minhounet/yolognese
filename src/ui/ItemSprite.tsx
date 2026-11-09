@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text } from 'react-native';
-import { Item, ItemKind } from '../domain/items';
+import { GiftKind, Item, ItemKind } from '../domain/items';
 
-export const ITEM_ICONS: Readonly<Record<ItemKind, string>> = {
+export const ITEM_ICONS: Readonly<Record<ItemKind | GiftKind, string>> = {
   food: '🍝',
   smoke: '💨',
   xray: '👓',
@@ -9,6 +9,7 @@ export const ITEM_ICONS: Readonly<Record<ItemKind, string>> = {
   charm: '🍀',
   present: '🎁',
   bomb: '💣',
+  darkness: '🌑',
 };
 
 const LEFT_MARGIN_PERCENT = 5;
