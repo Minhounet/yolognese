@@ -209,16 +209,16 @@ Order: AC10, AC11, AC12, AC14, AC13; then AC15 (user, after playing); then AC16,
 - Interpretation: the arm is a zig-zag spring that unfolds as it stretches and folds back as it returns (a generic spring arm, not a cartoon character's); the glove grows as it comes, as if punching the player through the screen; it still aims at a lane, so the shield still parries it (amends AC23's arm)
 - Questions: none
 - Covered by: the screen (src/ui/PunchArm.tsx)
-- Evidence: browser check e2e/ac24-ac25.spec.js "the punch arm is a zig-zag spring, and the glove grows as it comes at the player" (the arm is a polyline; the glove more than 1.8 times wider at full reach): 42 passed (twice). The look on the phone, by the user, pending
+- Evidence: browser check e2e/ac24-ac25.spec.js "the punch arm is a zig-zag spring, and the glove grows as it comes at the player" (the arm is a zig-zag line that unfolds down the screen and folds back after landing; the glove more than 1.8 times wider at full reach): 42 passed. kenji-reviewer: minor findings, the unfold now asserted. The look on the phone, by the user, pending (a confirmation, as for the earlier screen ACs)
 - Status: verified
 
 ## AC25: Caught, the guardian laughs and points at the player (user, round 8)
 - Source: "When caught the enemy must laugh and raise a finger to me (the real me which is holding the phone)"
 - Interpretation: when the player is caught peeking, the guardian laughs (squinting eyes, open mouth, "HA HA HA!") and points its finger out of the screen at the player (🫵, the reading of the orchestrator: a mocking point, not a rude gesture), for as long as the "Caught peeking" line shows (1.5 s)
-- Questions: none (the gesture is an assumption, to confirm by the user)
+- Questions: open, for the user: is the pointing finger 🫵 the gesture meant by "raise a finger to me"? (assumption of the orchestrator)
 - Covered by: the screen (src/ui/Guardian.tsx)
-- Evidence: browser check e2e/ac24-ac25.spec.js "when the player is caught, the guardian laughs and points at them, then calms down": 42 passed (twice). The look on the phone, by the user, pending
-- Status: verified
+- Evidence: browser check e2e/ac24-ac25.spec.js "when the player is caught, the guardian laughs and points at them, then calms down" (the laugh and the finger shown, still shown at 1.4 s, gone at 1.6 s): 42 passed. The squinting eyes and open mouth are the look, not checked; kenji-reviewer: minor findings only
+- Status: designed (pending the user's answer on the gesture)
 
 ## Discrepancies
 

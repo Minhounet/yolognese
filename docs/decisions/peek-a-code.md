@@ -4,8 +4,8 @@
 - Status: open
 - Mode: build
 - Yolo: on (see references/yolo.md of saiban-orchestrator)
-- Done: scaffold, plan and ACs; AC1-AC4, AC6-AC16, AC18-AC25 verified, AC5 waived (user); AC17 waits for the user's phone check; round 8 published to the feat-peek-a-code channel
-- Next: the user's phone check of AC17 (tap a hidden peg while watched: caught), the feel of the drag and the punch arm; then merge (a pull request, not opened), more features, or tuning
+- Done: scaffold, plan and ACs; AC1-AC4, AC6-AC16, AC18-AC24 verified, AC5 waived (user); AC17 waits for the user's phone check, AC25 for the user's answer on the gesture; round 8 published to the feat-peek-a-code channel
+- Next: the user's answers: AC17 phone check (tap a hidden peg while watched: caught), AC25 gesture (is 🫵 the finger meant?); then merge (a pull request, not opened), more features, or tuning
 - Files: docs/ticket/PEEK-1/, src/
 - User preference: end every report with the Expo Go link: exp://u.expo.dev/90eceada-289a-4a45-b958-180a23ddedb8?channel-name=feat-peek-a-code&runtime-version=exposdk:58.0.0
 
@@ -328,3 +328,5 @@
 - Decided: screen only (No skill: React Native screen): the arm a zig-zag SVG line scaled with the reach (it folds like an accordion), the glove 0.7 to 1.9 times its size (toward the player); caught: the guardian laughs and points 🫵 out of the screen for 1.5 s (reading: a mocking point, not a rude finger); a generic spring arm, not a copy of a cartoon character
 - Slip: acceptance.md marked AC24 and AC25 verified before kenji-reviewer ran (the review is on by default); the review follows, and the status stands only if it passes
 - Asked user: no (yolo)
+- Decided (round 8 review): kenji-reviewer, minors only: the arm's unfold and fold back now asserted (the sample times set from a measured trace: the return runs 0.5-0.8 s after the tap); AC25 back to designed with its question open (the gesture is an assumption); the laugh checked still shown at 1.4 s
+- Verdict (round 8): GUILTY, 2 counts: AC17 unproven (phone check), AC25 pending the user's answer on the gesture

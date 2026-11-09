@@ -15,11 +15,22 @@ test('AC24: the punch arm is a zig-zag spring, and the glove grows as it comes a
   const glove = page.getByTestId('meatball');
   const small = await glove.boundingBox();
 
-  await expect(page.getByTestId('punch-arm').locator('polyline')).toHaveCount(1); // the arm is a zig-zag line
+  const arm = page.getByTestId('punch-arm');
+  await expect(arm.locator('polyline')).toHaveCount(1); // the arm is drawn as a zig-zag line
+  const folded = await arm.boundingBox();
   await page.clock.runFor(400);
   const big = await glove.boundingBox();
+  const unfolded = await arm.boundingBox();
 
   expect(big.width).toBeGreaterThan(small.width * 1.8); // nearer: it punches toward the player
+  expect(unfolded.height).toBeGreaterThan(folded.height * 2); // the spring unfolds down the screen
+  // it lands at about 0.45-0.55 s and returns for 0.3 s: 0.65 s and 0.72 s are inside the return
+  await page.clock.runFor(250);
+  await expect(page.getByTestId('punch-returning')).toBeVisible();
+  const returning = await page.getByTestId('punch-arm').boundingBox();
+  await page.clock.runFor(70);
+  const shorter = await page.getByTestId('punch-arm').boundingBox();
+  expect(shorter.height).toBeLessThan(returning.height); // and folds back
 });
 
 test('AC25: when the player is caught, the guardian laughs and points at them, then calms down', async ({ page }) => {
@@ -31,7 +42,9 @@ test('AC25: when the player is caught, the guardian laughs and points at them, t
 
   await expect(page.getByTestId('guardian-laugh')).toHaveText('HA HA HA!');
   await expect(page.getByTestId('guardian-points')).toBeVisible();
-  await page.clock.runFor(1600);
+  await page.clock.runFor(1400);
+  await expect(page.getByTestId('guardian-laugh')).toBeVisible(); // still laughing just before 1.5 s
+  await page.clock.runFor(200);
   await expect(page.getByTestId('guardian-laugh')).toHaveCount(0);
   await expect(page.getByTestId('guardian-points')).toHaveCount(0);
 });
