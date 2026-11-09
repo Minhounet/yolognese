@@ -1,8 +1,9 @@
+import { Attack } from '../domain/attack';
 import { Color } from '../domain/color';
 import { isOver, penalise } from '../domain/game';
 import { isBlind, isDistracted } from '../domain/guardian';
 import { toGameView } from './GameMapper';
-import { Clock, GameRepository } from './ports';
+import { Clock, GameRepository, RandomSource } from './ports';
 import { GameView } from './views';
 
 const PEEK_COOLDOWN_MS = 5000;
@@ -20,7 +21,8 @@ export type PeekResponse =
       readonly cooldownMs: number;
     }
   | { readonly kind: 'caught'; readonly view: GameView; readonly cooldownMs: number }
-  | { readonly kind: 'rejected'; readonly reason: 'no-game' | 'game-over' | 'cooling-down' };
+  | { readonly kind: 'rejected'; readonly reason: 'no-game' | 'game-over' }
+  | { readonly kind: 'rejected'; readonly reason: 'cooling-down'; readonly punch?: Attack };
 
 export interface PeekSecret {
   execute(command: PeekCommand): PeekResponse;
@@ -30,6 +32,7 @@ export class PeekSecretImpl implements PeekSecret {
   constructor(
     private readonly repository: GameRepository,
     private readonly clock: Clock,
+    private readonly random: RandomSource,
   ) {}
 
   execute(command: PeekCommand): PeekResponse {

@@ -35,7 +35,7 @@ export function createUseCases(): UseCases {
     startGame: new StartGameImpl(random, repository, clock),
     submitGuess: new SubmitGuessImpl(repository),
     distractGuardian: new DistractGuardianImpl(repository, clock, configuredLuck() ?? random),
-    peekSecret: new PeekSecretImpl(repository, clock),
+    peekSecret: new PeekSecretImpl(repository, clock, random),
     tick: new TickImpl(repository, clock, random, random),
     moveShield: new MoveShieldImpl(repository),
     collectItem: new CollectItemImpl(repository, clock, random),

@@ -6,16 +6,17 @@ import { InMemoryGameRepository } from '../../src/infrastructure/InMemoryGameRep
 import { FakeClock } from '../support/FakeClock';
 import { ScriptedRandomSource } from '../support/ScriptedRandomSource';
 
-// secret: red yellow green blue; the guardian's luck draw: 1 is fooled (0 sees through it)
+// secret: red yellow green blue; the guardian's luck draw: 1 is fooled (0 sees through it);
+// punchLanes: the lane a punch is thrown at
 const FOOLED = 1;
-function startedGame(luck: readonly number[] = [FOOLED]) {
+function startedGame(luck: readonly number[] = [FOOLED], punchLanes: readonly number[] = [2]) {
   const clock = new FakeClock();
   const repository = new InMemoryGameRepository();
   new StartGameImpl(new ScriptedRandomSource([0, 1, 2, 3]), repository, clock).execute();
   return {
     clock,
     distractGuardian: new DistractGuardianImpl(repository, clock, new ScriptedRandomSource(luck)),
-    peekSecret: new PeekSecretImpl(repository, clock),
+    peekSecret: new PeekSecretImpl(repository, clock, new ScriptedRandomSource(punchLanes)),
     submitGuess: new SubmitGuessImpl(repository),
   };
 }
@@ -184,5 +185,14 @@ describe('PeekSecret', () => {
     const response = peekSecret.execute({ index: 2 });
 
     expect(response).toMatchObject({ kind: 'caught' });
+  });
+
+  it('shouldThrowPunch_whenPeekingDuringCooldown', () => {
+    const { peekSecret } = startedGame([FOOLED], [2]);
+    peekSecret.execute({ index: 0 });
+
+    const response = peekSecret.execute({ index: 1 });
+
+    expect(response).toMatchObject({ kind: 'rejected', reason: 'cooling-down', punch: { lane: 2, landsInMs: 700 } });
   });
 });

@@ -33,7 +33,7 @@ function startedGame(
     moveShield: new MoveShieldImpl(repository),
     distractGuardian: new DistractGuardianImpl(repository, clock, new ScriptedRandomSource([1])),
     collectItem: new CollectItemImpl(repository, clock, new ScriptedRandomSource(collectRandom)),
-    peekSecret: new PeekSecretImpl(repository, clock),
+    peekSecret: new PeekSecretImpl(repository, clock, new ScriptedRandomSource([0])),
   };
 }
 
