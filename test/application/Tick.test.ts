@@ -12,7 +12,8 @@ import { ScriptedRandomSource } from '../support/ScriptedRandomSource';
 
 // secret: red yellow green blue; attackRandom: the attack delay drawn at scheduling, then the lane at wind-up (cycling);
 // itemRandom: the item delay drawn at scheduling, then its kind and spot x, y when it appears (cycling)
-// item kinds by index: 0 food, 1 smoke, 2 xray, 3 hourglass, 4 charm, 5 present
+// item kinds by index: 0 food, 1 smoke, 2 xray, 3 hourglass, 4 charm, 5 present, 6 bomb
+// a present's gift by index: 0 food, 1 smoke, 2 xray, 3 hourglass, 4 charm, 5 darkness, 6 bomb
 // collectRandom: what an item draws when collected (the x-ray's peg among the hidden ones, the present's kind)
 function startedGame(
   attackRandom: readonly number[] = [0, 2],
@@ -692,5 +693,17 @@ describe('Tick', () => {
     const response = tick.execute();
 
     expect(response).toMatchObject({ kind: 'ticked', view: { life: 10 } });
+  });
+
+  it('shouldExplode_whenBombIsLeftOnField', () => {
+    const { clock, tick } = startedGame([300000, 0], [0, 6, 30, 70]);
+    tick.execute();
+    clock.advance(8000);
+    tick.execute();
+    clock.advance(4000);
+
+    const response = tick.execute();
+
+    expect(response).toMatchObject({ kind: 'ticked', view: { life: 8 }, exploded: true });
   });
 });
