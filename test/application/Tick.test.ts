@@ -731,4 +731,16 @@ describe('Tick', () => {
 
     expect(response).toMatchObject({ kind: 'ticked', view: { playerBlind: true } });
   });
+
+  it('shouldSeeAgain_afterFourSecondsOfDarkness', () => {
+    const { clock, collectItem, tick } = startedGame([300000, 0], [0, 5, 30, 70], [5]);
+    tick.execute();
+    clock.advance(8000);
+    collectShownItem(tick, collectItem);
+    clock.advance(4000);
+
+    const response = tick.execute();
+
+    expect(response.kind === 'ticked' && response.view.playerBlind).toBeFalsy();
+  });
 });
