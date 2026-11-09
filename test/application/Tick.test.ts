@@ -604,10 +604,10 @@ describe('Tick', () => {
   it('shouldWaitToThrowMeatball_whilePunchIsFlying', () => {
     const { clock, peekSecret, tick } = startedGame([0, 2]);
     tick.execute();
-    clock.advance(9500);
+    clock.advance(9700);
     peekSecret.execute({ index: 0 });
     peekSecret.execute({ index: 1 });
-    clock.advance(500);
+    clock.advance(300);
 
     const response = tick.execute();
 
