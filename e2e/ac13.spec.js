@@ -1,10 +1,11 @@
 // Browser checks for AC13, run against the web build (npm run e2e).
 // Each check fixes Math.random before the page loads, so every draw lands on the same index:
-// the item kind is that index (0 food, 1 smoke, 2 xray, 3 hourglass, 4 charm, 5 present).
+// the item kind is that index (0 food, 1 smoke, 2 xray, 3 hourglass, 4 charm, 5 present, 6 bomb);
+// a present's gift is drawn the same way among 7 gifts (5 darkness, 6 bomb).
 // Time is driven by Playwright's clock.
 const { test, expect } = require('./fixtures');
 
-const KINDS = ['food', 'smoke', 'xray', 'hourglass', 'charm', 'present'];
+const KINDS = ['food', 'smoke', 'xray', 'hourglass', 'charm', 'present', 'bomb'];
 
 async function startWithItem(page, kind) {
   const draw = (KINDS.indexOf(kind) + 0.5) / KINDS.length;
@@ -93,18 +94,21 @@ test('AC13: a shield charm blocks the next meatball wherever the shield is', asy
 
   const warning = page.getByTestId('meatball');
   for (let step = 0; step < 200 && !(await warning.isVisible()); step += 1) await page.clock.runFor(100);
-  await expect(warning).not.toHaveAttribute('aria-label', 'meatball falling on lane 1'); // the shield stays in lane 1
+  const lane = Number((await warning.getAttribute('aria-label')).slice(-1));
+  await tapAt(page, page.getByTestId(`lane-${(lane + 1) % 3}`)); // the shield moves out of the meatball's lane
+  await expect(page.getByTestId('laser-shield')).toBeVisible(); // the charm's green laser (AC26)
   await page.clock.runFor(1700);
 
   await expect(page.getByTestId('attack-result')).toHaveText('🛡️ Blocked!');
   await expect(page.getByTestId('life')).toHaveAttribute('aria-label', 'Life 10 of 10');
 });
 
-test('AC13: a present turns into another item, named on screen', async ({ page }) => {
+test('AC13: a present turns into another item, named on screen (here darkness, AC29)', async ({ page }) => {
   await startWithItem(page, 'present');
   const item = await waitForItem(page);
   await expect(item).toHaveAttribute('aria-label', 'item present');
   await tapAt(page, item);
 
-  await expect(page.getByTestId('item-note')).toContainText('🎁 → 🍀');
+  await expect(page.getByTestId('item-note')).toContainText('🎁 → 🌑'); // the same draw picks darkness among the gifts
+  await expect(page.getByTestId('darkness')).toBeVisible();
 });

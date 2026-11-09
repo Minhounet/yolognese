@@ -1,5 +1,5 @@
 import { ComponentRef, useCallback, useEffect, useRef, useState } from 'react';
-import { GestureResponderEvent, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { GestureResponderEvent, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { GameView } from '../application/views';
 import { UseCases } from '../compositionRoot';
 import { COLORS, Code, Color } from '../domain/color';
@@ -10,7 +10,8 @@ import { LifeBar } from './LifeBar';
 import { CooldownBar } from './CooldownBar';
 import { ShieldLanes } from './ShieldLanes';
 import { DraggableColor } from './DraggableColor';
-import { ITEM_ICONS, ItemSprite } from './ItemSprite';
+import { ITEM_ICONS, ItemSprite, itemPoint } from './ItemSprite';
+import { DarknessVeil, Explosion, SmokeGrenade, XrayBeam } from './Effects';
 import { GiftKind, Item, ItemKind } from '../domain/items';
 import { DustPuff } from './DustPuff';
 import { FallingMeatball } from './FallingMeatball';
@@ -28,12 +29,16 @@ const MIDDLE_LANE = 1;
 const CONTROL_TOUCH_MS = 600;
 const DRAGGED_HALF = 22;
 const PUNCH_RETURN_MS = 300;
+const BEAM_SHOWN_MS = 600;
+const BLAST_SHOWN_MS = 600;
+const SECRET_LENGTH = 4;
 
 const ATTACK_LINES = {
   hit: '💥 Hit by a meatball! −2 life',
   blocked: '🛡️ Blocked!',
   'punch-hit': '👊 Punched! −1 life',
   parried: '🛡️ Parried!',
+  boom: '💥 The bomb exploded! −2 life',
   'punch-coming': '👊 The guardian punches!',
   'meatball-coming': '⚠️ Incoming meatball!',
   none: ' ',
@@ -102,7 +107,7 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
   const [timeLeftMs, setTimeLeftMs] = useState<number | undefined>(undefined);
   const [shieldLane, setShieldLane] = useState(MIDDLE_LANE);
   const [warning, setWarning] = useState<{ readonly lane: number; readonly landsAt: number; readonly fallMs: number; readonly punch?: boolean } | undefined>();
-  const [attackResult, setAttackResult] = useState<'hit' | 'blocked' | 'punch-hit' | 'parried' | undefined>();
+  const [attackResult, setAttackResult] = useState<'hit' | 'blocked' | 'punch-hit' | 'parried' | 'boom' | undefined>();
   const [ground, setGround] = useState<{ readonly x: number; readonly y: number; readonly width: number }>();
   const [item, setItem] = useState<Item | undefined>();
   const [itemNote, setItemNote] = useState<string | undefined>();
@@ -121,6 +126,28 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
     return () => clearTimeout(timer);
   }, [blind]);
 
+  const screenSize = useWindowDimensions();
+  const secretRow = useRef<ComponentRef<typeof View>>(null);
+  const [smokeFrom, setSmokeFrom] = useState<Point | undefined>();
+  const [beam, setBeam] = useState<{ readonly from: Point; readonly to: Point } | undefined>();
+  const [blast, setBlast] = useState<Point | undefined>();
+  const lastItemAt = useRef<Point | undefined>(undefined);
+  useEffect(() => {
+    if (beam === undefined) return undefined;
+    const timer = setTimeout(() => setBeam(undefined), BEAM_SHOWN_MS);
+    return () => clearTimeout(timer);
+  }, [beam]);
+  useEffect(() => {
+    if (blast === undefined) return undefined;
+    const timer = setTimeout(() => setBlast(undefined), BLAST_SHOWN_MS);
+    return () => clearTimeout(timer);
+  }, [blast]);
+
+  const aimBeamAt = (from: Point, pegIndex: number) =>
+    secretRow.current?.measureInWindow((x, y, width, height) =>
+      setBeam({ from, to: { x: x + ((pegIndex + 0.5) * width) / SECRET_LENGTH, y: y + height / 2 } }),
+    );
+
   const collect = (shown: Item) => {
     const response = useCases.collectItem.execute({ id: shown.id });
     setItem(undefined);
@@ -129,8 +156,19 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
     if (received === undefined) return;
     setView(response.view);
     setItemNote(`${response.gift ? `${ITEM_ICONS.present} → ` : ''}${ITEM_ICONS[received]} ${GIFT_NOTES[received]}`);
-    if (received === 'smoke') setBlind(true);
+    const from = itemPoint(shown, screenSize);
+    if (received === 'smoke') {
+      setSmokeFrom(from);
+      setBlind(true);
+    }
     if (received === 'charm') setCharmed(true);
+    const xrayed = response.view.revealed[response.view.revealed.length - 1];
+    if (received === 'xray' && xrayed !== undefined) aimBeamAt(from, xrayed.index);
+    if (response.gift === 'bomb') {
+      // a present's bomb goes off in the player's hands; a bomb tapped on the field is thrown away
+      setBlast(from);
+      setAttackResult('boom');
+    }
   };
   const warningRef = useRef<{ readonly lane: number; readonly landsAt: number; readonly fallMs: number; readonly punch?: boolean } | undefined>(undefined);
   const showWarning = (next: { readonly lane: number; readonly landsAt: number; readonly fallMs: number; readonly punch?: boolean } | undefined) => {
@@ -177,6 +215,11 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
           fallMs: response.attack.landsInMs,
         });
       }
+      if (response.exploded) {
+        if (lastItemAt.current !== undefined) setBlast(lastItemAt.current);
+        setAttackResult('boom');
+      }
+      if (response.item !== undefined) lastItemAt.current = itemPoint(response.item, screenSize);
       setItem(response.item);
       if (pegUpRef.current !== undefined && response.view.pegUp === undefined) {
         pegUpRef.current = undefined; // the guardian looked back with the peg still up: caught
@@ -312,13 +355,8 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
       <Text style={styles.title}>Yolognese</Text>
       <View ref={guardianRef} onLayout={measureGuardian}>
         <Guardian gaze={gaze} laughing={caught} />
-        {blind && (
-          <Text testID="smoke" accessibilityLabel="guardian blinded by smoke" style={styles.smoke}>
-            💨💨
-          </Text>
-        )}
       </View>
-      <View style={styles.row} testID="secret" onTouchStart={touchedControl}>
+      <View ref={secretRow} style={styles.row} testID="secret" onTouchStart={touchedControl}>
         {(view.secret ?? EMPTY_DRAFT).map((color, slot) => {
           const xrayed = view.revealed.find((peg) => peg.index === slot)?.color;
           const up = view.secret === undefined && peeked?.index === slot;
@@ -409,6 +447,13 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
       {playing && returningPunch !== undefined && ground !== undefined && (
         <PunchArm from={guardianCentre.current} to={laneTarget(ground, returningPunch)} durationMs={PUNCH_RETURN_MS} phase="back" lane={returningPunch} />
       )}
+      {playing && blind && smokeFrom !== undefined && <SmokeGrenade from={smokeFrom} at={guardianCentre.current} />}
+      {playing && beam !== undefined && <XrayBeam from={beam.from} to={beam.to} />}
+      {blast !== undefined && <Explosion at={blast} />}
+      {playing && charmed && ground !== undefined && (
+        <View testID="laser-shield" accessibilityLabel="green laser shield" pointerEvents="none" style={[styles.laser, { left: ground.x, top: ground.y - 6, width: ground.width }]} />
+      )}
+      {playing && view.playerBlind === true && <DarknessVeil />}
       {dragging !== undefined && (
         <View pointerEvents="none" testID="dragged-color" style={[styles.dragged, { left: dragging.at.x - DRAGGED_HALF, top: dragging.at.y - DRAGGED_HALF }]}>
           <Peg color={dragging.color} size={DRAGGED_HALF * 2} />
@@ -432,9 +477,9 @@ const styles = StyleSheet.create({
   button: { backgroundColor: THEME.sauce, borderRadius: 24, paddingHorizontal: 32, paddingVertical: 12, marginTop: 8 },
   disabled: { opacity: 0.4 },
   caught: { color: THEME.sauce, fontWeight: 'bold' },
-  smoke: { position: 'absolute', alignSelf: 'center', top: 20, fontSize: 40 },
   itemNote: { color: THEME.ink, fontWeight: 'bold', minHeight: 20 },
   dragged: { position: 'absolute', opacity: 0.85 },
+  laser: { position: 'absolute', height: 6, borderRadius: 3, backgroundColor: '#39ff14', shadowColor: '#39ff14', shadowOpacity: 1, shadowRadius: 10 },
   playerZone: { alignSelf: 'stretch', alignItems: 'center', marginTop: 4 },
   attackResult: { color: THEME.sauce, fontWeight: 'bold', minHeight: 20 },
   timer: { color: THEME.ink, fontSize: 16, fontWeight: 'bold', fontVariant: ['tabular-nums'] },
