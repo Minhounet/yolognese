@@ -90,7 +90,7 @@ Interpretation is the orchestrator's (yolo), logged in the decision log.
 ## Round 2 (user, during the yolo run): the guardian becomes an enemy
 
 Source for AC10-AC14, verbatim: "I would like to change the try count. It should be a life bar. Before cheating again there must be a cooling bar. Being caught decrease the count bar. We must have a time limit for the game. Now an random item can be display on the screen. If "present" it will be a random thing. I suggest the following items, some food to regain life. Smoke bomb to blind the enemy. Etc.. if you have more idea. A "x ray glass" to see a peg randomly. Treat the opponent like an ennemy, he can attack us and we must use a shield to protect (you can drag the shield)."
-Order: AC10, AC11, AC12, AC14, AC13; then AC15 (user, after playing); then AC16, AC18, AC17 (user, round 4: AC18's punch and AC16's fall are rules, AC17 the screen) (AC11-AC14 spend or restore life; AC13's items act on AC11, AC12 and AC14)
+Order: AC10, AC11, AC12, AC14, AC13; then AC15 (user, after playing); then AC16, AC18, AC17 (user, round 4: AC18's punch and AC16's fall are rules, AC17 the screen); then AC19 (user, round 5) (AC11-AC14 spend or restore life; AC13's items act on AC11, AC12 and AC14)
 
 ## AC10: Life bar instead of attempts
 - Source: "change the try count. It should be a life bar ... Being caught decrease the count bar."
@@ -163,6 +163,14 @@ Order: AC10, AC11, AC12, AC14, AC13; then AC15 (user, after playing); then AC16,
 - Covered by: D-guardian (DistractGuardian draws luck from a RandomSource)
 - Evidence: red 76 DistractGuardian.shouldPunchPlayer_whenDistractionFails, red 77 shouldNotPunch_whenGameIsOver, guard 76 PeekSecret.shouldBeCaught_whenPeekingAfterBeingPunched; browser check e2e/ac16-ac18.spec.js "AC18: pointing fails: the guardian keeps watching and punches for 1 life" (luck fixed to 0); full build 85 passed. The rate one in four is the plan's value and is pinned by no test (ScriptedRandomSource ignores bounds); kenji-reviewer: minor notes only
 - Status: verified
+
+## AC19: Peeking during the cooldown gets a fast punch you can parry (user, round 5)
+- Source: "now trying to peek when cool down is note must make the ennemy punch us, we can parry but punch is fast"
+- Interpretation: a peek during the cooldown is still refused, and the guardian throws a punch at one of the 3 lanes that lands in 0.7 s; the shield in that lane parries it, otherwise it costs 1 life; the punch of a failed distraction (AC18) becomes the same parryable punch (amends AC11 "costs nothing" and AC18 "punches for 1 life" at once); no punch while a meatball or a punch is already on its way
+- Questions: none
+- Covered by: D-attack (an attack is a meatball or a punch), PeekSecret and DistractGuardian throw the punch, Tick lands it
+- Evidence:
+- Status: designed
 
 ## Discrepancies
 

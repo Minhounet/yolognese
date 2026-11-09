@@ -5,7 +5,7 @@
 - Mode: build
 - Yolo: on (see references/yolo.md of saiban-orchestrator)
 - Done: scaffold, plan and ACs; AC1-AC4, AC6-AC16 and AC18 verified, AC5 waived (user); AC17 waits for the user's phone check; round 4 published to the feat-peek-a-code channel
-- Next: the user's phone check of AC17 (tap a hidden peg while watched: caught), and the look of the rest; then merge (a pull request, not opened), more features, or tuning
+- Next: round 5 (user): AC19 the cooldown punch (and AC18's punch made parryable); AC17 still waits for the user's phone check
 - Files: docs/ticket/PEEK-1/, src/
 - User preference: end every report with the Expo Go link: exp://u.expo.dev/90eceada-289a-4a45-b958-180a23ddedb8?channel-name=feat-peek-a-code&runtime-version=exposdk:58.0.0
 
@@ -288,3 +288,9 @@
 ## User preference - the link in every report
 - Decided (user): "Don't forget the expo link each time": every report ends with the Expo Go link (also in the Resume block)
 - Asked user: yes
+
+## Round 5 - the cooldown punch
+- Decided: AC19 written from the user's words; punch lands in 700 ms and costs 1 (orchestrator's numbers); AC18's punch becomes the same thrown, parryable punch (reading: "we can parry"); one attack in flight at a time (no punch while one is falling)
+- Decided: structure: the Session's pending attack gets a kind (meatball 2 life, punch 1 life); PeekSecret takes a RandomSource for the punch's lane (constructor change in a red, traced); DistractGuardian draws the lane from its luck source after the fooled draw; the cooldown rejection carries the punch; Tick lands it like a meatball
+- Plan: make-room refactor first (the cooldown tests compare by fields), then reds from 78: 78 punch thrown on a cooldown peek, 79 an unparried punch costs 1, 80 the shield in its lane parries it, 81 (changed requirement) a failed distraction throws the punch instead of an instant hit, 82 no punch while an attack is on its way; dev: on, a fresh shonin-dev
+- Asked user: no (yolo)
