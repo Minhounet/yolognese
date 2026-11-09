@@ -3,6 +3,7 @@ export const ATTACK_DELAY_SPREAD_MS = 10001;
 
 const MIN_ATTACK_DELAY_MS = 10000;
 const ATTACK_WIND_UP_MS = 1500;
+const PUNCH_WIND_UP_MS = 700;
 
 export interface Attack {
   readonly lane: number;
@@ -19,6 +20,10 @@ export function isAttackDue(attackAt: number, now: number): boolean {
 
 export function windUp(lane: number): Attack {
   return { lane, landsInMs: ATTACK_WIND_UP_MS };
+}
+
+export function punchWindUp(lane: number): Attack {
+  return { lane, landsInMs: PUNCH_WIND_UP_MS };
 }
 
 export function hasLanded(landsAt: number, now: number): boolean {

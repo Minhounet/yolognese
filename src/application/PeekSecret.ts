@@ -1,4 +1,4 @@
-import { Attack } from '../domain/attack';
+import { Attack, LANE_COUNT, punchWindUp } from '../domain/attack';
 import { Color } from '../domain/color';
 import { isOver, penalise } from '../domain/game';
 import { isBlind, isDistracted } from '../domain/guardian';
@@ -45,7 +45,11 @@ export class PeekSecretImpl implements PeekSecret {
     }
     const now = this.clock.now();
     if (now < session.peekReadyAt) {
-      return { kind: 'rejected', reason: 'cooling-down' };
+      return {
+        kind: 'rejected',
+        reason: 'cooling-down',
+        punch: punchWindUp(this.random.nextInt(LANE_COUNT)),
+      };
     }
     if (!isDistracted(session.guardian, now)) {
       const game = penalise(session.game);
