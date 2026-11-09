@@ -8,7 +8,7 @@ import {
   scheduleAttackAt,
   windUp,
 } from '../domain/attack';
-import { Game, penalise, punch, timeUp } from '../domain/game';
+import { Game, explode, penalise, punch, timeUp } from '../domain/game';
 import { isDistracted } from '../domain/guardian';
 import {
   ITEM_DELAY_SPREAD_MS,
@@ -16,6 +16,7 @@ import {
   ITEM_SPOT_SPAN,
   Item,
   appear,
+  isBombLeft,
   isItemGone,
   isItemShown,
   scheduleItemAt,
@@ -35,6 +36,7 @@ export type TickResponse =
       readonly attack?: Attack;
       readonly item?: Item;
       readonly landed?: 'hit' | 'blocked';
+      readonly exploded?: true;
     }
   | { readonly kind: 'rejected'; readonly reason: 'no-game' };
 
@@ -61,7 +63,9 @@ export class TickImpl implements Tick {
     const landing = this.landing(session, now);
     const caughtPeeking = this.isCaughtPeeking(session, now);
     const landedGame = this.afterLanding(timedGame, landing);
-    const game = caughtPeeking ? penalise(landedGame) : landedGame;
+    const caughtGame = caughtPeeking ? penalise(landedGame) : landedGame;
+    const exploded = session.itemAt !== undefined && isBombLeft(session.item, session.itemAt, now);
+    const game = exploded ? explode(caughtGame) : caughtGame;
     const pegUp = caughtPeeking ? undefined : session.pegUp;
     const attackState = this.windUpIfDue(session, now, landing.pendingLandsAt);
     const itemState = this.itemOnShow(session, now);
@@ -82,6 +86,7 @@ export class TickImpl implements Tick {
       attack: attackState.attack,
       item: itemState.item,
       landed: this.reported(landing),
+      exploded: exploded ? true : undefined,
     };
   }
 

@@ -48,12 +48,12 @@ export class CollectItemImpl implements CollectItem {
     return {
       kind: 'collected',
       item: item.kind,
-      gift: item.kind === 'present' ? received : undefined,
+      gift: item.kind === 'present' && received !== 'bomb' ? received : undefined,
       view: toGameView(affected.game),
     };
   }
 
-  private effectOf(kind: GiftKind, session: Session, now: number): Session {
+  private effectOf(kind: GiftKind | 'bomb', session: Session, now: number): Session {
     switch (kind) {
       case 'food':
         return { ...session, game: restoreLife(session.game) };
@@ -65,6 +65,8 @@ export class CollectItemImpl implements CollectItem {
         return { ...session, endsAt: session.endsAt + HOURGLASS_BONUS_MS };
       case 'charm':
         return { ...session, charmed: true };
+      case 'bomb':
+        return session;
     }
   }
 

@@ -14,7 +14,7 @@ export const GIFT_KINDS = ['food', 'smoke', 'xray', 'hourglass', 'charm'] as con
 
 export type GiftKind = (typeof GIFT_KINDS)[number];
 
-export const ITEM_KINDS = [...GIFT_KINDS, 'present'] as const;
+export const ITEM_KINDS = [...GIFT_KINDS, 'present', 'bomb'] as const;
 
 export type ItemKind = (typeof ITEM_KINDS)[number];
 
@@ -38,4 +38,8 @@ export function isItemGone(itemAt: number, now: number): boolean {
 
 export function appear(kindIndex: number, x: number, y: number): Item {
   return { id: 0, kind: ITEM_KINDS[kindIndex], spot: { x, y } };
+}
+
+export function isBombLeft(item: Item | undefined, itemAt: number, now: number): boolean {
+  return item?.kind === 'bomb' && isItemGone(itemAt, now);
 }
