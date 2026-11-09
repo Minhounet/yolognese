@@ -588,4 +588,16 @@ describe('Tick', () => {
 
     expect(response).toMatchObject({ kind: 'ticked', view: { life: 8 }, landed: 'blocked' });
   });
+
+  it('shouldNotThrowPunch_whenMeatballIsFalling', () => {
+    const { clock, peekSecret, tick } = startedGame([0, 2]);
+    tick.execute();
+    clock.advance(10000);
+    tick.execute();
+    peekSecret.execute({ index: 0 });
+
+    const response = peekSecret.execute({ index: 1 });
+
+    expect(response).toEqual({ kind: 'rejected', reason: 'cooling-down' });
+  });
 });
