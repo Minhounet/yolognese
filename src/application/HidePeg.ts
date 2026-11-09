@@ -15,7 +15,12 @@ export interface HidePeg {
 export class HidePegImpl implements HidePeg {
   constructor(private readonly repository: GameRepository) {}
 
-  execute(_command: HidePegCommand): HidePegResponse {
-    return { kind: 'rejected', reason: 'no-game' };
+  execute(command: HidePegCommand): HidePegResponse {
+    const session = this.repository.load();
+    if (session === undefined) {
+      return { kind: 'rejected', reason: 'no-game' };
+    }
+    this.repository.save({ ...session, pegUp: undefined });
+    return { kind: 'hidden', index: command.index };
   }
 }
