@@ -10,11 +10,13 @@ export const SMOKE_BLIND_MS = 4000;
 
 export const HOURGLASS_BONUS_MS = 30000;
 
-export const GIFT_KINDS = ['food', 'smoke', 'xray', 'hourglass', 'charm'] as const;
+const FIELD_GIFT_KINDS = ['food', 'smoke', 'xray', 'hourglass', 'charm'] as const;
+
+export const GIFT_KINDS = [...FIELD_GIFT_KINDS, 'darkness'] as const;
 
 export type GiftKind = (typeof GIFT_KINDS)[number];
 
-export const ITEM_KINDS = [...GIFT_KINDS, 'present', 'bomb'] as const;
+export const ITEM_KINDS = [...FIELD_GIFT_KINDS, 'present', 'bomb'] as const;
 
 export type ItemKind = (typeof ITEM_KINDS)[number];
 

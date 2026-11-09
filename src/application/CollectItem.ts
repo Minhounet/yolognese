@@ -65,6 +65,8 @@ export class CollectItemImpl implements CollectItem {
         return { ...session, endsAt: session.endsAt + HOURGLASS_BONUS_MS };
       case 'charm':
         return { ...session, charmed: true };
+      case 'darkness':
+        return { ...session, playerBlind: true };
       case 'bomb':
         return session;
     }

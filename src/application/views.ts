@@ -22,6 +22,7 @@ export interface GameView {
   readonly secret?: Code;
   readonly turns: readonly TurnView[];
   readonly pegUp?: RevealedPegView;
+  readonly playerBlind?: boolean;
 }
 
 export interface GuardianView {

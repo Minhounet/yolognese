@@ -81,7 +81,7 @@ export class TickImpl implements Tick {
     });
     return {
       kind: 'ticked',
-      view: { ...toGameView(game), pegUp },
+      view: { ...toGameView(game), pegUp, playerBlind: session.playerBlind },
       timeLeftMs,
       attack: attackState.attack,
       item: itemState.item,
