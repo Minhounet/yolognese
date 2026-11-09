@@ -1,4 +1,5 @@
-import { isOver, punch } from '../domain/game';
+import { Attack, LANE_COUNT, punchWindUp } from '../domain/attack';
+import { isOver } from '../domain/game';
 import { distract } from '../domain/guardian';
 import { Point } from '../domain/point';
 import { Clock, GameRepository, RandomSource } from './ports';
@@ -15,7 +16,7 @@ export interface DistractCommand {
 
 export type DistractResponse =
   | { readonly kind: 'distracted'; readonly view: GuardianView }
-  | { readonly kind: 'punched'; readonly view: GameView }
+  | { readonly kind: 'punched'; readonly punch: Attack; readonly view: GameView }
   | { readonly kind: 'rejected'; readonly reason: 'no-game' | 'game-over' };
 
 export interface DistractGuardian {
@@ -37,12 +38,17 @@ export class DistractGuardianImpl implements DistractGuardian {
     if (isOver(session.game)) {
       return { kind: 'rejected', reason: 'game-over' };
     }
-    if (this.luck.nextInt(LUCK_OUTCOMES) === SEES_THROUGH) {
-      const game = punch(session.game);
-      this.repository.save({ ...session, game });
-      return { kind: 'punched', view: toGameView(game) };
-    }
     const now = this.clock.now();
+    if (this.luck.nextInt(LUCK_OUTCOMES) === SEES_THROUGH) {
+      const punch = punchWindUp(this.luck.nextInt(LANE_COUNT));
+      this.repository.save({
+        ...session,
+        attackLandsAt: now + punch.landsInMs,
+        attackLane: punch.lane,
+        attackIsPunch: true,
+      });
+      return { kind: 'punched', punch, view: toGameView(session.game) };
+    }
     const guardian = distract(session.guardian, now, now + DISTRACTION_MS);
     this.repository.save({ ...session, guardian });
     return { kind: 'distracted', view: { gaze: command.target, remainingMs: DISTRACTION_MS } };
