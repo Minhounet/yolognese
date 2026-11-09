@@ -1,6 +1,7 @@
 import { DistractGuardian, DistractGuardianImpl } from '../../src/application/DistractGuardian';
 import { StartGameImpl } from '../../src/application/StartGame';
 import { SubmitGuessImpl } from '../../src/application/SubmitGuess';
+import { TickImpl } from '../../src/application/Tick';
 import { InMemoryGameRepository } from '../../src/infrastructure/InMemoryGameRepository';
 import { FakeClock } from '../support/FakeClock';
 import { ScriptedRandomSource } from '../support/ScriptedRandomSource';
@@ -50,5 +51,20 @@ describe('DistractGuardian', () => {
     const response = distractGuardian.execute({ target: { x: 120, y: -40 } });
 
     expect(response).toEqual({ kind: 'rejected', reason: 'game-over' });
+  });
+
+  it('shouldNotThrowPunch_whenMeatballIsFalling', () => {
+    const clock = new FakeClock();
+    const repository = new InMemoryGameRepository();
+    new StartGameImpl(new ScriptedRandomSource([0, 1, 2, 3]), repository, clock).execute();
+    const tick = new TickImpl(repository, clock, new ScriptedRandomSource([0, 2]), new ScriptedRandomSource([30000]));
+    const distractGuardian = new DistractGuardianImpl(repository, clock, new ScriptedRandomSource([SEES_THROUGH]));
+    tick.execute();
+    clock.advance(10000);
+    tick.execute();
+
+    const response = distractGuardian.execute({ target: { x: 120, y: -40 } });
+
+    expect(response.kind === 'punched' && response.punch).toBeFalsy();
   });
 });
