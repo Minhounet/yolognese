@@ -193,6 +193,6 @@ describe('PeekSecret', () => {
 
     const response = peekSecret.execute({ index: 1 });
 
-    expect(response).toMatchObject({ kind: 'rejected', reason: 'cooling-down', punch: { lane: 2, landsInMs: 700 } });
+    expect(response).toMatchObject({ kind: 'rejected', reason: 'cooling-down', punch: { lane: 2, landsInMs: 450 } });
   });
 });
