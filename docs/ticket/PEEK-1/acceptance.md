@@ -90,7 +90,7 @@ Interpretation is the orchestrator's (yolo), logged in the decision log.
 ## Round 2 (user, during the yolo run): the guardian becomes an enemy
 
 Source for AC10-AC14, verbatim: "I would like to change the try count. It should be a life bar. Before cheating again there must be a cooling bar. Being caught decrease the count bar. We must have a time limit for the game. Now an random item can be display on the screen. If "present" it will be a random thing. I suggest the following items, some food to regain life. Smoke bomb to blind the enemy. Etc.. if you have more idea. A "x ray glass" to see a peg randomly. Treat the opponent like an ennemy, he can attack us and we must use a shield to protect (you can drag the shield)."
-Order: AC10, AC11, AC12, AC14, AC13; then AC15 (user, after playing); then AC16, AC18, AC17 (user, round 4: AC18's punch and AC16's fall are rules, AC17 the screen); then AC19 (user, round 5); then AC21, AC20 (user, round 6); then AC22, AC23 (user, round 7, screen only); then AC24, AC25 (user, round 8, screen only); then AC28, AC29, AC26, AC27 (user, round 9: the rules first, then the screen) (AC11-AC14 spend or restore life; AC13's items act on AC11, AC12 and AC14)
+Order: AC10, AC11, AC12, AC14, AC13; then AC15 (user, after playing); then AC16, AC18, AC17 (user, round 4: AC18's punch and AC16's fall are rules, AC17 the screen); then AC19 (user, round 5); then AC21, AC20 (user, round 6); then AC22, AC23 (user, round 7, screen only); then AC24, AC25 (user, round 8, screen only); then AC28, AC29, AC26, AC27 (user, round 9: the rules first, then the screen); then AC30 (user, round 10, screen only) (AC11-AC14 spend or restore life; AC13's items act on AC11, AC12 and AC14)
 
 ## AC10: Life bar instead of attempts
 - Source: "change the try count. It should be a life bar ... Being caught decrease the count bar."
@@ -251,6 +251,14 @@ Order: AC10, AC11, AC12, AC14, AC13; then AC15 (user, after playing); then AC16,
 - Covered by: D-items (round 9), the screen
 - Evidence: red 91 Tick.shouldBlindPlayer_whenPresentGivesDarkness, red 92 Tick.shouldSeeAgain_afterFourSecondsOfDarkness; browser checks e2e/ac26-ac29.spec.js "darkness veils the game for 4 s, then the player sees again" and e2e/ac13.spec.js's present check: 48 passed. kenji-reviewer: minor
 - Status: verified
+
+## AC30: The newest guesses stay on screen (user, round 10)
+- Source: "After multiple attempts I cannot see the last attempt. Oldest can disappear for readability. We can keep 10 or less visible depending on space we have"
+- Interpretation: the history shows the most recent guesses that fit in its space, 10 at most, the oldest dropped first, so the last guess is always visible; each row shows its number (#1, #2...) so a dropped guess is not confused
+- Questions: none
+- Covered by: the screen (GameScreen, turnsThatFit)
+- Evidence: browser check e2e/ac30.spec.js "after many guesses the newest is always on screen; the oldest give way, 10 at most" (fails on the old scrolling list: the 9th guess was out of view); 49 passed (twice); a phone-sized screen shows guesses #5-#9
+- Status: designed
 
 ## Discrepancies
 

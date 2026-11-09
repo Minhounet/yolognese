@@ -1,5 +1,5 @@
 import { ComponentRef, useCallback, useEffect, useRef, useState } from 'react';
-import { GestureResponderEvent, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { GestureResponderEvent, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { GameView } from '../application/views';
 import { UseCases } from '../compositionRoot';
 import { COLORS, Code, Color } from '../domain/color';
@@ -28,6 +28,15 @@ const TICK_MS = 100;
 const MIDDLE_LANE = 1;
 const CONTROL_TOUCH_MS = 600;
 const DRAGGED_HALF = 22;
+const MOST_TURNS_SHOWN = 10;
+const TURN_ROW_HEIGHT = 38; // a 30 px peg and its 4 px margins
+const BOARD_PADDING = 8;
+
+/** AC30: as many of the latest guesses as the board can show, 10 at most, the oldest dropped first. */
+function turnsThatFit(boardHeight: number): number {
+  const fits = Math.floor((boardHeight - 2 * BOARD_PADDING) / TURN_ROW_HEIGHT);
+  return Math.max(1, Math.min(MOST_TURNS_SHOWN, fits));
+}
 const PUNCH_RETURN_MS = 300;
 const BEAM_SHOWN_MS = 600;
 const BLAST_SHOWN_MS = 600;
@@ -247,6 +256,8 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
     return () => clearTimeout(timer);
   }, [returningPunch]);
 
+  const [boardHeight, setBoardHeight] = useState(MOST_TURNS_SHOWN * TURN_ROW_HEIGHT);
+
   // AC22: a colour dragged from the palette lands in the slot it is dropped on
   const slotRefs = useRef<(ComponentRef<typeof View> | null)[]>([]);
   const [dragging, setDragging] = useState<{ readonly color: Color; readonly at: Point } | undefined>();
@@ -383,16 +394,22 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
           </Text>
         </>
       )}
-      <ScrollView style={styles.board} contentContainerStyle={styles.boardContent}>
-        {view.turns.map((turn, index) => (
-          <View key={index} style={styles.row} testID={`turn-${index}`}>
-            {turn.guess.map((color, slot) => (
-              <Peg key={slot} color={color} size={30} />
-            ))}
-            <Feedback testID={`feedback-${index}`} exact={turn.exact} misplaced={turn.misplaced} />
-          </View>
-        ))}
-      </ScrollView>
+      <View style={styles.board} onLayout={(event) => setBoardHeight(event.nativeEvent.layout.height)}>
+        <View style={styles.boardContent}>
+          {view.turns.slice(-turnsThatFit(boardHeight)).map((turn, shown, kept) => {
+            const index = view.turns.length - kept.length + shown;
+            return (
+              <View key={index} style={styles.row} testID={`turn-${index}`}>
+                <Text style={styles.turnNumber}>#{index + 1}</Text>
+                {turn.guess.map((color, slot) => (
+                  <Peg key={slot} color={color} size={30} />
+                ))}
+                <Feedback testID={`feedback-${index}`} exact={turn.exact} misplaced={turn.misplaced} />
+              </View>
+            );
+          })}
+        </View>
+      </View>
       {playing ? (
         <View style={styles.controls} onTouchStart={touchedControl}>
           <View style={styles.row}>
@@ -471,7 +488,8 @@ const styles = StyleSheet.create({
   title: { fontSize: 24, fontWeight: 'bold', color: THEME.sauce, marginBottom: 8 },
   status: { color: THEME.ink, fontSize: 16, marginVertical: 8 },
   board: { flex: 1, alignSelf: 'stretch', marginHorizontal: 16, backgroundColor: THEME.board, borderRadius: 12 },
-  boardContent: { alignItems: 'center', paddingVertical: 8 },
+  boardContent: { alignItems: 'center', paddingVertical: BOARD_PADDING },
+  turnNumber: { color: THEME.ink, fontSize: 12, width: 26, textAlign: 'right', marginRight: 2 },
   row: { flexDirection: 'row', alignItems: 'center' },
   controls: { alignItems: 'center', marginTop: 8 },
   button: { backgroundColor: THEME.sauce, borderRadius: 24, paddingHorizontal: 32, paddingVertical: 12, marginTop: 8 },

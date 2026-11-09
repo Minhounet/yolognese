@@ -340,3 +340,7 @@
 - Decided (round 9): a composition-root setting globalThis.yologneseItemDraw (like yologneseLuck): the browser checks draw items as untapped food unless a check chooses its item, since a random bomb could cost life in any long check (three flaky checks showed it); the AC13 charm check now moves the shield away so the charm is what blocks
 - Decided (round 9 review): kenji-reviewer, no blocking, minors: the x-ray check now asserts the beam ends on the peg; open: explode() clamps at 0 untested (copied from penalise), the grenade's flight and the laser's end not checked, the present's bomb unit-tested only
 - Verdict (round 9): GUILTY, 2 counts: AC17 (phone check), AC25 (the gesture); AC26-AC29 verified
+
+## Round 10 - the newest guesses on screen
+- Decided (user's words): show the latest guesses that fit, 10 at most, oldest dropped; numbered rows (orchestrator); screen only (No skill: React Native screen); the scrolling list goes
+- Asked user: no (yolo)
