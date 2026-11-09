@@ -653,4 +653,18 @@ describe('Tick', () => {
     expect(response).toMatchObject({ kind: 'ticked', view: { life: 8 } });
     expect(response.kind === 'ticked' && response.view.pegUp).toBeUndefined();
   });
+
+  it('shouldStartCooldown_whenCaughtWithPegUp', () => {
+    const { clock, collectItem, peekSecret, tick } = startedGame([300000, 0], [0, 1, 30, 70]);
+    tick.execute();
+    clock.advance(8000);
+    collectShownItem(tick, collectItem);
+    peekSecret.execute({ index: 2 });
+    clock.advance(4000);
+    tick.execute();
+
+    const response = peekSecret.execute({ index: 1 });
+
+    expect(response).toMatchObject({ kind: 'rejected', reason: 'cooling-down' });
+  });
 });
