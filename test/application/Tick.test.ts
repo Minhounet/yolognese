@@ -613,4 +613,16 @@ describe('Tick', () => {
 
     expect(response.kind === 'ticked' && response.attack).toBeUndefined();
   });
+
+  it('shouldKeepPegUp_whenPeekRevealed', () => {
+    const { clock, distractGuardian, peekSecret, tick } = startedGame([30000, 0], [30000]);
+    tick.execute();
+    distractGuardian.execute({ target: { x: 150, y: -60 } });
+    peekSecret.execute({ index: 2 });
+    clock.advance(1000);
+
+    const response = tick.execute();
+
+    expect(response).toMatchObject({ kind: 'ticked', view: { pegUp: { index: 2, color: 'green' } } });
+  });
 });

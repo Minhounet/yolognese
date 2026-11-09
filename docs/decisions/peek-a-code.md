@@ -308,3 +308,4 @@
 - Decided: structure: Session.pegUp (index); PeekSecret stores it and refuses another while one is up; a new use case HidePeg({ index }) flips it back; Tick catches a peg up when the guardian is not distracted; GameView.pegUp { index, color } for the screen (the screen's 400 ms timer goes)
 - Plan: reds from 84: 84 punch 450 ms (changed requirement), 85 the revealed peg stays up (Tick's view), 86 HidePeg flips it back, 87 caught when the guardian looks back with the peg up, 88 another peek refused while one is up; guard: no catch when flipped back in time; dev: on, a fresh shonin-dev
 - Asked user: no (yolo)
+- Order slip (round 6): refactor 84 (retiming a Tick test the shorter punch broke, found by the dev) was committed between red 84 and green 84, since the make-room before red 84 had missed it
