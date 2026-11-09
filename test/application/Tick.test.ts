@@ -680,4 +680,17 @@ describe('Tick', () => {
 
     expect(response).toEqual({ kind: 'rejected', reason: 'peg-up' });
   });
+
+  it('shouldNotCatchPlayer_whenPegFlippedBackInTime', () => {
+    const { clock, distractGuardian, hidePeg, peekSecret, tick } = startedGame([30000, 0], [30000]);
+    tick.execute();
+    distractGuardian.execute({ target: { x: 150, y: -60 } });
+    peekSecret.execute({ index: 2 });
+    hidePeg.execute({ index: 2 });
+    clock.advance(1600);
+
+    const response = tick.execute();
+
+    expect(response).toMatchObject({ kind: 'ticked', view: { life: 10 } });
+  });
 });
