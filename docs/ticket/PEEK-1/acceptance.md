@@ -39,7 +39,7 @@ Interpretation is the orchestrator's (yolo), logged in the decision log.
 ## AC4: Peek at a hidden peg
 - Source: "then you can watch quickly by turning up the "pawns" to know there color"
 - Interpretation: while the guardian is distracted, peeking at a hidden peg
-  returns its colour; peeking while it watches is caught and costs one
+  returns its colour (it stays up until the player flips it back: AC20); peeking while it watches is caught and costs one
   attempt (which can lose the game); a finished game rejects peeks.
 - Questions: none
 - Covered by: D-peek, D-structure (PeekSecret)
@@ -57,7 +57,7 @@ Interpretation is the orchestrator's (yolo), logged in the decision log.
 
 ## AC6: Quick flip with an animation
 - Source: "When flipping back the peg there is a delay, can you check that ? And a better animation could cool during flipping." (user, added during the yolo run)
-- Interpretation: a peeked peg turns over with an animation, and turns back after 400 ms or as soon as the guardian looks back, whichever is first
+- Interpretation: a peeked peg turns over with an animation, and turns back when the player taps it (amended by AC20: was "after 400 ms or as soon as the guardian looks back"; a peg left up when the guardian looks back now gets the player caught)
 - Questions: none
 - Covered by: src/ui/SecretPeg.tsx, GameScreen (PEEK_SHOWN_MS 400, flip back on the guardian's return)
 - Evidence: e2e/ac6-ac8.spec.js "AC6: a peeked peg flips back within half a second" (squeezed mid-turn, shown at 200 ms, hidden at 600 ms) and "AC6: a peeked peg flips back as soon as the guardian looks back", passed on the web build, Playwright clock; the feel of the animation on the phone: by the user, pending
@@ -166,7 +166,7 @@ Order: AC10, AC11, AC12, AC14, AC13; then AC15 (user, after playing); then AC16,
 
 ## AC19: Peeking during the cooldown gets a fast punch you can parry (user, round 5)
 - Source: "now trying to peek when cool down is note must make the ennemy punch us, we can parry but punch is fast"
-- Interpretation: a peek during the cooldown is still refused, and the guardian throws a punch at one of the 3 lanes that lands in 0.7 s; the shield in that lane parries it, otherwise it costs 1 life; the punch of a failed distraction (AC18) becomes the same parryable punch (amends AC11 "costs nothing" and AC18 "punches for 1 life" at once); no punch while a meatball or a punch is already on its way
+- Interpretation: a peek during the cooldown is still refused, and the guardian throws a punch at one of the 3 lanes that lands in 0.7 s (amended by AC21: 0.45 s); the shield in that lane parries it, otherwise it costs 1 life; the punch of a failed distraction (AC18) becomes the same parryable punch (amends AC11 "costs nothing" and AC18 "punches for 1 life" at once); no punch while a meatball or a punch is already on its way
 - Questions: none
 - Covered by: D-attack (an attack is a meatball or a punch), PeekSecret and DistractGuardian throw the punch, Tick lands it
 - Evidence: reds 78-83 — PeekSecret.shouldThrowPunch_whenPeekingDuringCooldown, Tick.shouldCostOneLife_whenPunchIsNotParried, DistractGuardian.shouldPunchPlayer_whenDistractionFails (changed), Tick.shouldNotThrowPunch_whenMeatballIsFalling, DistractGuardian.shouldNotThrowPunch_whenMeatballIsFalling, Tick.shouldWaitToThrowMeatball_whilePunchIsFlying (guard 79 shouldParryPunch_whenShieldIsInItsLane is not evidence); full build 91 passed, tsc clean. Browser checks e2e/ac19.spec.js "peeking during the cooldown throws a fast punch, parried by the shield in its lane" and "a punch not parried costs 1 life, and it is fast (gone within 0.8 s)": 34 passed (twice), Playwright clock. kenji-reviewer: 1 blocking (records not amended) fixed; open minors: a failed distraction while an attack flies answers 'punched' with no punch (a misleading name), the screen was changed before its checks were written. The feel on the phone, by the user, pending
@@ -177,16 +177,16 @@ Order: AC10, AC11, AC12, AC14, AC13; then AC15 (user, after playing); then AC16,
 - Interpretation: a revealed peg stays turned up until the player taps it again to flip it back; if the guardian watches again (its distraction or the smoke ends) while a peg is still up, the player is caught: 2 life, the peg goes back down and the cooldown starts; one peg up at a time (a peek at another peg is refused, at no cost) (amends AC6 "turns back after 400 ms or as soon as the guardian looks back" and AC4's "shows the colour briefly")
 - Questions: none (reading of the orchestrator: being caught with a peg up is what makes the hand flip-back matter)
 - Covered by: D-peek (round 6): the Session holds the peg that is up; HidePeg flips it back; Tick catches a peg left up under the guardian's eyes; the view shows the peg up
-- Evidence:
-- Status: designed
+- Evidence: reds 85-89 — Tick.shouldKeepPegUp_whenPeekRevealed, Tick.shouldFlipPegBack_whenTappedAgain, Tick.shouldCatchPlayer_whenGuardianLooksBackWithPegUp, Tick.shouldStartCooldown_whenCaughtWithPegUp, Tick.shouldRefusePeek_whileAnotherPegIsUp (guard 89 shouldNotCatchPlayer_whenPegFlippedBackInTime is not evidence); red 89 (fix) changed two older tests to the one-peg rule; full build 97 passed, tsc clean. Browser checks e2e/ac6-ac8.spec.js "AC6: ... turns back when the player taps it", "AC20: a peg left up when the guardian looks back gets the player caught", "AC20: a game that ends with a peg up starts the next one clean" (fails without the fix of the review's blocking finding), "AC20: one peg up at a time"; e2e/ac4.spec.js amended: 36 passed (twice). kenji-reviewer: 1 blocking (a false caught after a new game) fixed; open minors: HidePeg ignores its index and never answers 'not-up'
+- Status: verified
 
 ## AC21: A faster punch (user, round 6)
 - Source: "Can the punch be faster ?"
 - Interpretation: the punch lands in 0.45 s (was 0.7 s) (amends AC19)
 - Questions: none
 - Covered by: D-punch
-- Evidence:
-- Status: designed
+- Evidence: red 84 (shouldThrowPunch_whenPeekingDuringCooldown expects landsInMs 450, after the make-room refactors 83 and 84); full build 97 passed; kenji-reviewer PASS
+- Status: verified
 
 ## Discrepancies
 

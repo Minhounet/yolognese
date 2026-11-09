@@ -90,6 +90,11 @@ pegs, exact / misplaced feedback), not a copy of a commercial game.
 - D-punch (AC18, AC19): a punch is an attack of its own kind (Session.attackIsPunch) that lands in 0.7 s and costs 1 life (a meatball costs 2); it is thrown by PeekSecret on a peek during the cooldown and by DistractGuardian when the guardian sees through a distraction (one in four, luck from a RandomSource); the lane is drawn from PeekSecret's RandomSource or after the luck draw; src/application/punches.ts holds the throw. One attack in flight at a time: no punch while one falls, no meatball wound up while a punch flies.
 - The composition root may fix the guardian's luck (globalThis.yologneseLuck) for the browser checks.
 
+### Round 6 (AC20-AC21): decisions, approved by the orchestrator in yolo
+
+- D-peek (amended): the Session holds the peg that is up (pegUp); PeekSecret puts it up and refuses another peek while one is up ('peg-up'); HidePeg puts it down; Tick catches a peg left up when the guardian is not distracted (2 life, peg down, cooldown from src/domain/peek.ts); GameView.pegUp carries it.
+- D-punch (amended): a punch lands in 0.45 s.
+
 ## Ruled out
 
 - One fat `GameService`: four operations with different rules and failures,

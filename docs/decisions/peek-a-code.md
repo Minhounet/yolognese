@@ -309,3 +309,10 @@
 - Plan: reds from 84: 84 punch 450 ms (changed requirement), 85 the revealed peg stays up (Tick's view), 86 HidePeg flips it back, 87 caught when the guardian looks back with the peg up, 88 another peek refused while one is up; guard: no catch when flipped back in time; dev: on, a fresh shonin-dev
 - Asked user: no (yolo)
 - Order slip (round 6): refactor 84 (retiming a Tick test the shorter punch broke, found by the dev) was committed between red 84 and green 84, since the make-room before red 84 had missed it
+- Plan changes (round 6): red 88 became "the cooldown starts when caught with a peg up" (AC20 asks it) and the refusal moved to red 89; the planned guard "no catch when flipped back" was written after the review as guard 89; the screen and checks commit landed between red 89 and red 89 (fix)/green 89 (not a step commit, while red 89 failed); the screen keeps its own peg state rather than reading GameView.pegUp
+
+## Round 6 - run and review
+- Decided: refactors 83, 84 (make room), reds 84-89 with greens by a fresh shonin-dev, refactor 88 (cooldown into the domain), red 89 (fix); screen: the peg stays up until tapped, caught when the guardian looks back with it up, one at a time
+- Decided: kenji-reviewer, 1 blocking (a false caught after a new game) -> fixed, a check that fails without the fix; minors: guard 89 added, one-peg browser check added, records amended; open: HidePeg ignores its index and never answers 'not-up'
+- Super-green misses: 0
+- Asked user: no (yolo)
