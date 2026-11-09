@@ -1,9 +1,14 @@
+import { CollectItem, CollectItemImpl } from './application/CollectItem';
 import { DistractGuardian, DistractGuardianImpl } from './application/DistractGuardian';
+import { HidePeg, HidePegImpl } from './application/HidePeg';
+import { MoveShield, MoveShieldImpl } from './application/MoveShield';
 import { PeekSecret, PeekSecretImpl } from './application/PeekSecret';
 import { StartGame, StartGameImpl } from './application/StartGame';
 import { SubmitGuess, SubmitGuessImpl } from './application/SubmitGuess';
 import { Tick, TickImpl } from './application/Tick';
 import { InMemoryGameRepository } from './infrastructure/InMemoryGameRepository';
+import { RandomSource } from './application/ports';
+import { FixedRandomSource } from './infrastructure/FixedRandomSource';
 import { MathRandomSource } from './infrastructure/MathRandomSource';
 import { SystemClock } from './infrastructure/SystemClock';
 
@@ -13,16 +18,38 @@ export interface UseCases {
   readonly distractGuardian: DistractGuardian;
   readonly peekSecret: PeekSecret;
   readonly tick: Tick;
+  readonly moveShield: MoveShield;
+  readonly collectItem: CollectItem;
+  readonly hidePeg: HidePeg;
+}
+
+/** A luck draw fixed by configuration (globalThis.yologneseLuck), used by the browser checks; none in play. */
+function configuredLuck(): RandomSource | undefined {
+  return configuredDraw('yologneseLuck');
+}
+
+/** An item draw fixed by configuration (globalThis.yologneseItemDraw), used by the browser checks; none in play. */
+function configuredItemDraw(): RandomSource | undefined {
+  return configuredDraw('yologneseItemDraw');
+}
+
+function configuredDraw(name: 'yologneseLuck' | 'yologneseItemDraw'): RandomSource | undefined {
+  const value = (globalThis as Partial<Record<typeof name, unknown>>)[name];
+  return typeof value === 'number' ? new FixedRandomSource(value) : undefined;
 }
 
 export function createUseCases(): UseCases {
   const repository = new InMemoryGameRepository();
   const clock = new SystemClock();
+  const random = new MathRandomSource();
   return {
-    startGame: new StartGameImpl(new MathRandomSource(), repository),
+    startGame: new StartGameImpl(random, repository, clock),
     submitGuess: new SubmitGuessImpl(repository),
-    distractGuardian: new DistractGuardianImpl(repository, clock),
-    peekSecret: new PeekSecretImpl(repository, clock),
-    tick: new TickImpl(repository, clock),
+    distractGuardian: new DistractGuardianImpl(repository, clock, configuredLuck() ?? random),
+    peekSecret: new PeekSecretImpl(repository, clock, random),
+    tick: new TickImpl(repository, clock, random, configuredItemDraw() ?? random),
+    moveShield: new MoveShieldImpl(repository),
+    hidePeg: new HidePegImpl(repository),
+    collectItem: new CollectItemImpl(repository, clock, random),
   };
 }

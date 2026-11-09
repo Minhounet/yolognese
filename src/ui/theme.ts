@@ -19,6 +19,5 @@ export const THEME = {
   meatball: '#8d5a3b',
   dust: '#c9a77c',
   meatballDark: '#6e4229',
-  ready: '#43a047',
-  cooling: '#9e9e9e',
+  life: '#43a047',
 } as const;

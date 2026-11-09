@@ -75,14 +75,25 @@ pegs, exact / misplaced feedback), not a copy of a commercial game.
 ### Round 2 (AC10-AC14): decisions, approved by the orchestrator in yolo
 
 - D-life: Game holds `life` (start 10, max 10) instead of counting attempts; costs: miss 1, caught 2, attack hit 2; lost at 0. The view shows `life`, not `attemptsLeft`.
-- D-cooldown: the Session holds `peekReadyAt`; PeekSecret rejects ('cooling-down', with `remainingMs`) before it; `cooldownRemainingMs` rides on PeekSecret's revealed and caught responses, not on GameView (deviation at AC11, logged: GameView has no clock), and the screen times the bar from it.
-- D-timer: the Session holds `endsAt` (start + 180 s), set by the first Tick; Tick detects time-up and saves the game lost (`Game.timeUp`), which the other use cases reject as game-over (deviation at AC12 from "every use case checks the clock first": SubmitGuess has no clock; a window of at most 100 ms, logged).
+- D-cooldown: the Session holds `peekReadyAt`; PeekSecret rejects ('cooling-down') before it; the revealed and caught responses carry `cooldownMs` (5000) and the screen refills the bar from it (changed at AC11 from a `cooldownRemainingMs` in the view, which would need the clock in the mapper; logged).
+- D-timer: the Session holds `endsAt` (start + 180 s); every use case checks the clock first: past it, the game is lost ('time-up').
 - D-items and D-attack need time to pass with no player action, so a new use case `Tick` (constructor(GameRepository, Clock, RandomSource)), called by the screen every 100 ms, spawns and expires items and resolves attacks; `CollectItem` (item id) applies an item; `MoveShield` (lane 0-2) stores the shield lane. Item kinds and attack timings are pure domain (src/domain/items.ts, src/domain/attack.ts); randomness only through RandomSource, time only through Clock, so every rule is test-driven with the scripted random source and the fake clock.
 - The shield drag is UI (a PanResponder snapping to the nearest lane) calling MoveShield; the screen shows the life bar, cooldown bar, countdown, items and the attack warning from the views.
 
 
 - None blocking. The exact tuning (1500 ms, shake threshold) may change
   after the user tries it on the phone.
+
+### Round 3-5 (AC15-AC19): decisions, approved by the orchestrator in yolo
+
+- D-attack (amended): an attack falls for 1.5 s (AC15 2.5 s, then AC16 1.5 s) in a lane, not marked; the shield follows the finger and blocks by the lane under its centre.
+- D-punch (AC18, AC19): a punch is an attack of its own kind (Session.attackIsPunch) that lands in 0.7 s and costs 1 life (a meatball costs 2); it is thrown by PeekSecret on a peek during the cooldown and by DistractGuardian when the guardian sees through a distraction (one in four, luck from a RandomSource); the lane is drawn from PeekSecret's RandomSource or after the luck draw; src/application/punches.ts holds the throw. One attack in flight at a time: no punch while one falls, no meatball wound up while a punch flies.
+- The composition root may fix the guardian's luck (globalThis.yologneseLuck) for the browser checks.
+
+### Round 6 (AC20-AC21): decisions, approved by the orchestrator in yolo
+
+- D-peek (amended): the Session holds the peg that is up (pegUp); PeekSecret puts it up and refuses another peek while one is up ('peg-up'); HidePeg puts it down; Tick catches a peg left up when the guardian is not distracted (2 life, peg down, cooldown from src/domain/peek.ts); GameView.pegUp carries it.
+- D-punch (amended): a punch lands in 0.45 s.
 
 ## Ruled out
 

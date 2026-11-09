@@ -1,6 +1,7 @@
 import { StartGameImpl } from '../../src/application/StartGame';
 import { SubmitGuess, SubmitGuessImpl } from '../../src/application/SubmitGuess';
 import { InMemoryGameRepository } from '../../src/infrastructure/InMemoryGameRepository';
+import { FakeClock } from '../support/FakeClock';
 import { ScriptedRandomSource } from '../support/ScriptedRandomSource';
 
 // secret indexes into COLORS: red=0 yellow=1 green=2 blue=3 purple=4 orange=5
@@ -8,7 +9,7 @@ const RED_YELLOW_GREEN_BLUE = [0, 1, 2, 3];
 
 function startedGame(secretIndexes: readonly number[]): SubmitGuess {
   const repository = new InMemoryGameRepository();
-  new StartGameImpl(new ScriptedRandomSource(secretIndexes), repository).execute();
+  new StartGameImpl(new ScriptedRandomSource(secretIndexes), repository, new FakeClock()).execute();
   return new SubmitGuessImpl(repository);
 }
 
@@ -99,6 +100,22 @@ describe('SubmitGuess', () => {
     const response = submitGuess.execute({ guess: ['purple', 'purple', 'orange', 'orange'] });
 
     expect(response).toMatchObject({ kind: 'played', view: { status: 'playing' } });
+  });
+
+  it('shouldLoseOneLife_whenGuessMisses', () => {
+    const submitGuess = startedGame(RED_YELLOW_GREEN_BLUE);
+
+    const response = submitGuess.execute({ guess: ['purple', 'purple', 'orange', 'orange'] });
+
+    expect(response).toMatchObject({ kind: 'played', view: { life: 9 } });
+  });
+
+  it('shouldKeepLife_whenGuessWins', () => {
+    const submitGuess = startedGame(RED_YELLOW_GREEN_BLUE);
+
+    const response = submitGuess.execute({ guess: ['red', 'yellow', 'green', 'blue'] });
+
+    expect(response).toMatchObject({ kind: 'played', view: { life: 10 } });
   });
 
   it('shouldBeLost_whenTenthGuessMisses', () => {

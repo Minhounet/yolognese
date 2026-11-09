@@ -4,10 +4,10 @@
 - Status: open
 - Mode: build
 - Yolo: on (see references/yolo.md of saiban-orchestrator)
-- Done: scaffold (Expo SDK 58, TypeScript), structural plan and ACs, AC1-AC4, AC6-AC12 verified; AC5 waived (user)
-- Next: round 2 in progress: AC10, AC11, AC12 verified; next AC14, then AC13; also the user's look at the flip (AC6) and the feedback marks (AC9); then the user decides: merge, more features, or keep ideas
-- Expo: at every finish or pause, publish the update and give the user the Expo Go link (user, AC11): exp://u.expo.dev/90eceada-289a-4a45-b958-180a23ddedb8?channel-name=main&runtime-version=exposdk:58.0.0
+- Done: scaffold, plan and ACs; AC1-AC4, AC6-AC16, AC18-AC24, AC26-AC30 verified, AC5 waived (user); AC17 waits for the user's phone check, AC25 for the user's answer on the gesture; round 10 published to the feat-peek-a-code channel
+- Next: round 9 (user): AC28 bomb, AC29 darkness (rules, TDD), then AC26 item animations, AC27 life bar (screen); AC17 and AC25 still wait for the user
 - Files: docs/ticket/PEEK-1/, src/
+- User preference: end every report with the Expo Go link: exp://u.expo.dev/90eceada-289a-4a45-b958-180a23ddedb8?channel-name=feat-peek-a-code&runtime-version=exposdk:58.0.0
 
 ## Start - scope and mode
 - Decided: build mode, yolo; ACs from the user's request (no ticket), ticket folder PEEK-1
@@ -119,98 +119,230 @@
 - Fixed: the AC9 edit had dropped the "## Discrepancies" heading of acceptance.md; restored
 - Asked user: no (yolo)
 
-## Round 2 resumed - new session
-- Decided: work on branch `ccr-e460c87d-7q11ue` (the session's designated branch, same commit as feat/peek-a-code) and push there; the EAS channel stays `feat-peek-a-code`
-- Why: this session may push only to its designated branch; publishing an update reads the working tree, not the branch name
+## AC10 - TDD plan (session 3, resumed)
+- Decided: 5 reds, numbering continues at 28:
+  28 [AC10] shouldStartWithTenLife_whenGameStarts (StartGame) — the view shows life 10
+  29 [AC10] shouldLoseOneLife_whenGuessMisses (SubmitGuess) — a miss leaves life 9
+  30 [AC10] shouldLoseTwoLife_whenCaught (PeekSecret) — being caught leaves life 8
+  31 [AC10] shouldBeLost_whenCaughtWithTwoLifeLeft (PeekSecret) — 8 misses then caught: lost, life 0 (attempts would still be 1)
+  32 [AC10] shouldStopLifeAtZero_whenCaughtWithOneLifeLeft (PeekSecret) — 9 misses then caught: life 0, not -1
+  Planned refactor at the end (traced): attemptsLeft leaves the view and the domain; tests that read it are translated to life (same value: shouldCountAttemptsLeft -> duplicate of 29, removed; shouldBeLost_whenTenthGuessMisses and guard 13 read life; changed value under AC10: shouldCostOneAttempt_whenCaught superseded by 30, shouldLoseGame_whenCaughtOnLastAttempt superseded by 32, shouldKeepPenalty reads life 7 — a mutation shows it still fails without the save)
+  "Shown as a bar": browser check e2e/ac10.spec.js (no game rule; screen only)
+- dev: on (ticket with 5 ACs left, 5 tests)
+- Why: drive AC10 at the use-case level; each red fails under the minimal greens before it
 - Asked user: no (yolo)
-
-## AC10 - TDD plan
-- Decided: tests through StartGame, SubmitGuess and PeekSecret, in test/application/Life.test.ts:
-  28. shouldStartWithTenLife_whenGameStarts [AC10] - StartGame view.life 10
-  29. shouldLoseOneLife_whenGuessMisses [AC10] - one miss: life 9
-  30. shouldKeepLife_whenGuessWins [AC10] - winning guess: life 10
-  31. shouldLoseTwoLife_whenCaught [AC10] - caught peeking: life 8
-  32. shouldBeLost_whenCaughtWithTwoLifeLeft [AC10] - 8 misses then caught: lost, life 0
-  33. shouldStopAtZeroLife_whenCaughtWithOneLifeLeft [AC10] - 9 misses then caught: lost, life 0
-  Refactor 33 (traced): retire attempts (AC10 replaces them): `attemptsLeft` leaves the view and the domain; old tests reworded or removed, each named in the refactor summary. Not behaviour-preserving for that field: a superseded behaviour removed, logged here
-- Decided: dev on (round 2 has 5 ACs, 6 tests in this run)
-- Then: life bar on the screen, browser check e2e/ac10.spec.js (shoko-playwright), older checks' "attempts left" texts follow
-- Asked user: no (yolo)
+- Deviation (AC10, approved by the orchestrator in yolo): shonin-dev's GREEN 29 spared a winning guess from losing life, ahead of any test (rule 5); cut back to an unconditional cost before commit. Red 30 shouldKeepLife_whenGuessWins added ("a guess that does not win costs 1"); the plan's 30-32 become 31-33.
 
 ## AC10 - run and review
-- Decided: GREEN 29 by shonin-dev cut back (branched on "no shared colour" from one test); greens 28, 30-33 accepted; refactor 30 extracted isWinningTurn (shared with isWon); refactor 33 retired attempts (tests traced in its commit)
-- Decided: life bar on screen (src/ui/Bar.tsx), caught message "−2 ❤️", lost text "Out of life"; browser check e2e/ac10.spec.js; older checks read the life bar
-- Decided: kenji-reviewer, 4 minor: (1) AC2/AC4 still read attempts -> D1 recorded (AC-vs-AC, B wins: the user's request), AC4 evidence refreshed: fixed; (2) the check reads the bar's label, not its fill, and skips on a RRRR secret (1 in 1296) -> open, label stands in (said in the evidence); (3) MAX_LIFE stated twice (domain and GameScreen) -> open, AC13's food ("up to 10") needs the maximum in the view: put it there then; (4) Bar takes icon/max/color ahead of AC11-AC12 -> open, accepted: AC11 and AC12 reuse it next
-- Super-green misses: 0
-- Deferred refinement notes: untested generalization: isOutOfLife reads life <= 0 (the clamp makes it 0); play() does not clamp (unreachable: finished games reject guesses)
+- Decided: reds 28-33 by the orchestrator, greens by one shonin-dev; green 29 cut back (deviation above); refactor 30 one cracksCode rule (make-room: duplication with isWon), refactor 33 attempts replaced by life (planned, every test change traced); life bar on the screen (LifeBar), checks read life
+- Decided: kenji-reviewer, 5 minor: (1) the AC10 check skipped when the random secret was all red -> it starts a new game until the guess misses; (2) the bar's fill is not machine-checked -> said in acceptance.md, the look is the user's; (3) the UI repeats max life 10 and "−2 life" -> open, carried to AC13 (food caps life at the max: the view gets maxLife then); (4) low-life colour no AC asked for -> removed; heart icon and count kept (no behaviour); (5) README said "lose an attempt" -> updated, acceptance.md AC2/AC4 evidence notes the round-2 change
+- Super-green misses: 0 (refactors 30 and 33 are make-room and the planned removal)
+- Deferred refinement notes: untested generalization — the clamp at 0 lives only in penalise; an attack hit (AC14) needs it too
 - Asked user: no (yolo)
-- Carry forward: Life.test.ts startGame() helper with FakeClock for AC11-AC14 (pass the clock in when time matters); Bar for the cooldown (AC11) and the countdown (AC12); AC13 food needs max life in the view (finding 3); AC14's hit costs 2 life through a domain function like penalise
+- Carry forward: AC11 extends PeekSecret (cooldown before the caught/revealed branch) and the Session (peekReadyAt); AC14's attack hit reuses a life loss with the clamp; AC13's food needs maxLife in the view (minor 3)
 
 ## AC11 - TDD plan
-- Decided: tests through PeekSecret with the fake clock, in test/application/Cooldown.test.ts; Session holds `peekReadyAt` (D-cooldown):
-  34. shouldRejectPeek_whenPeekingAgainRightAfterReveal [AC11] - distracted, peek, peek again at once: rejected 'cooling-down'
-  35. shouldAllowPeek_whenCooldownHasPassed [AC11] - peek, 5000 ms later distracted again, peek: revealed
-  36. shouldRejectPeek_justBeforeCooldownEnds (guard if green 35 already holds it; mutation: cooldown 1 ms short) [AC11]
-  37. shouldStartCooldown_whenCaught [AC11] - caught, then distracted, peek at once: rejected 'cooling-down'
-  38. shouldCostNothing_whenPeekRejectedForCooldown [AC11] - caught (life 8), peek again at once while watched: rejected, life still 8 on the next miss (7) (guard if the order already holds it; mutation: watched check before the cooldown check)
-  Refactor 38 (traced, make room): PeekSecret tests asserting `revealed` with toEqual move to toMatchObject, so a response may carry more
-  39. shouldReportCooldown_whenRevealed [AC11] - revealed carries cooldownRemainingMs 5000
-  40. shouldReportCooldown_whenCaught [AC11] - caught carries cooldownRemainingMs 5000
-  41. shouldReportRemainingCooldown_whenRejected [AC11] - rejected 2000 ms after a peek carries remainingMs 3000
-- Decided: dev on, a fresh one (round 2 has 5 ACs; 8 tests)
-- Then: cooldown bar on the screen (Bar), browser check e2e/ac11.spec.js
+- Decided: through PeekSecret, numbering from 34:
+  34 [AC11] shouldRejectPeek_whenPeekedJustBefore — a revealed peek, then another at once: rejected 'cooling-down'
+  35 [AC11] shouldAllowPeek_whenCooldownHasPassed — 5000 ms after a peek, distracted again: revealed
+  (guard) shouldRejectPeek_justBeforeCooldownEnds — 4999 ms after: rejected (mutation: cooldown 1 ms short)
+  36 [AC11] shouldRejectPeek_whenCaughtJustBefore — caught, then a peek at once: rejected, not caught again
+  (guard) shouldCostNothing_whenPeekRejectedDuringCooldown — caught then rejected: a miss afterwards leaves life 7 (mutation: a rejected peek costs life)
+  37 [AC11] shouldStartCooldown_whenPeekRevealed — the revealed response carries cooldownMs 5000 (the screen's bar)
+  38 [AC11] shouldStartCooldown_whenCaught — the caught response carries cooldownMs 5000
+  "Shown as a bar refilling": browser check e2e/ac11.spec.js
+- Deviation from conception.md D-cooldown (smallest change): the responses carry cooldownMs (as DistractGuardian's remainingMs) instead of a cooldownRemainingMs in GameView, which would need the clock in the mapper; the Session holds peekReadyAt as planned
+- dev: on (6 tests, ticket with 4 ACs left); a fresh shonin-dev
 - Asked user: no (yolo)
+- Deviation (AC11, orchestrator in yolo): GREEN 34 tied the cooldown to time with a guessed 1000 ms (only "greater than 0" was forced); accepted, and the order swapped so the time is driven: red 35 shouldRejectPeek_justBeforeCooldownEnds (4999 ms: rejected, fails at 1000), then guard shouldAllowPeek_whenCooldownHasPassed (5000 ms, mutation: cooldown 1 ms long)
 
 ## AC11 - run and review
-- Decided: GREEN 34 by shonin-dev cut back (time and a guessed 1000 ms ahead of the test, boolean instead); GREEN 35's 1000 ms set to 5000 (the test's number), planned test 36 became guard 35; planned test 38 became guard 36 (the check order already held it); greens 36-39 accepted; refactor 36 one cooldown start, refactor 38 one Cooldown type
-- Decided: plan deviations (yolo, smallest change): a make-room test refactor before red 37 and `red 39 (fix)`, both turning older exact assertions into toMatchObject (same expectations), traced in their commits
-- Decided: deviation from D-cooldown: `cooldownRemainingMs` rides on PeekSecret's revealed/caught responses, not GameView (no clock in the mapper); conception.md updated
-- Decided: kenji-reviewer blocking (the check never saw the bar refill) fixed: the label carries the fill percent, the check asserts 4/40/80 % and ready on a paused clock, screenshot kept; minor fixed: a peek during the cooldown shows "Still cooling down: N s" from remainingMs; re-review PASS
+- Decided: reds 34-38 by the orchestrator, greens by a fresh shonin-dev, all accepted (green 34's guessed 1000 ms was accepted and red 35 forced 5000: see the deviation line); refactor checklist after each green: nothing applies (34-38); cooldown bar on the screen (CooldownBar), refilled from the response's cooldownMs
+- Decided: kenji-reviewer, 6 minor: (1) the toEqual -> toMatchObject change was a test refactor put in a red fix -> retro, left in history; (2) no AC11 run entry -> this one; (3) conception.md D-cooldown stale -> updated; (4) the browser check covered only the caught path -> revealed variant added; (5) unasked ready colour and peek/wait text -> removed, eye icon kept (no behaviour), LifeBar's aria-value* change kept (react-native-web drops accessibilityValue: retro); (6) the bar reads Date.now, the rule reads Clock -> open (SystemClock is Date.now; the Tick view of AC12 can carry the remaining time)
 - Super-green misses: 0
-- Deferred refinement notes: none
+- Deferred refinement notes: untested generalization — the revealed path's cooldown is proven in the browser only by its label, not its refill
 - Asked user: no (yolo)
-- Carry forward: AC12's Tick will return a view every 100 ms: the cooldown (and the guardian's distraction) could move into it then, replacing the screen's own timers; the browser checks pause the page clock (ac11.spec.js) when a timed value is asserted; AC12's time-up must also reject peeks
-
-## User preference - the Expo link every time
-- Decided (user): "Each time you finish give the expo url": every finish or pause publishes the EAS update and ends with the Expo Go link; written in the Resume block so a fresh session keeps it
-- Asked user: yes
-
-## Bug - the peek vanishes (user, after AC11)
-- Decided: fixed before AC12 (it breaks the core of the game): SecretPeg no longer stops its animation in the effect cleanup (that stopped the opening half too); browser check at real speed, failing before the fix (width 0), passing after
-- Why it was missed: every peek check ran on Playwright's frozen clock (retro)
-- No skill: React Native screen
-- Asked user: no (yolo; the user reported the bug)
-- Decided: kenji-reviewer blocking on the fix: a colour change back during the closing half (a peek in the last 90 ms before the guardian looks back) was skipped and left the peg squeezed; fixed (the effect compares the last requested colour, not the shown one, and every change runs a whole flip), a check on a paused clock covers it (failed width 0 before, passes after); minor fixed: checks tagged [AC6], the open-state wait widened to 1 s
-
-- Decided: re-review PASS (the look-back check fails on the previous code, 16/16 on the new, 5/5 extra runs)
-
-## Branch and channel - main (user)
-- Decided (user): all work on `main` from now on: `main` created from the session branch (the repo had none; its default was `feat/peek-a-code`); every commit pushed to `main`; the Expo updates go to a new channel `main` (branch `main`), new link in the Resume block and README. Setting `main` as GitHub's default branch is the user's (repository settings)
-- Asked user: yes
-
+- Carry forward: AC12 adds endsAt to the Session and a time check first in every use case; the Tick use case (AC12 or AC13/14) can return the remaining cooldown and time so the screen stops reading Date.now (minor 6)
 
 ## AC12 - TDD plan
-- Decided: a `Tick` use case (constructor(GameRepository, Clock)), called by the screen every 100 ms, returns ticked(timeLeftMs, GameView) | rejected('no-game'); the Session holds `endsAt`, set by the first tick of a game (start + 100 ms at most); Tick alone detects time-up and marks the game lost (Game holds `timeUp`), which SubmitGuess and PeekSecret already reject as game-over
-- Deviation from D-timer ("every use case checks the clock first"): SubmitGuess has no clock; a ≤100 ms window before the next tick is accepted; RandomSource joins Tick with AC14/AC13
-- Tests through Tick, in test/application/Tick.test.ts:
-  40. shouldReportThreeMinutesLeft_whenFirstTick [AC12] - timeLeftMs 180000
-  41. shouldCountDown_whenTimePasses [AC12] - 60 s later: 120000
-  42. shouldLoseAndRevealSecret_whenTimeRunsOut [AC12] - 180 s later: lost, secret shown, timeLeftMs 0
-  43. shouldRejectGuess_whenTimeIsUp [AC12] - SubmitGuess after time-up: rejected game-over
-  44. shouldNotGoBelowZero_whenTimeIsPast [AC12] - 200 s later: timeLeftMs 0
-  45. shouldStartFreshCountdown_whenNewGameStarted [AC12] (guard if it passes on write; mutation: StartGame keeps endsAt)
-  46. shouldStayWon_whenTimeRunsOutAfterWinning [AC12] (guard if it passes on write; mutation: time-up ignores a win)
-  Dropped: a peek after time-up (same game-over path as 43)
-- Decided: dev on, a fresh one (6+ tests)
-- Then: countdown bar and text on the screen, browser check e2e/ac12.spec.js
+- Decided: the countdown needs time to pass with no player action, so the Tick use case (conception.md round 2) starts here: Tick(GameRepository, Clock), RandomSource joins at AC13/14 when it is needed; StartGame gets the Clock to store endsAt (constructor change, made in red 39 as its stub, every test construction passes a FakeClock: traced)
+  39 [AC12] shouldCountDownTimeLeft_whenTicked — 1 s after the start, timeLeftMs 179000
+  40 [AC12] shouldBeLost_whenTimeIsUp — 180 s after the start: status lost, secret shown
+  41 [AC12] shouldStopTimeAtZero_whenTimeIsUp — 200 s after: timeLeftMs 0
+  42 [AC12] shouldStayWon_whenTimeRunsOutAfterWinning — a won game is not lost by the clock
+  "Shown as a countdown": browser check e2e/ac12.spec.js
+- Deviation from D-timer (smallest change that keeps its intent): Tick, called by the screen every 100 ms, is the one judge of time and stores the lost game; the other use cases then reject as for any finished game, instead of each reading the clock first (a guess can still land within 100 ms after time is up)
+- dev: on (4 tests, 3 ACs left); a fresh shonin-dev
 - Asked user: no (yolo)
+- Deviation (AC12, orchestrator in yolo): GREEN 40 ends the game by draining life to 0 (D-life: lost at 0) without saving it; so "a won game stays won" passes on write -> guard (mutation: time-up ignores a win), and red 42 becomes shouldRejectGuess_afterTimeIsUp (a tick past the end, then a guess: rejected), which drives the save the deviation from D-timer relies on
 
 ## AC12 - run and review
-- Decided: greens 40, 41, 43, 44 by shonin-dev accepted; GREEN 42 changed before commit (life 0 -> the planned Game.timeUp); refactor 41 a counted super-green miss (green 41 copied a session only to narrow a type); refactor 43 one ticked response (duplication across greens 42/43); guards: new game restarts the clock (mutation: StartGame keeps endsAt), stays won after time-up (mutation: isLost ignores a win AND toStatus tests lost first; the commit names only the first, kenji-reviewer)
-- Decided: screen: Tick every 100 ms while playing, ⏳ bar with m:ss, "Time's up! The guardian wins." when lost at 0:00; the screen's GAME_DURATION_MS seeds the bar
-- Decided: kenji-reviewer, 4 minor: (1) guard 44's mutation under-stated -> corrected here and in retro; (2) Tick's no-game rejection untested -> open (as AC1); (3) the 3 minutes stated twice (Tick and GameScreen) -> open, AC13's hourglass (+30 s) must carry the total in the Tick response: do it there; (4) deadline()/expired() hid their saves -> renamed deadlineStartingClock()/expireAndSave()
-- Super-green misses: 1 (refactor 41)
-- Deferred refinement notes: an expired game is saved again on every tick after time-up (idempotent; the screen stops ticking when the game is over)
+- Decided: reds 39-42 by the orchestrator, greens by a fresh shonin-dev, all accepted; refactor checklist 39-42: nothing applies; countdown on the screen, Tick called every 100 ms while playing
+- Decided: kenji-reviewer PASS with 2 minor, both open: (1) no test of a tick exactly at the end (test 40 covers 180000 ms, the same instant); (2) "Time's up" is chosen in the UI from timeLeftMs 0 and status lost (the view has no loss cause) and the "–:––" placeholder before the first tick is no AC's
+- Super-green misses: 0
+- Deferred refinement notes: untested generalizations — Tick saves on every call; PeekSecret and DistractGuardian after time up are covered only by isOver (PeekSecret) or not at all (DistractGuardian)
 - Asked user: no (yolo)
-- Carry forward: Tick is where AC14 (attacks) and AC13 (items) go: add RandomSource to its constructor then; Tick's response should grow a view of the guardian (distracted / blind / attacking) and of items; AC13's hourglass needs the game's total time in the response (finding 3) and food needs max life in the view (AC10 finding 3); attacks must not run when the game is over
+- Carry forward: AC14 extends Tick (RandomSource for the attack timing and lane, the attack resolution) and adds MoveShield; the life loss on a hit needs the clamp (penalise holds it today); the view gains the attack warning and the shield lane
 
+## AC14 - TDD plan
+- Decided: through Tick (and MoveShield from 47), numbering from 43. Tick gets the RandomSource (constructor change in red 43 as its stub, traced). Randomness, fixed by the plan so tests can script it: the delay before an attack (10 s + nextInt(10001) ms) is drawn when it is scheduled, from the first tick; the lane (nextInt(3)) when the guardian winds up; the warning lasts 1000 ms
+  43 [AC14] shouldWarnOfAttack_whenAttackTimeComes — random delay 0, lane 2: 10 s after the first tick the response shows attack { lane 2, landsInMs 1000 }
+  44 [AC14] shouldNotWarn_beforeAttackTime — 9999 ms after: no attack
+  45 [AC14] shouldWaitRandomDelay_beforeAttacking — delay 10000: still no attack at 19999 ms
+  46 [AC14] shouldHitPlayer_whenShieldIsNotInLane — the meatball lands in lane 2, the shield is elsewhere: life 8
+  47 [AC14] shouldBlockAttack_whenShieldIsInLane — MoveShield to lane 2 before it lands: life 10 (MoveShield use case: moved | rejected('no-game'))
+  48 [AC14] shouldAttackAgain_afterLanding — the next warning comes a new random delay after the landing
+  49 [AC14] shouldNotAttack_whenGuardianIsDistracted — distracted when the attack time comes: no warning
+  "Drag the shield", the warning and the throw on screen: browser checks e2e/ac14.spec.js (blocked and hit)
+- dev: on (7 tests, 2 ACs left); a fresh shonin-dev
+- Asked user: no (yolo)
+- Deviation (AC14, orchestrator in yolo): GREEN 43 scheduled the attack on a random delay ahead of reds 44-45, with invented tuning (5 s + up to 5 s); the tuning was set to the plan's (10 s + nextInt(10001)) before commit, so 44 and 45 pass on write and become guards with mutation checks (44: minimum delay 1 ms short; 45: the drawn delay ignored). ScriptedRandomSource ignores the bound it is given, so the spread (10001) is not pinned by any test: open
+- Plan change (AC14): red 46 shouldHitOnlyOnce_whenAttackLands added (green 44 left the landing in place, so a meatball kept hitting on every tick: a real bug the plan missed); the plan's 48-49 become 47 shouldAttackAgain_afterLanding and 48 shouldNotAttack_whenGuardianIsDistracted
+
+## AC14 - run and review
+- Decided: reds 43-47 by the orchestrator, greens by a fresh shonin-dev (green 43 retuned before commit, see deviation); refactor 47 split Tick into landing and wind-up steps; screen: ShieldLanes (drag, or tap a lane), the warning target, the outcome line; long browser checks block attacks through e2e/support.js
+- Decided: a bug found while fixing the checks: a tap on the shield reached the scene and distracted the guardian -> fixed, pinned by a browser check
+- Decided: kenji-reviewer, 4 minor, open: (1) the UI tells hit from blocked by comparing life and timing the landing with Date.now, which can mislabel a hit as "Blocked!" by a few ms -> carried to AC13: Tick returns the landing's outcome (a red there); (2) the UI repeats rule numbers (−2, 3 lanes) -> with AC10 minor 3, at AC13; (3) the attack spread and lane count are not pinned (ScriptedRandomSource ignores bounds) -> open; (4) tapping a lane moves the shield, not asked -> said in acceptance.md, kept
+- Super-green misses: 0 (refactor 47 is a clarity pattern on a method grown over cycles 43-47)
+- Deferred refinement notes: untested generalizations — attacks still land on a finished game; MoveShield takes any lane number and works after the game; a distracted guardian postpones the wind-up rather than skipping it; hit and caught share penalise (both 2)
+- Asked user: no (yolo)
+- Carry forward: AC13 extends Tick (spawn and expire items with RandomSource, the landing outcome in the response), adds CollectItem; the smoke bomb makes the guardian blind (no attack, safe peeks without cooldown); food needs maxLife; the shield charm blocks the next attack whatever the lane; the hourglass moves endsAt
+
+## AC13 - TDD plan
+- Decided: through Tick and a new CollectItem({ id }) use case (collected(kind, view) | rejected('no-game' | 'no-item')), numbering from 48. Tick gets a second RandomSource for items (constructor change in red 48, the composition root passes the same MathRandomSource twice), so the attack tests' scripted draws stay as they are. Item draws, fixed by the plan so tests can script them: when an item is scheduled (first tick, and when an item leaves) its delay 8 s + nextInt(7001); when it appears its kind nextInt(6) in the order food, smoke, xray, hourglass, charm, present, then its spot x and y, each nextInt(101) (percent of the play area); an x-ray draws the index among the still-hidden pegs, a present draws its kind among the five others
+  48 [AC13] shouldShowItem_whenItemTimeComes — 8 s after the first tick: item { kind food, spot 30/70 }
+  49 [AC13] shouldRemoveItem_afterFourSeconds — 4 s after it appeared: no item
+  50 [AC13] shouldRestoreLife_whenFoodCollected — life 6, food: life 9
+  51 [AC13] shouldCapLife_whenFoodCollectedAtFullLife — life 10, food: life 10, maxLife 10 in the view (closes AC10 minor 3)
+  52 [AC13] shouldRejectCollect_whenItemIsGone — collecting 4 s after it appeared: rejected 'no-item'
+  53 [AC13] shouldBlindGuardian_whenSmokeCollected — a peek while watched is revealed, not caught
+  54 [AC13] shouldNotStartCooldown_whenPeekingWhileBlind — two peeks in a row while blind: both revealed
+  55 [AC13] shouldSeeAgain_afterFourSecondsOfSmoke — 4 s after the smoke: a peek is caught
+  56 [AC13] shouldNotAttack_whenGuardianIsBlind — blind when the attack time comes: no warning
+  57 [AC13] shouldRevealHiddenPeg_whenXrayCollected — the view lists the peg (index 1, yellow) for the rest of the game
+  58 [AC13] shouldRevealStillHiddenPeg_whenXrayCollectedAgain — the second x-ray draws among the pegs still hidden
+  59 [AC13] shouldAddThirtySeconds_whenHourglassCollected — time left grows by 30 s
+  60 [AC13] shouldBlockNextAttack_whenCharmCollected — the meatball lands outside the shield: no life lost
+  61 [AC13] shouldHitAgain_afterCharmWasUsed — the following attack hits
+  62 [AC13] shouldGiveAnotherItem_whenPresentCollected — present, then food drawn: life restored
+  63 [AC13] shouldShowAnotherItem_afterOneLeaves — the next item comes a new delay after the first left
+  64 (AC14 minor 1) shouldReportHit_whenAttackLands / blocked — Tick's response names the landing's outcome, so the screen stops guessing it
+  On the screen: the item at its spot (tap to collect), the guardian blinded by smoke, x-rayed pegs shown, the charm by the shield; browser checks e2e/ac13.spec.js
+- dev: on (17 tests); a fresh shonin-dev
+- Asked user: no (yolo)
+- Plan change (AC13): red 53 shouldRejectCollect_whenAlreadyCollected added (green 50 left a collected item in place: food could be eaten twice); the plan's 53-64 shift by one (54-65)
+- Plan change (AC13): red 54 shouldKeepSameItem_whileShown (Tick redraws the item on every tick of its 4 s) and red 55 shouldNotShowItem_afterItWasCollected (the next tick re-shows a collected item) added; the plan's later reds shift by two (smoke from 56)
+- Order change (AC13): the plan's shouldShowAnotherItem_afterOneLeaves moved up to red 56 (the item state grows flags while nothing reschedules; with the respawn in place the refactor can reshape it)
+- Plan change (AC13): red 57 shouldShowAnotherItem_afterOneIsCollected (a collected item also leaves: the next one comes a new delay after the tick that sees it gone)
+- Deviation (AC13): green 58 picked 5 s of smoke (invented); set to the plan's 4 s before commit, so shouldSeeAgain_afterFourSecondsOfSmoke will likely pass on write (guard)
+- Plan change (AC13): red 60 shouldReportNoCooldown_whenPeekingWhileBlind (a blind peek still told the screen to refill the bar); shouldSeeAgain and shouldNotAttack_whenGuardianIsBlind passed on write: guards 59
+- Paused (AC13): the account's 5-hour usage limit stopped the run's shonin-dev at green 62 (resets 20:30 UTC). Reds 48-62 so far, greens 48-61 committed; guards 59 (two); plan changes logged above. Resume: say "resume peek-a-code"; a fresh shonin-dev takes green 62 (the old one's context is heavy).
+- Plan change (AC13): red 69 shouldReportBlocked_whenCharmStopsAttack (a charmed landing reported no outcome, so the screen would show none)
+- Plan change (AC13): red 70 shouldNameGift_whenPresentCollected (the screen cannot show a smoke or charm that came out of a present unless the response names it)
+- Review fix (AC13, blocking): red 71 shouldStayBlind_whenPointingDuringSmoke (a tap during the smoke replaced the blindness with a 1.5 s distraction)
+- Review fix (AC13, minor): red 72 shouldRejectCollect_whenGameIsOver (food on a lost game brought it back to life)
+- Review fix (AC13, minor): red 73 shouldRevealNothingMore_whenEveryPegIsRevealed (an x-ray with no hidden peg pushed undefined into revealed)
+
+## AC13 - run and review
+- Decided: reds 48-73 by the orchestrator, greens by two shonin-devs (the first stopped on the usage limit at green 62); several invented tuning values reset to the plan's before commit (delay spread, spot span, smoke 4 s); refactors 51 (start at full life), 57 (item step grouped), 60 (caught branch owns its cooldown), 70 (wrapped); screen: ItemSprite, smoke over the guardian, x-rayed pegs, charm line, outcome read from Tick
+- Decided: kenji-reviewer, 1 blocking (a tap during the smoke replaced the blindness) -> red 71, fixed; minors fixed: collect after the game (red 72), x-ray with no hidden peg (red 73), the life bar reads maxLife; re-review PASS; open minors: the screen times the smoke (SMOKE_SHOWN_MS) and guesses blind/charmed from the collect response, CollectItem ignores the item id (always 0), the CollectItem tests live in Tick.test.ts, game-over and all-revealed unit-tested only
+- Super-green misses: 0
+- Deferred refinement notes: untested generalizations — a collect between time up and the next tick is accepted (D-timer deviation of AC12); a second charm or smoke does not stack; a point while only distracted restarts the 1.5 s
+- Asked user: no (yolo)
+- Carry forward: none (last AC)
+
+## Finish - round 2
+- Verdict: NOT GUILTY: AC10-AC14 verified (AC1-AC4, AC6-AC9 still verified, AC5 waived), last runs green (82 unit tests, tsc clean, 26 browser checks), no blocking finding or discrepancy open, all committed and pushed; EAS Update published (group 95147022)
+- Waiting for you: the look and feel on the phone (confirmations, not counts); merging the branch (a pull request, outward-facing, not opened)
+- Keep: e2e/support.js runForBlockingAttacks and the Math.random-per-check pattern (fix one draw index per browser check) — generic to any game with random events checked by Playwright; lives in e2e/
+- Improvements:
+  1. saiban-orchestrator / shonin-dev: the dev invented tuning values five times (delays, spans, smoke length) the tests could not pin. Add to the dev prompt rule: "Name only values the failing test forces; a value the test cannot tell apart (a random bound, a duration longer than the test runs) is the caller's: leave a TODO-free named constant only if the plan gives its value, else ask in your report."
+  2. igiari-tdd audit-tdd-history.sh: in a Node project its worktree has no node_modules, so every red reads "no failure line" and the final build fails; link the checkout's node_modules (or run an install command given with --setup-cmd) before re-running.
+  3. kenji-reviewer prompt in saiban-orchestrator: name the skill paths "to Read with your file tool, not a Skill tool" when the skills are not installed (the AC12 review admitted it had not read them).
+
+## Round 3 - the user's feedback after playing
+- Asked user: yes — "Cannot see the pegs when revealed" meant the x-ray peg (it is: the flip's clean-up stops the opening half of the animation, so the peg stays squeezed to 0 width; the browser check read only the label); "dragged like a real shield" means following the finger sideways
+- Decided: AC15 written from the user's words; wind-up 1000 -> 2500 ms (orchestrator's number: slow enough to see it fall); blocking stays by lane (the shield's nearest lane when it lands), the domain unchanged; the life bar moves to the player's zone at the bottom with the shield (yolo)
+- Decided: TDD for the rule change: make-room refactor first (the attack tests wait 2500 ms after the warning, still green at 1000), then red 74 (landsInMs 2500); dev: on (rule: ticket with several ACs), a fresh shonin-dev; the screen without TDD, browser checks that assert the pegs are visible, not only labelled
+- Asked user: no (yolo) for the numbers and the layout
+
+## Round 3 - run and review
+- Decided: refactors 73 and 73 (b) made room in the tests, red 74 (changed requirement: 2.5 s), green 74 by a fresh shonin-dev; screen: FallingMeatball, the player's zone at the bottom (ShieldLanes + LifeBar), the shield follows the finger; SecretPeg's flip fixed (its clean-up stopped the opening half)
+- Decided: kenji-reviewer, 1 blocking (no check of the follow) -> mid-drag check; the fall check then exposed a stale ground measure -> measured again on each throw; AC14's wording amended by AC15; re-review PASS; open minors listed in acceptance.md AC15
+- Super-green misses: 0
+- Asked user: yes (the two questions above); the rest no (yolo)
+- Verdict: NOT GUILTY: AC1-AC4, AC6-AC15 verified, AC5 waived, last runs green (82 unit, tsc clean, 29 browser checks twice), no blocking finding open, committed and pushed
+
+## Round 4 - the user's feedback
+- Decided: AC16 fall 1.5 s (orchestrator's number), 🎯 marker removed; AC18 fail chance 1 in 4, punch costs 1 life (orchestrator's numbers); AC17 read as the phone delivering a peg tap to the scene too (not reproducible here): taps inside the pegs, controls, items and shield never distract, whatever the platform does
+- Decided: DistractGuardian gets a RandomSource (luck); the composition root takes a fixed luck draw from globalThis.yologneseLuck when a check sets it, else Math.random: the browser checks that distract set it to "always fooled", the AC18 check to "never" (a configuration seam in the composition root, not a branch in the rules)
+- Decided: TDD reds from 75 (AC16 changed requirement, AC18 through DistractGuardian), dev: on, a fresh shonin-dev
+- Asked user: no (yolo)
+
+## Round 4 - run and review
+- Decided: red 75 (changed requirement 1.5 s), green 75; red 76 (stub: luck port), green 76 (luck bound set to the plan's 4 before commit), guard 76 (mutation: a punch distracts anyway), red 77, green 77 by a fresh shonin-dev; screen: no 🎯, the punch line, control taps never distract, items below the pegs (one covered a peg in a check); checks: e2e/fixtures.js fixes the luck through the composition root, lanes read from the falling meatball, retimed to 1.5 s
+- Decided: kenji-reviewer, no blocking, 7 minor: AC17's check passes without the fix -> AC17 left unverified for the user's phone check; the 1-in-4 rate unpinned -> said in acceptance.md; AC14 amended by AC16; retro written; stale comment fixed; punch has no floor (unreachable: isOver first) -> open
+- Asked user: no (yolo)
+- Verdict: GUILTY, 1 count: AC17 not proven: its fix answers a phone-only behaviour the web build does not show; the user's check decides
+
+## User preference - the link in every report
+- Decided (user): "Don't forget the expo link each time": every report ends with the Expo Go link (also in the Resume block)
+- Asked user: yes
+
+## Round 5 - the cooldown punch
+- Decided: AC19 written from the user's words; punch lands in 700 ms and costs 1 (orchestrator's numbers); AC18's punch becomes the same thrown, parryable punch (reading: "we can parry"); one attack in flight at a time (no punch while one is falling)
+- Decided: structure: the Session's pending attack gets a kind (meatball 2 life, punch 1 life); PeekSecret takes a RandomSource for the punch's lane (constructor change in a red, traced); DistractGuardian draws the lane from its luck source after the fooled draw; the cooldown rejection carries the punch; Tick lands it like a meatball
+- Plan: make-room refactor first (the cooldown tests compare by fields), then reds from 78: 78 punch thrown on a cooldown peek, 79 an unparried punch costs 1, 80 the shield in its lane parries it, 81 (changed requirement) a failed distraction throws the punch instead of an instant hit, 82 no punch while an attack is on its way; dev: on, a fresh shonin-dev
+- Asked user: no (yolo)
+- Plan deviations (round 5): the parry red passed on write -> guard 79; "no punch while an attack flies" took two reds (81 PeekSecret, 82 DistractGuardian); red 83 added (no meatball wound up while a punch flies, from the dev's note)
+
+## Round 5 - run and review
+- Decided: refactor 77 make-room; reds 78-83 by the orchestrator, greens by a fresh shonin-dev; refactor 80 (punches.ts); screen: the fist flies like the meatball, Parried!/Punched!; checks: e2e/ac19.spec.js, AC11 and AC18 checks follow the thrown punch
+- Decided: kenji-reviewer, 1 blocking (AC11, AC18, AC19 records not amended) -> amended with evidence, conception.md round 3-5 decisions, retro; minors: a check claimed "gone" without asserting it -> asserted; open: 'punched' with no punch while an attack flies, screen before checks
+- Super-green misses: 0
+- Asked user: no (yolo)
+- Verdict (round 5): GUILTY, 1 count: AC17 still unproven (the phone check); AC19 verified, re-review PASS
+
+## Round 6 - the hand flip-back and a faster punch
+- Decided: AC20 read as: the peg stays up until tapped again; caught (−2, peg down, cooldown) if the guardian watches again with a peg up; one peg up at a time, another peek refused ('peg-up', no cost); AC21 punch 450 ms (orchestrator's number)
+- Decided: structure: Session.pegUp (index); PeekSecret stores it and refuses another while one is up; a new use case HidePeg({ index }) flips it back; Tick catches a peg up when the guardian is not distracted; GameView.pegUp { index, color } for the screen (the screen's 400 ms timer goes)
+- Plan: reds from 84: 84 punch 450 ms (changed requirement), 85 the revealed peg stays up (Tick's view), 86 HidePeg flips it back, 87 caught when the guardian looks back with the peg up, 88 another peek refused while one is up; guard: no catch when flipped back in time; dev: on, a fresh shonin-dev
+- Asked user: no (yolo)
+- Order slip (round 6): refactor 84 (retiming a Tick test the shorter punch broke, found by the dev) was committed between red 84 and green 84, since the make-room before red 84 had missed it
+- Plan changes (round 6): red 88 became "the cooldown starts when caught with a peg up" (AC20 asks it) and the refusal moved to red 89; the planned guard "no catch when flipped back" was written after the review as guard 89; the screen and checks commit landed between red 89 and red 89 (fix)/green 89 (not a step commit, while red 89 failed); the screen keeps its own peg state rather than reading GameView.pegUp
+
+## Round 6 - run and review
+- Decided: refactors 83, 84 (make room), reds 84-89 with greens by a fresh shonin-dev, refactor 88 (cooldown into the domain), red 89 (fix); screen: the peg stays up until tapped, caught when the guardian looks back with it up, one at a time
+- Decided: kenji-reviewer, 1 blocking (a false caught after a new game) -> fixed, a check that fails without the fix; minors: guard 89 added, one-peg browser check added, records amended; open: HidePeg ignores its index and never answers 'not-up'
+- Super-green misses: 0
+- Asked user: no (yolo)
+- Verdict (round 6): GUILTY, 1 count: AC17 still unproven (the phone check); AC20 and AC21 verified, re-review PASS
+
+## Round 7 - drag and drop, and the boxer's arm
+- Decided: both ACs are screen-only (No skill: React Native screen): no TDD run, no dev; proven by browser checks; the tap on a colour stays (fills the first empty slot); the arm retracts in 0.3 s after landing (orchestrator's number)
+- Asked user: no (yolo)
+- Decided (round 7 run): DraggableColor (drag after 6 px, a tap stays a tap), PunchArm (out 0.45 s, back 0.3 s); the AC23 check retimed once (it sampled the glove at the very end of its return); kenji-reviewer PASS with minors: a terminated drag no longer drops, a touch-event drag check added; open: the timing of the arm is not measured by the screen check
+- Verdict (round 7): GUILTY, 1 count: AC17 still unproven (the phone check); AC22, AC23 verified
+
+## Round 8 - the spring arm and the laughing guardian
+- Decided: screen only (No skill: React Native screen): the arm a zig-zag SVG line scaled with the reach (it folds like an accordion), the glove 0.7 to 1.9 times its size (toward the player); caught: the guardian laughs and points 🫵 out of the screen for 1.5 s (reading: a mocking point, not a rude finger); a generic spring arm, not a copy of a cartoon character
+- Slip: acceptance.md marked AC24 and AC25 verified before kenji-reviewer ran (the review is on by default); the review follows, and the status stands only if it passes
+- Asked user: no (yolo)
+- Decided (round 8 review): kenji-reviewer, minors only: the arm's unfold and fold back now asserted (the sample times set from a measured trace: the return runs 0.5-0.8 s after the tap); AC25 back to designed with its question open (the gesture is an assumption); the laugh checked still shown at 1.4 s
+- Verdict (round 8): GUILTY, 2 counts: AC17 unproven (phone check), AC25 pending the user's answer on the gesture
+
+## Round 9 - better items, negative items
+- Decided: the bomb appears among the items (kind index 6) and explodes when its 4 s end unless tapped (2 life); a present may give darkness or a bomb besides the good items (gifts: food, smoke, xray, hourglass, charm, darkness, bomb); darkness blinds the player 4 s (view: playerBlind), a bomb from a present explodes at once; numbers by the orchestrator
+- Plan: reds from 90: 90 a bomb left on the field explodes (Tick reports exploded, life 8), 91 a tapped bomb does not explode, 92 a present can give darkness (the view says the player is blind), 93 the player sees again after 4 s, 94 a present can give a bomb that explodes at once; dev: on, a fresh shonin-dev; then the screen (AC26, AC27) with browser checks
+- Asked user: no (yolo)
+- Deviation (round 9): green 90 widened the item kinds with 'bomb', and CollectItem could not compile without a case for it; the smallest case (a collected bomb has no effect) is what red 91 asked, so 91 becomes a guard
+- Numbering (round 9): red/green 90 (field bomb), guard 90 (tapped bomb, was the plan's red 91), red/green 91 darkness, 92 sees again, 93 present's bomb; the bomb's screen commit sits between green 90 and guard 90
+- Decided (round 9): a composition-root setting globalThis.yologneseItemDraw (like yologneseLuck): the browser checks draw items as untapped food unless a check chooses its item, since a random bomb could cost life in any long check (three flaky checks showed it); the AC13 charm check now moves the shield away so the charm is what blocks
+- Decided (round 9 review): kenji-reviewer, no blocking, minors: the x-ray check now asserts the beam ends on the peg; open: explode() clamps at 0 untested (copied from penalise), the grenade's flight and the laser's end not checked, the present's bomb unit-tested only
+- Verdict (round 9): GUILTY, 2 counts: AC17 (phone check), AC25 (the gesture); AC26-AC29 verified
+
+## Round 10 - the newest guesses on screen
+- Decided (user's words): show the latest guesses that fit, 10 at most, oldest dropped; numbered rows (orchestrator); screen only (No skill: React Native screen); the scrolling list goes
+- Asked user: no (yolo)
+- Decided (round 10 review): kenji-reviewer PASS, 2 minor open (the cap untested on a tall screen, a fixed row height)
+- Verdict (round 10): GUILTY, 2 counts: AC17 (phone check), AC25 (the gesture); AC30 verified

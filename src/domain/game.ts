@@ -1,8 +1,13 @@
 import { Code, COLORS, Color } from './color';
 
-const MAX_LIFE = 10;
+export const MAX_LIFE = 10;
+const STARTING_LIFE = MAX_LIFE;
 const LIFE_LOST_PER_MISS = 1;
 const LIFE_LOST_WHEN_CAUGHT = 2;
+const LIFE_LOST_WHEN_PUNCHED = 1;
+const LIFE_LOST_WHEN_BOMB_EXPLODES = 2;
+const LIFE_RESTORED_BY_FOOD = 3;
+const MIN_LIFE = 0;
 
 export interface Turn {
   readonly guess: Code;
@@ -14,11 +19,11 @@ export interface Game {
   readonly secret: Code;
   readonly turns: readonly Turn[];
   readonly life: number;
-  readonly timeUp: boolean;
+  readonly revealed: readonly number[];
 }
 
 export function newGame(secret: Code): Game {
-  return { secret, turns: [], life: MAX_LIFE, timeUp: false };
+  return { secret, turns: [], life: STARTING_LIFE, revealed: [] };
 }
 
 function countExact(game: Game, guess: Code): number {
@@ -40,42 +45,55 @@ function countMisplaced(game: Game, guess: Code): number {
   return countSharedColours(game.secret, guess) - countExact(game, guess);
 }
 
+function cracksCode(game: Game, turn: Turn): boolean {
+  return turn.exact === game.secret.length;
+}
+
 export function play(game: Game, guess: Code): Game {
   const turn: Turn = {
     guess,
     exact: countExact(game, guess),
     misplaced: countMisplaced(game, guess),
   };
-  return { ...game, turns: [...game.turns, turn], life: game.life - lifeLost(game, turn) };
-}
-
-function isWinningTurn(game: Game, { exact }: Turn): boolean {
-  return exact === game.secret.length;
-}
-
-function lifeLost(game: Game, turn: Turn): number {
-  return isWinningTurn(game, turn) ? 0 : LIFE_LOST_PER_MISS;
+  const life = cracksCode(game, turn) ? game.life : game.life - LIFE_LOST_PER_MISS;
+  return { ...game, turns: [...game.turns, turn], life };
 }
 
 export function penalise(game: Game): Game {
-  const life = Math.max(0, game.life - LIFE_LOST_WHEN_CAUGHT);
+  const life = Math.max(MIN_LIFE, game.life - LIFE_LOST_WHEN_CAUGHT);
   return { ...game, life };
 }
 
-export function expire(game: Game): Game {
-  return { ...game, timeUp: true };
+export function punch(game: Game): Game {
+  return { ...game, life: game.life - LIFE_LOST_WHEN_PUNCHED };
+}
+
+export function explode(game: Game): Game {
+  return { ...game, life: Math.max(MIN_LIFE, game.life - LIFE_LOST_WHEN_BOMB_EXPLODES) };
+}
+
+export function restoreLife(game: Game): Game {
+  return { ...game, life: Math.min(MAX_LIFE, game.life + LIFE_RESTORED_BY_FOOD) };
+}
+
+export function hiddenPegs(game: Game): readonly number[] {
+  return game.secret.map((_, index) => index).filter((index) => !game.revealed.includes(index));
+}
+
+export function revealPeg(game: Game, index: number): Game {
+  return { ...game, revealed: [...game.revealed, index] };
+}
+
+export function timeUp(game: Game): Game {
+  return { ...game, life: MIN_LIFE };
 }
 
 export function isWon(game: Game): boolean {
-  return game.turns.some((turn) => isWinningTurn(game, turn));
+  return game.turns.some((turn) => cracksCode(game, turn));
 }
 
 export function isLost(game: Game): boolean {
-  return !isWon(game) && (isOutOfLife(game) || game.timeUp);
-}
-
-function isOutOfLife(game: Game): boolean {
-  return game.life <= 0;
+  return !isWon(game) && game.life <= 0;
 }
 
 export function isOver(game: Game): boolean {

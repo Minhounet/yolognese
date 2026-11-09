@@ -1,6 +1,6 @@
 // Browser checks for AC1 and AC2, run against the web build (npm run export:web).
 // One check per AC. The secret is random, so checks read it from the end of a lost game.
-const { test, expect } = require('@playwright/test');
+const { test, expect } = require('./fixtures');
 
 const BASE = process.env.BASE_URL ?? 'http://localhost:8081';
 const MISS = ['red', 'red', 'red', 'red'];
@@ -28,7 +28,7 @@ test('AC2: losing reveals the secret, and a new game starts fresh', async ({ pag
   await expect(page.getByTestId('status')).toContainText(/Out of life|You cracked it/);
   await expect(page.getByTestId('secret-0')).not.toHaveAttribute('aria-label', 'hidden peg');
   await page.getByTestId('new-game').click();
-  await expect(page.getByTestId('life')).toHaveAttribute('aria-label', 'life 10 of 10');
+  await expect(page.getByTestId('life')).toHaveAttribute('aria-label', 'Life 10 of 10');
   await expect(page.getByTestId('turn-0')).toHaveCount(0);
   await expect(page.getByTestId('secret-0')).toHaveAttribute('aria-label', 'hidden peg');
 });

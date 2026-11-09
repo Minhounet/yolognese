@@ -1,26 +1,29 @@
+import { Attack, LANE_COUNT, punchWindUp } from '../domain/attack';
 import { Color } from '../domain/color';
+import { PEEK_COOLDOWN_MS } from '../domain/peek';
 import { isOver, penalise } from '../domain/game';
-import { isDistracted } from '../domain/guardian';
+import { isBlind, isDistracted } from '../domain/guardian';
 import { toGameView } from './GameMapper';
-import { Clock, GameRepository, Session } from './ports';
+import { withPunchThrown } from './punches';
+import { Clock, GameRepository, RandomSource } from './ports';
 import { GameView } from './views';
 
-const PEEK_COOLDOWN_MS = 5000;
+const NO_COOLDOWN_MS = 0;
 
 export interface PeekCommand {
   readonly index: number;
 }
 
-/** A peek that went through, revealed or caught, starts the cooldown; the screen's bar reads it. */
-interface Cooldown {
-  readonly cooldownRemainingMs: number;
-}
-
 export type PeekResponse =
-  | ({ readonly kind: 'revealed'; readonly index: number; readonly color: Color } & Cooldown)
-  | ({ readonly kind: 'caught'; readonly view: GameView } & Cooldown)
-  | { readonly kind: 'rejected'; readonly reason: 'no-game' | 'game-over' }
-  | { readonly kind: 'rejected'; readonly reason: 'cooling-down'; readonly remainingMs: number };
+  | {
+      readonly kind: 'revealed';
+      readonly index: number;
+      readonly color: Color;
+      readonly cooldownMs: number;
+    }
+  | { readonly kind: 'caught'; readonly view: GameView; readonly cooldownMs: number }
+  | { readonly kind: 'rejected'; readonly reason: 'no-game' | 'game-over' | 'peg-up' }
+  | { readonly kind: 'rejected'; readonly reason: 'cooling-down'; readonly punch?: Attack };
 
 export interface PeekSecret {
   execute(command: PeekCommand): PeekResponse;
@@ -30,6 +33,7 @@ export class PeekSecretImpl implements PeekSecret {
   constructor(
     private readonly repository: GameRepository,
     private readonly clock: Clock,
+    private readonly random: RandomSource,
   ) {}
 
   execute(command: PeekCommand): PeekResponse {
@@ -42,20 +46,28 @@ export class PeekSecretImpl implements PeekSecret {
     }
     const now = this.clock.now();
     if (now < session.peekReadyAt) {
-      return { kind: 'rejected', reason: 'cooling-down', remainingMs: session.peekReadyAt - now };
+      if (session.attackLandsAt !== undefined) {
+        return { kind: 'rejected', reason: 'cooling-down' };
+      }
+      const punch = punchWindUp(this.random.nextInt(LANE_COUNT));
+      this.repository.save(withPunchThrown(session, now, punch));
+      return { kind: 'rejected', reason: 'cooling-down', punch };
     }
-    const coolingDown: Session = { ...session, peekReadyAt: now + PEEK_COOLDOWN_MS };
+    if (session.pegUp !== undefined) {
+      return { kind: 'rejected', reason: 'peg-up' };
+    }
     if (!isDistracted(session.guardian, now)) {
       const game = penalise(session.game);
-      this.repository.save({ ...coolingDown, game });
-      return { kind: 'caught', view: toGameView(game), cooldownRemainingMs: PEEK_COOLDOWN_MS };
+      this.repository.save({ ...session, game, peekReadyAt: now + PEEK_COOLDOWN_MS });
+      return { kind: 'caught', view: toGameView(game), cooldownMs: PEEK_COOLDOWN_MS };
     }
-    this.repository.save(coolingDown);
-    return {
-      kind: 'revealed',
-      index: command.index,
-      color: session.game.secret[command.index],
-      cooldownRemainingMs: PEEK_COOLDOWN_MS,
-    };
+    const cooldownMs = isBlind(session.guardian, now) ? NO_COOLDOWN_MS : PEEK_COOLDOWN_MS;
+    const color = session.game.secret[command.index];
+    this.repository.save({
+      ...session,
+      peekReadyAt: now + cooldownMs,
+      pegUp: { index: command.index, color },
+    });
+    return { kind: 'revealed', index: command.index, color, cooldownMs };
   }
 }
