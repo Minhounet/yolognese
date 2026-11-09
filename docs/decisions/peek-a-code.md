@@ -326,5 +326,5 @@
 
 ## Round 8 - the spring arm and the laughing guardian
 - Decided: screen only (No skill: React Native screen): the arm a zig-zag SVG line scaled with the reach (it folds like an accordion), the glove 0.7 to 1.9 times its size (toward the player); caught: the guardian laughs and points 🫵 out of the screen for 1.5 s (reading: a mocking point, not a rude finger); a generic spring arm, not a copy of a cartoon character
-- Decided: no kenji-reviewer pass this round? No: the review is on by default -> see below
+- Slip: acceptance.md marked AC24 and AC25 verified before kenji-reviewer ran (the review is on by default); the review follows, and the status stands only if it passes
 - Asked user: no (yolo)
