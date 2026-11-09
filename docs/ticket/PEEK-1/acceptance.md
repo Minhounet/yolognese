@@ -90,7 +90,7 @@ Interpretation is the orchestrator's (yolo), logged in the decision log.
 ## Round 2 (user, during the yolo run): the guardian becomes an enemy
 
 Source for AC10-AC14, verbatim: "I would like to change the try count. It should be a life bar. Before cheating again there must be a cooling bar. Being caught decrease the count bar. We must have a time limit for the game. Now an random item can be display on the screen. If "present" it will be a random thing. I suggest the following items, some food to regain life. Smoke bomb to blind the enemy. Etc.. if you have more idea. A "x ray glass" to see a peg randomly. Treat the opponent like an ennemy, he can attack us and we must use a shield to protect (you can drag the shield)."
-Order: AC10, AC11, AC12, AC14, AC13; then AC15 (user, after playing); then AC16, AC18, AC17 (user, round 4: AC18's punch and AC16's fall are rules, AC17 the screen); then AC19 (user, round 5); then AC21, AC20 (user, round 6); then AC22, AC23 (user, round 7, screen only); then AC24, AC25 (user, round 8, screen only) (AC11-AC14 spend or restore life; AC13's items act on AC11, AC12 and AC14)
+Order: AC10, AC11, AC12, AC14, AC13; then AC15 (user, after playing); then AC16, AC18, AC17 (user, round 4: AC18's punch and AC16's fall are rules, AC17 the screen); then AC19 (user, round 5); then AC21, AC20 (user, round 6); then AC22, AC23 (user, round 7, screen only); then AC24, AC25 (user, round 8, screen only); then AC28, AC29, AC26, AC27 (user, round 9: the rules first, then the screen) (AC11-AC14 spend or restore life; AC13's items act on AC11, AC12 and AC14)
 
 ## AC10: Life bar instead of attempts
 - Source: "change the try count. It should be a life bar ... Being caught decrease the count bar."
@@ -219,6 +219,38 @@ Order: AC10, AC11, AC12, AC14, AC13; then AC15 (user, after playing); then AC16,
 - Covered by: the screen (src/ui/Guardian.tsx)
 - Evidence: browser check e2e/ac24-ac25.spec.js "when the player is caught, the guardian laughs and points at them, then calms down" (the laugh and the finger shown, still shown at 1.4 s, gone at 1.6 s): 42 passed. The squinting eyes and open mouth are the look, not checked; kenji-reviewer: minor findings only
 - Status: designed (pending the user's answer on the gesture)
+
+## AC26: Item animations (user, round 9)
+- Source: "Can we improve the items animation ? Blinding can be like smoke grenade., shield can be a green laser protecting us. The glasses can launch a laser beam to a peg."
+- Interpretation: the smoke bomb is thrown as a grenade at the guardian and a smoke cloud covers it while it is blind; the shield charm shows a green laser wall across the player's zone until it is used; the x-ray glasses fire a laser beam from where they were picked up to the revealed peg
+- Questions: none
+- Covered by: the screen
+- Evidence:
+- Status: designed
+
+## AC27: A smoother life bar that shows what was lost (user, round 9)
+- Source: "Lifebar can be smoother, when you lose some life, the life you lose should blink a little to make it visible. Like in most fighting game."
+- Interpretation: the life bar slides to its new length; the part just lost stays visible a moment and blinks before it shrinks away
+- Questions: none
+- Covered by: the screen (LifeBar)
+- Evidence:
+- Status: designed
+
+## AC28: A bomb that explodes if left (user, round 9)
+- Source: "Need some negative items ... A bomb make you loose life after explosion."
+- Interpretation: a 💣 bomb can appear like an item; if it is still there when its 4 s end, it explodes and costs 2 life; tapping it before throws it away (no cost); a present can also turn into a bomb, which explodes at once (2 life)
+- Questions: none
+- Covered by: D-items (round 9)
+- Evidence:
+- Status: designed
+
+## AC29: Darkness blinds the player (user, round 9)
+- Source: "Need some negative items. You can be blind too and dont see what you are doing."
+- Interpretation: a present can turn into 🌑 darkness: for 4 s the player is blind: a dark veil covers the secret pegs, the board and the guess being built (the controls still work)
+- Questions: none
+- Covered by: D-items (round 9), the screen
+- Evidence:
+- Status: designed
 
 ## Discrepancies
 

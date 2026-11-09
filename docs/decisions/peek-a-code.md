@@ -5,7 +5,7 @@
 - Mode: build
 - Yolo: on (see references/yolo.md of saiban-orchestrator)
 - Done: scaffold, plan and ACs; AC1-AC4, AC6-AC16, AC18-AC24 verified, AC5 waived (user); AC17 waits for the user's phone check, AC25 for the user's answer on the gesture; round 8 published to the feat-peek-a-code channel
-- Next: the user's answers: AC17 phone check (tap a hidden peg while watched: caught), AC25 gesture (is 🫵 the finger meant?); then merge (a pull request, not opened), more features, or tuning
+- Next: round 9 (user): AC28 bomb, AC29 darkness (rules, TDD), then AC26 item animations, AC27 life bar (screen); AC17 and AC25 still wait for the user
 - Files: docs/ticket/PEEK-1/, src/
 - User preference: end every report with the Expo Go link: exp://u.expo.dev/90eceada-289a-4a45-b958-180a23ddedb8?channel-name=feat-peek-a-code&runtime-version=exposdk:58.0.0
 
@@ -330,3 +330,8 @@
 - Asked user: no (yolo)
 - Decided (round 8 review): kenji-reviewer, minors only: the arm's unfold and fold back now asserted (the sample times set from a measured trace: the return runs 0.5-0.8 s after the tap); AC25 back to designed with its question open (the gesture is an assumption); the laugh checked still shown at 1.4 s
 - Verdict (round 8): GUILTY, 2 counts: AC17 unproven (phone check), AC25 pending the user's answer on the gesture
+
+## Round 9 - better items, negative items
+- Decided: the bomb appears among the items (kind index 6) and explodes when its 4 s end unless tapped (2 life); a present may give darkness or a bomb besides the good items (gifts: food, smoke, xray, hourglass, charm, darkness, bomb); darkness blinds the player 4 s (view: playerBlind), a bomb from a present explodes at once; numbers by the orchestrator
+- Plan: reds from 90: 90 a bomb left on the field explodes (Tick reports exploded, life 8), 91 a tapped bomb does not explode, 92 a present can give darkness (the view says the player is blind), 93 the player sees again after 4 s, 94 a present can give a bomb that explodes at once; dev: on, a fresh shonin-dev; then the screen (AC26, AC27) with browser checks
+- Asked user: no (yolo)
