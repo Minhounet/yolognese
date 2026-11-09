@@ -5,7 +5,7 @@
 - Mode: build
 - Yolo: on (see references/yolo.md of saiban-orchestrator)
 - Done: scaffold, plan and ACs; AC1-AC4, AC6-AC16, AC18, AC19 verified, AC5 waived (user); AC17 waits for the user's phone check; round 5 published to the feat-peek-a-code channel
-- Next: the user's phone check of AC17 (tap a hidden peg while watched: caught) and the feel of the punch; then merge (a pull request, not opened), more features, or tuning
+- Next: round 6 (user): AC21 punch 0.45 s, AC20 manual flip-back (caught if the guardian looks back with a peg up); AC17 still waits for the user's phone check
 - Files: docs/ticket/PEEK-1/, src/
 - User preference: end every report with the Expo Go link: exp://u.expo.dev/90eceada-289a-4a45-b958-180a23ddedb8?channel-name=feat-peek-a-code&runtime-version=exposdk:58.0.0
 
@@ -302,3 +302,9 @@
 - Super-green misses: 0
 - Asked user: no (yolo)
 - Verdict (round 5): GUILTY, 1 count: AC17 still unproven (the phone check); AC19 verified, re-review PASS
+
+## Round 6 - the hand flip-back and a faster punch
+- Decided: AC20 read as: the peg stays up until tapped again; caught (−2, peg down, cooldown) if the guardian watches again with a peg up; one peg up at a time, another peek refused ('peg-up', no cost); AC21 punch 450 ms (orchestrator's number)
+- Decided: structure: Session.pegUp (index); PeekSecret stores it and refuses another while one is up; a new use case HidePeg({ index }) flips it back; Tick catches a peg up when the guardian is not distracted; GameView.pegUp { index, color } for the screen (the screen's 400 ms timer goes)
+- Plan: reds from 84: 84 punch 450 ms (changed requirement), 85 the revealed peg stays up (Tick's view), 86 HidePeg flips it back, 87 caught when the guardian looks back with the peg up, 88 another peek refused while one is up; guard: no catch when flipped back in time; dev: on, a fresh shonin-dev
+- Asked user: no (yolo)

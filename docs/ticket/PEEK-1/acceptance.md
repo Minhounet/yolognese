@@ -90,7 +90,7 @@ Interpretation is the orchestrator's (yolo), logged in the decision log.
 ## Round 2 (user, during the yolo run): the guardian becomes an enemy
 
 Source for AC10-AC14, verbatim: "I would like to change the try count. It should be a life bar. Before cheating again there must be a cooling bar. Being caught decrease the count bar. We must have a time limit for the game. Now an random item can be display on the screen. If "present" it will be a random thing. I suggest the following items, some food to regain life. Smoke bomb to blind the enemy. Etc.. if you have more idea. A "x ray glass" to see a peg randomly. Treat the opponent like an ennemy, he can attack us and we must use a shield to protect (you can drag the shield)."
-Order: AC10, AC11, AC12, AC14, AC13; then AC15 (user, after playing); then AC16, AC18, AC17 (user, round 4: AC18's punch and AC16's fall are rules, AC17 the screen); then AC19 (user, round 5) (AC11-AC14 spend or restore life; AC13's items act on AC11, AC12 and AC14)
+Order: AC10, AC11, AC12, AC14, AC13; then AC15 (user, after playing); then AC16, AC18, AC17 (user, round 4: AC18's punch and AC16's fall are rules, AC17 the screen); then AC19 (user, round 5); then AC21, AC20 (user, round 6) (AC11-AC14 spend or restore life; AC13's items act on AC11, AC12 and AC14)
 
 ## AC10: Life bar instead of attempts
 - Source: "change the try count. It should be a life bar ... Being caught decrease the count bar."
@@ -171,6 +171,22 @@ Order: AC10, AC11, AC12, AC14, AC13; then AC15 (user, after playing); then AC16,
 - Covered by: D-attack (an attack is a meatball or a punch), PeekSecret and DistractGuardian throw the punch, Tick lands it
 - Evidence: reds 78-83 — PeekSecret.shouldThrowPunch_whenPeekingDuringCooldown, Tick.shouldCostOneLife_whenPunchIsNotParried, DistractGuardian.shouldPunchPlayer_whenDistractionFails (changed), Tick.shouldNotThrowPunch_whenMeatballIsFalling, DistractGuardian.shouldNotThrowPunch_whenMeatballIsFalling, Tick.shouldWaitToThrowMeatball_whilePunchIsFlying (guard 79 shouldParryPunch_whenShieldIsInItsLane is not evidence); full build 91 passed, tsc clean. Browser checks e2e/ac19.spec.js "peeking during the cooldown throws a fast punch, parried by the shield in its lane" and "a punch not parried costs 1 life, and it is fast (gone within 0.8 s)": 34 passed (twice), Playwright clock. kenji-reviewer: 1 blocking (records not amended) fixed; open minors: a failed distraction while an attack flies answers 'punched' with no punch (a misleading name), the screen was changed before its checks were written. The feel on the phone, by the user, pending
 - Status: verified
+
+## AC20: The player flips a peeked peg back by hand (user, round 6)
+- Source: "For the peeking we must flip back, it must not be automatically, it does not make sense otherwise."
+- Interpretation: a revealed peg stays turned up until the player taps it again to flip it back; if the guardian watches again (its distraction or the smoke ends) while a peg is still up, the player is caught: 2 life, the peg goes back down and the cooldown starts; one peg up at a time (a peek at another peg is refused, at no cost) (amends AC6 "turns back after 400 ms or as soon as the guardian looks back" and AC4's "shows the colour briefly")
+- Questions: none (reading of the orchestrator: being caught with a peg up is what makes the hand flip-back matter)
+- Covered by: D-peek (round 6): the Session holds the peg that is up; HidePeg flips it back; Tick catches a peg left up under the guardian's eyes; the view shows the peg up
+- Evidence:
+- Status: designed
+
+## AC21: A faster punch (user, round 6)
+- Source: "Can the punch be faster ?"
+- Interpretation: the punch lands in 0.45 s (was 0.7 s) (amends AC19)
+- Questions: none
+- Covered by: D-punch
+- Evidence:
+- Status: designed
 
 ## Discrepancies
 
