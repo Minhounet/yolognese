@@ -25,6 +25,16 @@ const CAUGHT_SHOWN_MS = 1500;
 const TICK_MS = 100;
 const MIDDLE_LANE = 1;
 const CONTROL_TOUCH_MS = 600;
+
+const ATTACK_LINES = {
+  hit: '💥 Hit by a meatball! −2 life',
+  blocked: '🛡️ Blocked!',
+  'punch-hit': '👊 Punched! −1 life',
+  parried: '🛡️ Parried!',
+  'punch-coming': '👊 The guardian punches!',
+  'meatball-coming': '⚠️ Incoming meatball!',
+  none: ' ',
+} as const;
 const LANE_COUNT_SHOWN = 3;
 const ATTACK_RESULT_SHOWN_MS = 1200;
 const ITEM_NOTE_SHOWN_MS = 1500;
@@ -78,8 +88,8 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
   const [cooldown, setCooldown] = useState({ startedAt: 0, cooldownMs: 0 });
   const [timeLeftMs, setTimeLeftMs] = useState<number | undefined>(undefined);
   const [shieldLane, setShieldLane] = useState(MIDDLE_LANE);
-  const [warning, setWarning] = useState<{ readonly lane: number; readonly landsAt: number; readonly fallMs: number } | undefined>();
-  const [attackResult, setAttackResult] = useState<'hit' | 'blocked' | 'punched' | undefined>();
+  const [warning, setWarning] = useState<{ readonly lane: number; readonly landsAt: number; readonly fallMs: number; readonly punch?: boolean } | undefined>();
+  const [attackResult, setAttackResult] = useState<'hit' | 'blocked' | 'punch-hit' | 'parried' | undefined>();
   const [ground, setGround] = useState<{ readonly x: number; readonly y: number; readonly width: number }>();
   const [item, setItem] = useState<Item | undefined>();
   const [itemNote, setItemNote] = useState<string | undefined>();
@@ -109,11 +119,14 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
     if (received === 'smoke') setBlind(true);
     if (received === 'charm') setCharmed(true);
   };
-  const warningRef = useRef<{ readonly lane: number; readonly landsAt: number; readonly fallMs: number } | undefined>(undefined);
-  const showWarning = (next: { readonly lane: number; readonly landsAt: number; readonly fallMs: number } | undefined) => {
+  const warningRef = useRef<{ readonly lane: number; readonly landsAt: number; readonly fallMs: number; readonly punch?: boolean } | undefined>(undefined);
+  const showWarning = (next: { readonly lane: number; readonly landsAt: number; readonly fallMs: number; readonly punch?: boolean } | undefined) => {
     warningRef.current = next;
     setWarning(next);
   };
+
+  const throwPunch = (punch: { readonly lane: number; readonly landsInMs: number }) =>
+    showWarning({ lane: punch.lane, landsAt: Date.now() + punch.landsInMs, fallMs: punch.landsInMs, punch: true });
 
   const moveShield = useCallback(
     (lane: number) => {
@@ -138,7 +151,7 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
       if (response.kind !== 'ticked') return;
       setTimeLeftMs(response.timeLeftMs);
       if (response.landed !== undefined) {
-        setAttackResult(response.landed);
+        setAttackResult(warningRef.current?.punch ? (response.landed === 'hit' ? 'punch-hit' : 'parried') : response.landed);
         setCharmed(false);
         showWarning(undefined);
       }
@@ -178,6 +191,9 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
     if (response.kind === 'revealed' || response.kind === 'caught') {
       setCooldown({ startedAt: Date.now(), cooldownMs: response.cooldownMs });
     }
+    if (response.kind === 'rejected' && response.reason === 'cooling-down' && response.punch !== undefined) {
+      throwPunch(response.punch);
+    }
     if (response.kind === 'revealed') setPeeked({ index, color: response.color });
     if (response.kind === 'caught') {
       setView(response.view);
@@ -200,7 +216,7 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
     const response = useCases.distractGuardian.execute({ target });
     if (response.kind === 'punched') {
       setView(response.view);
-      setAttackResult('punched');
+      throwPunch(response.punch);
       return;
     }
     if (response.kind !== 'distracted') return;
@@ -277,7 +293,7 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
       {playing && (
         <>
           <Text testID="attack-result" style={styles.attackResult}>
-            {attackResult === 'punched' ? '👊 The guardian saw through it! −1 life' : attackResult === 'hit' ? '💥 Hit by a meatball! −2 life' : attackResult === 'blocked' ? '🛡️ Blocked!' : warning ? '⚠️ Incoming meatball!' : ' '}
+            {ATTACK_LINES[attackResult ?? (warning?.punch ? 'punch-coming' : warning ? 'meatball-coming' : 'none')]}
           </Text>
           <Text testID="item-note" style={styles.itemNote}>
             {itemNote ?? (charmed ? '🍀 Shield charm ready' : ' ')}
@@ -336,6 +352,7 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
           to={{ x: ground.x + ((warning.lane + 0.5) * ground.width) / LANE_COUNT_SHOWN, y: ground.y }}
           durationMs={warning.fallMs}
           lane={warning.lane}
+          punch={warning.punch}
         />
       )}
       {puffs.map((puff) => (

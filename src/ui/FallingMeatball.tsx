@@ -11,11 +11,14 @@ export function FallingMeatball({
   to,
   durationMs,
   lane,
+  punch = false,
 }: {
   readonly from: Point;
   readonly to: Point;
   readonly durationMs: number;
   readonly lane: number;
+  /** A punch flies the same way, faster, as a fist. */
+  readonly punch?: boolean;
 }) {
   const progress = useRef(new Animated.Value(0)).current;
 
@@ -31,11 +34,11 @@ export function FallingMeatball({
   return (
     <Animated.View
       testID="meatball"
-      accessibilityLabel={`meatball falling on lane ${lane}`}
+      accessibilityLabel={`${punch ? 'punch' : 'meatball'} falling on lane ${lane}`}
       pointerEvents="none"
       style={[styles.meatball, { transform: [{ translateX }, { translateY }] }]}
     >
-      <Text style={styles.icon}>🧆</Text>
+      <Text style={styles.icon}>{punch ? '👊' : '🧆'}</Text>
     </Animated.View>
   );
 }
