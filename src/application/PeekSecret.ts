@@ -3,6 +3,7 @@ import { Color } from '../domain/color';
 import { isOver, penalise } from '../domain/game';
 import { isBlind, isDistracted } from '../domain/guardian';
 import { toGameView } from './GameMapper';
+import { withPunchThrown } from './punches';
 import { Clock, GameRepository, RandomSource } from './ports';
 import { GameView } from './views';
 
@@ -46,12 +47,7 @@ export class PeekSecretImpl implements PeekSecret {
     const now = this.clock.now();
     if (now < session.peekReadyAt) {
       const punch = punchWindUp(this.random.nextInt(LANE_COUNT));
-      this.repository.save({
-        ...session,
-        attackLandsAt: now + punch.landsInMs,
-        attackLane: punch.lane,
-        attackIsPunch: true,
-      });
+      this.repository.save(withPunchThrown(session, now, punch));
       return { kind: 'rejected', reason: 'cooling-down', punch };
     }
     if (!isDistracted(session.guardian, now)) {

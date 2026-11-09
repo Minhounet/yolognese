@@ -2,6 +2,7 @@ import { Attack, LANE_COUNT, punchWindUp } from '../domain/attack';
 import { isOver } from '../domain/game';
 import { distract } from '../domain/guardian';
 import { Point } from '../domain/point';
+import { withPunchThrown } from './punches';
 import { Clock, GameRepository, RandomSource } from './ports';
 import { toGameView } from './GameMapper';
 import { GameView, GuardianView } from './views';
@@ -41,12 +42,7 @@ export class DistractGuardianImpl implements DistractGuardian {
     const now = this.clock.now();
     if (this.luck.nextInt(LUCK_OUTCOMES) === SEES_THROUGH) {
       const punch = punchWindUp(this.luck.nextInt(LANE_COUNT));
-      this.repository.save({
-        ...session,
-        attackLandsAt: now + punch.landsInMs,
-        attackLane: punch.lane,
-        attackIsPunch: true,
-      });
+      this.repository.save(withPunchThrown(session, now, punch));
       return { kind: 'punched', punch, view: toGameView(session.game) };
     }
     const guardian = distract(session.guardian, now, now + DISTRACTION_MS);
