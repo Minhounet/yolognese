@@ -90,7 +90,7 @@ Interpretation is the orchestrator's (yolo), logged in the decision log.
 ## Round 2 (user, during the yolo run): the guardian becomes an enemy
 
 Source for AC10-AC14, verbatim: "I would like to change the try count. It should be a life bar. Before cheating again there must be a cooling bar. Being caught decrease the count bar. We must have a time limit for the game. Now an random item can be display on the screen. If "present" it will be a random thing. I suggest the following items, some food to regain life. Smoke bomb to blind the enemy. Etc.. if you have more idea. A "x ray glass" to see a peg randomly. Treat the opponent like an ennemy, he can attack us and we must use a shield to protect (you can drag the shield)."
-Order: AC10, AC11, AC12, AC14, AC13; then AC15 (user, after playing); then AC16, AC18, AC17 (user, round 4: AC18's punch and AC16's fall are rules, AC17 the screen); then AC19 (user, round 5); then AC21, AC20 (user, round 6) (AC11-AC14 spend or restore life; AC13's items act on AC11, AC12 and AC14)
+Order: AC10, AC11, AC12, AC14, AC13; then AC15 (user, after playing); then AC16, AC18, AC17 (user, round 4: AC18's punch and AC16's fall are rules, AC17 the screen); then AC19 (user, round 5); then AC21, AC20 (user, round 6); then AC22, AC23 (user, round 7, screen only) (AC11-AC14 spend or restore life; AC13's items act on AC11, AC12 and AC14)
 
 ## AC10: Life bar instead of attempts
 - Source: "change the try count. It should be a life bar ... Being caught decrease the count bar."
@@ -187,6 +187,22 @@ Order: AC10, AC11, AC12, AC14, AC13; then AC15 (user, after playing); then AC16,
 - Covered by: D-punch
 - Evidence: red 84 (shouldThrowPunch_whenPeekingDuringCooldown expects landsInMs 450, after the make-room refactors 83 and 84); full build 97 passed; kenji-reviewer PASS
 - Status: verified
+
+## AC22: Drag a colour onto the slot you choose (user, round 7)
+- Source: "To select, I want a drag and drop from my color to the target. This gives the ability to choose how I place the pawns."
+- Interpretation: dragging a colour from the palette and dropping it on one of the four guess slots puts that colour in that slot (replacing what was there); a drop outside the slots changes nothing; a tap on a colour still fills the first empty slot
+- Questions: none
+- Covered by: the screen (no game rule: the guess being built is the screen's)
+- Evidence:
+- Status: designed
+
+## AC23: The punch is a boxing glove on an arm that comes back (user, round 7)
+- Source: "Can the punch has a kind of \"extensible thing\" attached to the punch gant, it must go back to the ennemy like a boxer."
+- Interpretation: the punch is drawn as a glove on an arm stretching from the guardian to its lane while it flies (0.45 s), and the arm pulls the glove back to the guardian once it has landed
+- Questions: none
+- Covered by: the screen (the punch's rules are unchanged)
+- Evidence:
+- Status: designed
 
 ## Discrepancies
 
