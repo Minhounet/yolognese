@@ -45,11 +45,14 @@ export class PeekSecretImpl implements PeekSecret {
     }
     const now = this.clock.now();
     if (now < session.peekReadyAt) {
-      return {
-        kind: 'rejected',
-        reason: 'cooling-down',
-        punch: punchWindUp(this.random.nextInt(LANE_COUNT)),
-      };
+      const punch = punchWindUp(this.random.nextInt(LANE_COUNT));
+      this.repository.save({
+        ...session,
+        attackLandsAt: now + punch.landsInMs,
+        attackLane: punch.lane,
+        attackIsPunch: true,
+      });
+      return { kind: 'rejected', reason: 'cooling-down', punch };
     }
     if (!isDistracted(session.guardian, now)) {
       const game = penalise(session.game);

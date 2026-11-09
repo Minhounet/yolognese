@@ -8,7 +8,7 @@ import {
   scheduleAttackAt,
   windUp,
 } from '../domain/attack';
-import { penalise, timeUp } from '../domain/game';
+import { Game, penalise, punch, timeUp } from '../domain/game';
 import { isDistracted } from '../domain/guardian';
 import {
   ITEM_DELAY_SPREAD_MS,
@@ -58,10 +58,17 @@ export class TickImpl implements Tick {
     const timeLeftMs = Math.max(MIN_TIME_LEFT_MS, session.endsAt - now);
     const timedGame = timeLeftMs === MIN_TIME_LEFT_MS ? timeUp(session.game) : session.game;
     const landing = this.landing(session, now);
-    const game = landing.hits ? penalise(timedGame) : timedGame;
+    const game = this.afterLanding(timedGame, landing);
     const attackState = this.windUpIfDue(session, now, landing.pendingLandsAt);
     const itemState = this.itemOnShow(session, now);
-    this.repository.save({ ...session, ...attackState.stored, ...itemState, game, charmed: landing.charmed });
+    this.repository.save({
+      ...session,
+      ...attackState.stored,
+      ...itemState,
+      game,
+      charmed: landing.charmed,
+      attackIsPunch: landing.pendingIsPunch,
+    });
     return {
       kind: 'ticked',
       view: toGameView(game),
@@ -93,6 +100,13 @@ export class TickImpl implements Tick {
     );
   }
 
+  private afterLanding(game: Game, landing: { readonly hits: boolean; readonly isPunch: boolean }): Game {
+    if (!landing.hits) {
+      return game;
+    }
+    return landing.isPunch ? punch(game) : penalise(game);
+  }
+
   private reported(landing: { readonly hits: boolean; readonly blocked: boolean }): 'hit' | 'blocked' | undefined {
     if (landing.hits) {
       return 'hit';
@@ -106,6 +120,8 @@ export class TickImpl implements Tick {
     return {
       blocked,
       hits: landed && !blocked,
+      isPunch: session.attackIsPunch === true,
+      pendingIsPunch: landed ? undefined : session.attackIsPunch,
       pendingLandsAt: landed ? undefined : session.attackLandsAt,
       charmed: session.charmed === true && !landed,
     };
