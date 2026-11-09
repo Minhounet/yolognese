@@ -640,4 +640,17 @@ describe('Tick', () => {
 
     expect(response.kind === 'ticked' && response.view.pegUp).toBeUndefined();
   });
+
+  it('shouldCatchPlayer_whenGuardianLooksBackWithPegUp', () => {
+    const { clock, distractGuardian, peekSecret, tick } = startedGame([30000, 0], [30000]);
+    tick.execute();
+    distractGuardian.execute({ target: { x: 150, y: -60 } });
+    peekSecret.execute({ index: 2 });
+    clock.advance(1600);
+
+    const response = tick.execute();
+
+    expect(response).toMatchObject({ kind: 'ticked', view: { life: 8 } });
+    expect(response.kind === 'ticked' && response.view.pegUp).toBeUndefined();
+  });
 });
