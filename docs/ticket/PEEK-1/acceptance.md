@@ -81,7 +81,7 @@ Interpretation is the orchestrator's (yolo), logged in the decision log.
 
 ## AC9: Feedback colours people already know
 - Source: "I dont think that the black white display is intuitive. Green should be right. Yellow can be misplaced." (user, added during the yolo run)
-- Interpretation: right colour in the right place is a green dot, right colour in the wrong place a yellow dot (white-ringed, so they don't read as pegs), with a legend under the status line; the four marks in one line beside the guess, not a 2×2 square; marks are emoji, ✅ right place and 🔄 wrong place, an empty ring for nothing (user)
+- Interpretation: right colour in the right place is a green dot, right colour in the wrong place a yellow dot (white-ringed, so they don't read as pegs), with a legend under the status line; the four marks in one line beside the guess, not a 2×2 square; marks are emoji, ✅ right place and 🔄 wrong place, an empty ring for nothing (user) (amended by AC31: two numbers instead of a line of marks)
 - Questions: none
 - Covered by: src/ui/Feedback.tsx (Feedback, FeedbackLegend)
 - Evidence: browser checks still green (11 passed; AC1's feedback check reads the same labels); look on the phone: by the user, pending
@@ -90,7 +90,7 @@ Interpretation is the orchestrator's (yolo), logged in the decision log.
 ## Round 2 (user, during the yolo run): the guardian becomes an enemy
 
 Source for AC10-AC14, verbatim: "I would like to change the try count. It should be a life bar. Before cheating again there must be a cooling bar. Being caught decrease the count bar. We must have a time limit for the game. Now an random item can be display on the screen. If "present" it will be a random thing. I suggest the following items, some food to regain life. Smoke bomb to blind the enemy. Etc.. if you have more idea. A "x ray glass" to see a peg randomly. Treat the opponent like an ennemy, he can attack us and we must use a shield to protect (you can drag the shield)."
-Order: AC10, AC11, AC12, AC14, AC13; then AC15 (user, after playing); then AC16, AC18, AC17 (user, round 4: AC18's punch and AC16's fall are rules, AC17 the screen); then AC19 (user, round 5); then AC21, AC20 (user, round 6); then AC22, AC23 (user, round 7, screen only); then AC24, AC25 (user, round 8, screen only); then AC28, AC29, AC26, AC27 (user, round 9: the rules first, then the screen); then AC30 (user, round 10, screen only) (AC11-AC14 spend or restore life; AC13's items act on AC11, AC12 and AC14)
+Order: AC10, AC11, AC12, AC14, AC13; then AC15 (user, after playing); then AC16, AC18, AC17 (user, round 4: AC18's punch and AC16's fall are rules, AC17 the screen); then AC19 (user, round 5); then AC21, AC20 (user, round 6); then AC22, AC23 (user, round 7, screen only); then AC24, AC25 (user, round 8, screen only); then AC28, AC29, AC26, AC27 (user, round 9: the rules first, then the screen); then AC30 (user, round 10, screen only); then AC31 (user, round 11, screen only) (AC11-AC14 spend or restore life; AC13's items act on AC11, AC12 and AC14)
 
 ## AC10: Life bar instead of attempts
 - Source: "change the try count. It should be a life bar ... Being caught decrease the count bar."
@@ -259,6 +259,14 @@ Order: AC10, AC11, AC12, AC14, AC13; then AC15 (user, after playing); then AC16,
 - Covered by: the screen (GameScreen, turnsThatFit)
 - Evidence: browser check e2e/ac30.spec.js "after many guesses the newest is always on screen; the oldest give way, 10 at most" (fails on the old scrolling list: the 9th guess was out of view); 49 passed (twice); a phone-sized screen shows guesses #5-#9. kenji-reviewer: PASS, 2 minor open: the 10 cap is not exercised (life ends a game by the 10th miss on the checked phone size), the fit count assumes a 38 px row
 - Status: verified
+
+## AC31: The result as two numbers, not a line of marks (user, round 11)
+- Source: "Ok so display as a line can be confusing. Maybe we can add a number instead no ?"
+- Interpretation: each guess shows ✅ and a number (pegs of the right colour in the right place) and 🔄 and a number (right colour, wrong place); a zero is greyed out; nothing points to a position (amends AC9's line of marks)
+- Questions: none
+- Covered by: the screen (Feedback)
+- Evidence: browser check e2e/ac31.spec.js "each guess shows two numbers" (✅2 🔄0 for orange orange red red against orange x4); the AC1 check reads the same counts; 50 passed (twice). Before this change, a hand check of 20 guesses in 4 games and of the user's screenshot (7 guesses) showed the counts right: the line was misread as positions
+- Status: designed
 
 ## Discrepancies
 

@@ -350,3 +350,8 @@
 ## Merge to main (user)
 - Decided (user): "Yes then merge": pull request #1 merged into main (merge commit db35fa8); main's parallel AC10-AC12 superseded by this branch's AC10-AC30 (merged with this branch's tree kept); main's README channel switch kept: the Expo channel is now main
 - Asked user: yes
+
+## Round 11 - the result as numbers
+- Checked (user's question): the results are not reversed: 20 guesses in 4 games and the user's 7 compared with a count by hand, all right; the line of marks read as positions was the confusion
+- Decided (user's idea): ✅ n and 🔄 n, zero greyed out (AC31); screen only
+- Asked user: yes (the idea is theirs)
