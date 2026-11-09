@@ -1,6 +1,7 @@
 import { Game } from '../domain/game';
 import { Guardian } from '../domain/guardian';
 import { Item } from '../domain/items';
+import { RevealedPegView } from './views';
 
 export interface RandomSource {
   nextInt(maxExclusive: number): number;
@@ -24,6 +25,7 @@ export interface Session {
   readonly attackIsPunch?: boolean;
   readonly shieldLane?: number;
   readonly charmed?: boolean;
+  readonly pegUp?: RevealedPegView;
 }
 
 export interface GameRepository {

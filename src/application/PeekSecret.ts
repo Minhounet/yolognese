@@ -59,12 +59,12 @@ export class PeekSecretImpl implements PeekSecret {
       return { kind: 'caught', view: toGameView(game), cooldownMs: PEEK_COOLDOWN_MS };
     }
     const cooldownMs = isBlind(session.guardian, now) ? NO_COOLDOWN_MS : PEEK_COOLDOWN_MS;
-    this.repository.save({ ...session, peekReadyAt: now + cooldownMs });
-    return {
-      kind: 'revealed',
-      index: command.index,
-      color: session.game.secret[command.index],
-      cooldownMs,
-    };
+    const color = session.game.secret[command.index];
+    this.repository.save({
+      ...session,
+      peekReadyAt: now + cooldownMs,
+      pegUp: { index: command.index, color },
+    });
+    return { kind: 'revealed', index: command.index, color, cooldownMs };
   }
 }
