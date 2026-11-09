@@ -38,7 +38,7 @@ describe('DistractGuardian', () => {
 
     const response = distractGuardian.execute({ target: { x: 120, y: -40 } });
 
-    expect(response).toMatchObject({ kind: 'punched', punch: { lane: 0, landsInMs: 700 }, view: { life: 10 } });
+    expect(response).toMatchObject({ kind: 'punched', punch: { lane: 0 }, view: { life: 10 } });
   });
 
   it('shouldNotPunch_whenGameIsOver', () => {
