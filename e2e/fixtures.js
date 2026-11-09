@@ -2,12 +2,19 @@
 // sets its own luck with `test.use({ luck: 0 })`: AC18 makes one distraction in four fail at random.
 const base = require('@playwright/test');
 
+// Items are drawn as harmless food (draw 0) that no check taps, so a random bomb (AC28) never costs
+// life in a long check; the item checks set `test.use({ itemDraw: null })` and fix Math.random.
 const test = base.test.extend({
   luck: [1, { option: true }],
-  page: async ({ page, luck }, use) => {
-    await page.addInitScript((value) => {
-      globalThis.yologneseLuck = value;
-    }, luck);
+  itemDraw: [0, { option: true }],
+  page: async ({ page, luck, itemDraw }, use) => {
+    await page.addInitScript(
+      ([fixedLuck, fixedItemDraw]) => {
+        globalThis.yologneseLuck = fixedLuck;
+        if (typeof fixedItemDraw === 'number') globalThis.yologneseItemDraw = fixedItemDraw;
+      },
+      [luck, itemDraw],
+    );
     await use(page);
   },
 });

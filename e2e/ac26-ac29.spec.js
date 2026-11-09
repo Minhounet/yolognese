@@ -2,6 +2,8 @@
 // Item checks fix Math.random so every draw lands on one index of the 7 kinds
 // (0 food, 1 smoke, 2 xray, 3 hourglass, 4 charm, 5 present, 6 bomb). Time is Playwright's clock.
 const { test, expect } = require('./fixtures');
+
+test.use({ itemDraw: null }); // these checks fix Math.random to choose the item
 const { runForBlockingAttacks } = require('./support');
 
 const KINDS = ['food', 'smoke', 'xray', 'hourglass', 'charm', 'present', 'bomb'];

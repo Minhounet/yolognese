@@ -25,7 +25,16 @@ export interface UseCases {
 
 /** A luck draw fixed by configuration (globalThis.yologneseLuck), used by the browser checks; none in play. */
 function configuredLuck(): RandomSource | undefined {
-  const value = (globalThis as { yologneseLuck?: unknown }).yologneseLuck;
+  return configuredDraw('yologneseLuck');
+}
+
+/** An item draw fixed by configuration (globalThis.yologneseItemDraw), used by the browser checks; none in play. */
+function configuredItemDraw(): RandomSource | undefined {
+  return configuredDraw('yologneseItemDraw');
+}
+
+function configuredDraw(name: 'yologneseLuck' | 'yologneseItemDraw'): RandomSource | undefined {
+  const value = (globalThis as Partial<Record<typeof name, unknown>>)[name];
   return typeof value === 'number' ? new FixedRandomSource(value) : undefined;
 }
 
@@ -38,7 +47,7 @@ export function createUseCases(): UseCases {
     submitGuess: new SubmitGuessImpl(repository),
     distractGuardian: new DistractGuardianImpl(repository, clock, configuredLuck() ?? random),
     peekSecret: new PeekSecretImpl(repository, clock, random),
-    tick: new TickImpl(repository, clock, random, random),
+    tick: new TickImpl(repository, clock, random, configuredItemDraw() ?? random),
     moveShield: new MoveShieldImpl(repository),
     hidePeg: new HidePegImpl(repository),
     collectItem: new CollectItemImpl(repository, clock, random),

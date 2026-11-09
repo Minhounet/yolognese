@@ -5,6 +5,8 @@
 // Time is driven by Playwright's clock.
 const { test, expect } = require('./fixtures');
 
+test.use({ itemDraw: null }); // these checks fix Math.random to choose the item
+
 const KINDS = ['food', 'smoke', 'xray', 'hourglass', 'charm', 'present', 'bomb'];
 
 async function startWithItem(page, kind) {
