@@ -4,8 +4,8 @@
 - Status: open
 - Mode: build
 - Yolo: on (see references/yolo.md of saiban-orchestrator)
-- Done: scaffold, plan and ACs; AC1-AC4, AC6-AC16, AC18-AC24, AC26-AC30 verified, AC5 waived (user); AC17 waits for the user's phone check, AC25 for the user's answer on the gesture; round 10 published to the feat-peek-a-code channel
-- Next: round 9 (user): AC28 bomb, AC29 darkness (rules, TDD), then AC26 item animations, AC27 life bar (screen); AC17 and AC25 still wait for the user
+- Done: AC1-AC4, AC6-AC16, AC18-AC24, AC26-AC31 verified, AC5 waived (user); rounds 2-10 merged into main (PR #1, Expo channel main); round 11 (AC31, results as two numbers) on this branch and the feat-peek-a-code channel, not yet on main
+- Next: ask the user: merge AC31 into main (PR #2), and whether to merge each change without asking; the user's phone check of AC17 (tap a hidden peg while watched: caught); the user's answer on AC25 (is 🫵 the gesture meant?); pass-and-play multiplayer if the user wants it (the first step proposed); known open minors in acceptance.md and the round entries
 - Files: docs/ticket/PEEK-1/, src/
 - User preference: end every report with the Expo Go link: exp://u.expo.dev/90eceada-289a-4a45-b958-180a23ddedb8?channel-name=main&runtime-version=exposdk:58.0.0 (main since PR #1; feat-peek-a-code holds the same game)
 
@@ -355,3 +355,6 @@
 - Checked (user's question): the results are not reversed: 20 guesses in 4 games and the user's 7 compared with a count by hand, all right; the line of marks read as positions was the confusion
 - Decided (user's idea): ✅ n and 🔄 n, zero greyed out (AC31); screen only
 - Asked user: yes (the idea is theirs)
+
+## Pause - new session (user)
+- Decided (user asked whether to start a new session; recommended: the context is long and costly): Resume block updated; resume with "resume peek-a-code"
