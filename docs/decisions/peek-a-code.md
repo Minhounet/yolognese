@@ -335,3 +335,4 @@
 - Decided: the bomb appears among the items (kind index 6) and explodes when its 4 s end unless tapped (2 life); a present may give darkness or a bomb besides the good items (gifts: food, smoke, xray, hourglass, charm, darkness, bomb); darkness blinds the player 4 s (view: playerBlind), a bomb from a present explodes at once; numbers by the orchestrator
 - Plan: reds from 90: 90 a bomb left on the field explodes (Tick reports exploded, life 8), 91 a tapped bomb does not explode, 92 a present can give darkness (the view says the player is blind), 93 the player sees again after 4 s, 94 a present can give a bomb that explodes at once; dev: on, a fresh shonin-dev; then the screen (AC26, AC27) with browser checks
 - Asked user: no (yolo)
+- Deviation (round 9): green 90 widened the item kinds with 'bomb', and CollectItem could not compile without a case for it; the smallest case (a collected bomb has no effect) is what red 91 asked, so 91 becomes a guard
