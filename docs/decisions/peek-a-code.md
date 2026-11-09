@@ -4,7 +4,7 @@
 - Status: open
 - Mode: build
 - Yolo: on (see references/yolo.md of saiban-orchestrator)
-- Done: scaffold, plan and ACs; AC1-AC4, AC6-AC16, AC18-AC24, AC26-AC29 verified, AC5 waived (user); AC17 waits for the user's phone check, AC25 for the user's answer on the gesture; round 9 published to the feat-peek-a-code channel
+- Done: scaffold, plan and ACs; AC1-AC4, AC6-AC16, AC18-AC24, AC26-AC30 verified, AC5 waived (user); AC17 waits for the user's phone check, AC25 for the user's answer on the gesture; round 10 published to the feat-peek-a-code channel
 - Next: round 9 (user): AC28 bomb, AC29 darkness (rules, TDD), then AC26 item animations, AC27 life bar (screen); AC17 and AC25 still wait for the user
 - Files: docs/ticket/PEEK-1/, src/
 - User preference: end every report with the Expo Go link: exp://u.expo.dev/90eceada-289a-4a45-b958-180a23ddedb8?channel-name=feat-peek-a-code&runtime-version=exposdk:58.0.0
@@ -344,3 +344,5 @@
 ## Round 10 - the newest guesses on screen
 - Decided (user's words): show the latest guesses that fit, 10 at most, oldest dropped; numbered rows (orchestrator); screen only (No skill: React Native screen); the scrolling list goes
 - Asked user: no (yolo)
+- Decided (round 10 review): kenji-reviewer PASS, 2 minor open (the cap untested on a tall screen, a fixed row height)
+- Verdict (round 10): GUILTY, 2 counts: AC17 (phone check), AC25 (the gesture); AC30 verified

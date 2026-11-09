@@ -257,8 +257,8 @@ Order: AC10, AC11, AC12, AC14, AC13; then AC15 (user, after playing); then AC16,
 - Interpretation: the history shows the most recent guesses that fit in its space, 10 at most, the oldest dropped first, so the last guess is always visible; each row shows its number (#1, #2...) so a dropped guess is not confused
 - Questions: none
 - Covered by: the screen (GameScreen, turnsThatFit)
-- Evidence: browser check e2e/ac30.spec.js "after many guesses the newest is always on screen; the oldest give way, 10 at most" (fails on the old scrolling list: the 9th guess was out of view); 49 passed (twice); a phone-sized screen shows guesses #5-#9
-- Status: designed
+- Evidence: browser check e2e/ac30.spec.js "after many guesses the newest is always on screen; the oldest give way, 10 at most" (fails on the old scrolling list: the 9th guess was out of view); 49 passed (twice); a phone-sized screen shows guesses #5-#9. kenji-reviewer: PASS, 2 minor open: the 10 cap is not exercised (life ends a game by the 10th miss on the checked phone size), the fit count assumes a 38 px row
+- Status: verified
 
 ## Discrepancies
 
