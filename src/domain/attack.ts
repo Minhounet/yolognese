@@ -3,7 +3,7 @@ export const ATTACK_DELAY_SPREAD_MS = 10001;
 
 const MIN_ATTACK_DELAY_MS = 10000;
 const ATTACK_WIND_UP_MS = 1500;
-const PUNCH_WIND_UP_MS = 700;
+const PUNCH_WIND_UP_MS = 450;
 
 export interface Attack {
   readonly lane: number;
