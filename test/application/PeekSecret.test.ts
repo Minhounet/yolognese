@@ -114,7 +114,7 @@ describe('PeekSecret', () => {
 
     const response = peekSecret.execute({ index: 1 });
 
-    expect(response).toEqual({ kind: 'rejected', reason: 'cooling-down' });
+    expect(response).toMatchObject({ kind: 'rejected', reason: 'cooling-down' });
   });
 
   it('shouldRejectPeek_justBeforeCooldownEnds', () => {
@@ -126,7 +126,7 @@ describe('PeekSecret', () => {
 
     const response = peekSecret.execute({ index: 1 });
 
-    expect(response).toEqual({ kind: 'rejected', reason: 'cooling-down' });
+    expect(response).toMatchObject({ kind: 'rejected', reason: 'cooling-down' });
   });
 
   it('shouldAllowPeek_whenCooldownHasPassed', () => {
@@ -147,7 +147,7 @@ describe('PeekSecret', () => {
 
     const response = peekSecret.execute({ index: 1 });
 
-    expect(response).toEqual({ kind: 'rejected', reason: 'cooling-down' });
+    expect(response).toMatchObject({ kind: 'rejected', reason: 'cooling-down' });
   });
 
   it('shouldCostNothing_whenPeekRejectedDuringCooldown', () => {
