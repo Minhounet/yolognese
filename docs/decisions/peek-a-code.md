@@ -7,7 +7,7 @@
 - Done: scaffold, plan and ACs; AC1-AC4, AC6-AC16, AC18-AC24, AC26-AC30 verified, AC5 waived (user); AC17 waits for the user's phone check, AC25 for the user's answer on the gesture; round 10 published to the feat-peek-a-code channel
 - Next: round 9 (user): AC28 bomb, AC29 darkness (rules, TDD), then AC26 item animations, AC27 life bar (screen); AC17 and AC25 still wait for the user
 - Files: docs/ticket/PEEK-1/, src/
-- User preference: end every report with the Expo Go link: exp://u.expo.dev/90eceada-289a-4a45-b958-180a23ddedb8?channel-name=feat-peek-a-code&runtime-version=exposdk:58.0.0
+- User preference: end every report with the Expo Go link: exp://u.expo.dev/90eceada-289a-4a45-b958-180a23ddedb8?channel-name=main&runtime-version=exposdk:58.0.0 (main since PR #1; feat-peek-a-code holds the same game)
 
 ## Start - scope and mode
 - Decided: build mode, yolo; ACs from the user's request (no ticket), ticket folder PEEK-1
