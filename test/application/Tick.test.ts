@@ -563,4 +563,16 @@ describe('Tick', () => {
 
     expect(response).toMatchObject({ kind: 'collected', view: { revealed: { length: 4 } } });
   });
+
+  it('shouldCostOneLife_whenPunchIsNotParried', () => {
+    const { clock, peekSecret, tick } = startedGame([30000, 0]);
+    tick.execute();
+    peekSecret.execute({ index: 0 });
+    peekSecret.execute({ index: 1 });
+    clock.advance(700);
+
+    const response = tick.execute();
+
+    expect(response).toMatchObject({ kind: 'ticked', view: { life: 7 }, landed: 'hit' });
+  });
 });
