@@ -1,5 +1,6 @@
 import { Attack, LANE_COUNT, punchWindUp } from '../domain/attack';
 import { Color } from '../domain/color';
+import { PEEK_COOLDOWN_MS } from '../domain/peek';
 import { isOver, penalise } from '../domain/game';
 import { isBlind, isDistracted } from '../domain/guardian';
 import { toGameView } from './GameMapper';
@@ -7,7 +8,6 @@ import { withPunchThrown } from './punches';
 import { Clock, GameRepository, RandomSource } from './ports';
 import { GameView } from './views';
 
-export const PEEK_COOLDOWN_MS = 5000;
 const NO_COOLDOWN_MS = 0;
 
 export interface PeekCommand {

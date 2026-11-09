@@ -21,7 +21,7 @@ import {
   scheduleItemAt,
 } from '../domain/items';
 import { toGameView } from './GameMapper';
-import { PEEK_COOLDOWN_MS } from './PeekSecret';
+import { PEEK_COOLDOWN_MS } from '../domain/peek';
 import { Clock, GameRepository, RandomSource, Session } from './ports';
 import { GameView } from './views';
 
