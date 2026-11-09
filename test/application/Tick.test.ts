@@ -600,4 +600,17 @@ describe('Tick', () => {
 
     expect(response).toEqual({ kind: 'rejected', reason: 'cooling-down' });
   });
+
+  it('shouldWaitToThrowMeatball_whilePunchIsFlying', () => {
+    const { clock, peekSecret, tick } = startedGame([0, 2]);
+    tick.execute();
+    clock.advance(9500);
+    peekSecret.execute({ index: 0 });
+    peekSecret.execute({ index: 1 });
+    clock.advance(500);
+
+    const response = tick.execute();
+
+    expect(response.kind === 'ticked' && response.attack).toBeUndefined();
+  });
 });
