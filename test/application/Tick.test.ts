@@ -1,5 +1,6 @@
 import { CollectItemImpl } from '../../src/application/CollectItem';
 import { DistractGuardianImpl } from '../../src/application/DistractGuardian';
+import { HidePegImpl } from '../../src/application/HidePeg';
 import { MoveShieldImpl } from '../../src/application/MoveShield';
 import { PeekSecretImpl } from '../../src/application/PeekSecret';
 import { StartGameImpl } from '../../src/application/StartGame';
@@ -31,6 +32,7 @@ function startedGame(
     ),
     submitGuess: new SubmitGuessImpl(repository),
     moveShield: new MoveShieldImpl(repository),
+    hidePeg: new HidePegImpl(repository),
     distractGuardian: new DistractGuardianImpl(repository, clock, new ScriptedRandomSource([1])),
     collectItem: new CollectItemImpl(repository, clock, new ScriptedRandomSource(collectRandom)),
     peekSecret: new PeekSecretImpl(repository, clock, new ScriptedRandomSource([0])),
@@ -624,5 +626,18 @@ describe('Tick', () => {
     const response = tick.execute();
 
     expect(response).toMatchObject({ kind: 'ticked', view: { pegUp: { index: 2, color: 'green' } } });
+  });
+
+  it('shouldFlipPegBack_whenTappedAgain', () => {
+    const { clock, distractGuardian, hidePeg, peekSecret, tick } = startedGame([30000, 0], [30000]);
+    tick.execute();
+    distractGuardian.execute({ target: { x: 150, y: -60 } });
+    peekSecret.execute({ index: 2 });
+    hidePeg.execute({ index: 2 });
+    clock.advance(100);
+
+    const response = tick.execute();
+
+    expect(response.kind === 'ticked' && response.view.pegUp).toBeUndefined();
   });
 });

@@ -1,5 +1,6 @@
 import { CollectItem, CollectItemImpl } from './application/CollectItem';
 import { DistractGuardian, DistractGuardianImpl } from './application/DistractGuardian';
+import { HidePeg, HidePegImpl } from './application/HidePeg';
 import { MoveShield, MoveShieldImpl } from './application/MoveShield';
 import { PeekSecret, PeekSecretImpl } from './application/PeekSecret';
 import { StartGame, StartGameImpl } from './application/StartGame';
@@ -19,6 +20,7 @@ export interface UseCases {
   readonly tick: Tick;
   readonly moveShield: MoveShield;
   readonly collectItem: CollectItem;
+  readonly hidePeg: HidePeg;
 }
 
 /** A luck draw fixed by configuration (globalThis.yologneseLuck), used by the browser checks; none in play. */
@@ -38,6 +40,7 @@ export function createUseCases(): UseCases {
     peekSecret: new PeekSecretImpl(repository, clock, random),
     tick: new TickImpl(repository, clock, random, random),
     moveShield: new MoveShieldImpl(repository),
+    hidePeg: new HidePegImpl(repository),
     collectItem: new CollectItemImpl(repository, clock, random),
   };
 }
