@@ -58,7 +58,10 @@ export class TickImpl implements Tick {
     const timeLeftMs = Math.max(MIN_TIME_LEFT_MS, session.endsAt - now);
     const timedGame = timeLeftMs === MIN_TIME_LEFT_MS ? timeUp(session.game) : session.game;
     const landing = this.landing(session, now);
-    const game = this.afterLanding(timedGame, landing);
+    const caughtPeeking = this.isCaughtPeeking(session, now);
+    const landedGame = this.afterLanding(timedGame, landing);
+    const game = caughtPeeking ? penalise(landedGame) : landedGame;
+    const pegUp = caughtPeeking ? undefined : session.pegUp;
     const attackState = this.windUpIfDue(session, now, landing.pendingLandsAt);
     const itemState = this.itemOnShow(session, now);
     this.repository.save({
@@ -66,17 +69,22 @@ export class TickImpl implements Tick {
       ...attackState.stored,
       ...itemState,
       game,
+      pegUp,
       charmed: landing.charmed,
       attackIsPunch: landing.pendingIsPunch,
     });
     return {
       kind: 'ticked',
-      view: { ...toGameView(game), pegUp: session.pegUp },
+      view: { ...toGameView(game), pegUp },
       timeLeftMs,
       attack: attackState.attack,
       item: itemState.item,
       landed: this.reported(landing),
     };
+  }
+
+  private isCaughtPeeking(session: Session, now: number): boolean {
+    return session.pegUp !== undefined && !isDistracted(session.guardian, now);
   }
 
   private itemOnShow(session: Session, now: number) {
