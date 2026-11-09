@@ -743,4 +743,14 @@ describe('Tick', () => {
 
     expect(response.kind === 'ticked' && response.view.playerBlind).toBeFalsy();
   });
+
+  it('shouldExplodeAtOnce_whenPresentGivesBomb', () => {
+    const { clock, collectItem, tick } = startedGame([300000, 0], [0, 5, 30, 70], [6]);
+    tick.execute();
+    clock.advance(8000);
+
+    const response = collectShownItem(tick, collectItem);
+
+    expect(response).toMatchObject({ kind: 'collected', item: 'present', gift: 'bomb', view: { life: 8 } });
+  });
 });
