@@ -263,6 +263,8 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
     showWarning(undefined);
     setAttackResult(undefined);
     setItem(undefined);
+    pegUpRef.current = undefined; // a peg left up in the last game is not this game's
+    setPeeked(undefined);
     setBlind(false);
     setCharmed(false);
     moveShield(MIDDLE_LANE);
