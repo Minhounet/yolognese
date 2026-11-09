@@ -265,8 +265,8 @@ Order: AC10, AC11, AC12, AC14, AC13; then AC15 (user, after playing); then AC16,
 - Interpretation: each guess shows ✅ and a number (pegs of the right colour in the right place) and 🔄 and a number (right colour, wrong place); a zero is greyed out; nothing points to a position (amends AC9's line of marks)
 - Questions: none
 - Covered by: the screen (Feedback)
-- Evidence: browser check e2e/ac31.spec.js "each guess shows two numbers" (✅2 🔄0 for orange orange red red against orange x4); the AC1 check reads the same counts; 50 passed (twice). Before this change, a hand check of 20 guesses in 4 games and of the user's screenshot (7 guesses) showed the counts right: the line was misread as positions
-- Status: designed
+- Evidence: browser check e2e/ac31.spec.js "each guess shows two numbers" (✅2 🔄0 for orange orange red red against orange x4); the AC1 check reads the same counts; 50 passed (twice). Before this change, a hand check of 20 guesses in 4 games and of the user's screenshot (7 guesses) showed the counts right: the line was misread as positions. kenji-reviewer: minor only; the grey zero is the look, by the user, pending (a confirmation, as for the earlier screen ACs)
+- Status: verified
 
 ## Discrepancies
 
