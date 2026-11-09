@@ -53,6 +53,9 @@ export class PeekSecretImpl implements PeekSecret {
       this.repository.save(withPunchThrown(session, now, punch));
       return { kind: 'rejected', reason: 'cooling-down', punch };
     }
+    if (session.pegUp !== undefined) {
+      return { kind: 'rejected', reason: 'peg-up' };
+    }
     if (!isDistracted(session.guardian, now)) {
       const game = penalise(session.game);
       this.repository.save({ ...session, game, peekReadyAt: now + PEEK_COOLDOWN_MS });
