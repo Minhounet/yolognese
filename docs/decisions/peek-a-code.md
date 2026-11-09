@@ -4,7 +4,7 @@
 - Status: open
 - Mode: build
 - Yolo: on (see references/yolo.md of saiban-orchestrator)
-- Done: scaffold, plan and ACs; AC1-AC4, AC6-AC16, AC18-AC23 verified, AC5 waived (user); AC17 waits for the user's phone check; round 7 published to the feat-peek-a-code channel
+- Done: scaffold, plan and ACs; AC1-AC4, AC6-AC16, AC18-AC25 verified, AC5 waived (user); AC17 waits for the user's phone check; round 8 published to the feat-peek-a-code channel
 - Next: the user's phone check of AC17 (tap a hidden peg while watched: caught), the feel of the drag and the punch arm; then merge (a pull request, not opened), more features, or tuning
 - Files: docs/ticket/PEEK-1/, src/
 - User preference: end every report with the Expo Go link: exp://u.expo.dev/90eceada-289a-4a45-b958-180a23ddedb8?channel-name=feat-peek-a-code&runtime-version=exposdk:58.0.0
@@ -323,3 +323,8 @@
 - Asked user: no (yolo)
 - Decided (round 7 run): DraggableColor (drag after 6 px, a tap stays a tap), PunchArm (out 0.45 s, back 0.3 s); the AC23 check retimed once (it sampled the glove at the very end of its return); kenji-reviewer PASS with minors: a terminated drag no longer drops, a touch-event drag check added; open: the timing of the arm is not measured by the screen check
 - Verdict (round 7): GUILTY, 1 count: AC17 still unproven (the phone check); AC22, AC23 verified
+
+## Round 8 - the spring arm and the laughing guardian
+- Decided: screen only (No skill: React Native screen): the arm a zig-zag SVG line scaled with the reach (it folds like an accordion), the glove 0.7 to 1.9 times its size (toward the player); caught: the guardian laughs and points 🫵 out of the screen for 1.5 s (reading: a mocking point, not a rude finger); a generic spring arm, not a copy of a cartoon character
+- Decided: no kenji-reviewer pass this round? No: the review is on by default -> see below
+- Asked user: no (yolo)

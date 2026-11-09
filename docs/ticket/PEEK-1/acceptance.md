@@ -90,7 +90,7 @@ Interpretation is the orchestrator's (yolo), logged in the decision log.
 ## Round 2 (user, during the yolo run): the guardian becomes an enemy
 
 Source for AC10-AC14, verbatim: "I would like to change the try count. It should be a life bar. Before cheating again there must be a cooling bar. Being caught decrease the count bar. We must have a time limit for the game. Now an random item can be display on the screen. If "present" it will be a random thing. I suggest the following items, some food to regain life. Smoke bomb to blind the enemy. Etc.. if you have more idea. A "x ray glass" to see a peg randomly. Treat the opponent like an ennemy, he can attack us and we must use a shield to protect (you can drag the shield)."
-Order: AC10, AC11, AC12, AC14, AC13; then AC15 (user, after playing); then AC16, AC18, AC17 (user, round 4: AC18's punch and AC16's fall are rules, AC17 the screen); then AC19 (user, round 5); then AC21, AC20 (user, round 6); then AC22, AC23 (user, round 7, screen only) (AC11-AC14 spend or restore life; AC13's items act on AC11, AC12 and AC14)
+Order: AC10, AC11, AC12, AC14, AC13; then AC15 (user, after playing); then AC16, AC18, AC17 (user, round 4: AC18's punch and AC16's fall are rules, AC17 the screen); then AC19 (user, round 5); then AC21, AC20 (user, round 6); then AC22, AC23 (user, round 7, screen only); then AC24, AC25 (user, round 8, screen only) (AC11-AC14 spend or restore life; AC13's items act on AC11, AC12 and AC14)
 
 ## AC10: Life bar instead of attempts
 - Source: "change the try count. It should be a life bar ... Being caught decrease the count bar."
@@ -202,6 +202,22 @@ Order: AC10, AC11, AC12, AC14, AC13; then AC15 (user, after playing); then AC16,
 - Questions: none
 - Covered by: the screen (the punch's rules are unchanged)
 - Evidence: browser check e2e/ac22-ac23.spec.js "the punch is a glove on an arm that stretches to its lane, then goes back to the guardian" (the arm stretched in flight, the glove halfway home 0.15 s after landing, gone after its return): 40 passed, three times in a row. It proves the arm and the return, not their timing (the 0.45 s flight is AC21's red 84). kenji-reviewer: PASS with minors
+- Status: verified
+
+## AC24: The punch arm is a zig-zag spring, and the glove comes at the player (user, round 8)
+- Source: "Can it be a zig zag thing which extends with the punch (like in inspecteurgadget)? Punch must be towards us (verd moi)."
+- Interpretation: the arm is a zig-zag spring that unfolds as it stretches and folds back as it returns (a generic spring arm, not a cartoon character's); the glove grows as it comes, as if punching the player through the screen; it still aims at a lane, so the shield still parries it (amends AC23's arm)
+- Questions: none
+- Covered by: the screen (src/ui/PunchArm.tsx)
+- Evidence: browser check e2e/ac24-ac25.spec.js "the punch arm is a zig-zag spring, and the glove grows as it comes at the player" (the arm is a polyline; the glove more than 1.8 times wider at full reach): 42 passed (twice). The look on the phone, by the user, pending
+- Status: verified
+
+## AC25: Caught, the guardian laughs and points at the player (user, round 8)
+- Source: "When caught the enemy must laugh and raise a finger to me (the real me which is holding the phone)"
+- Interpretation: when the player is caught peeking, the guardian laughs (squinting eyes, open mouth, "HA HA HA!") and points its finger out of the screen at the player (🫵, the reading of the orchestrator: a mocking point, not a rude gesture), for as long as the "Caught peeking" line shows (1.5 s)
+- Questions: none (the gesture is an assumption, to confirm by the user)
+- Covered by: the screen (src/ui/Guardian.tsx)
+- Evidence: browser check e2e/ac24-ac25.spec.js "when the player is caught, the guardian laughs and points at them, then calms down": 42 passed (twice). The look on the phone, by the user, pending
 - Status: verified
 
 ## Discrepancies

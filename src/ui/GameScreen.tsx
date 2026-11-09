@@ -309,7 +309,7 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
     <Pressable testID="scene" style={styles.screen} onPress={pointAt}>
       <Text style={styles.title}>Yolognese</Text>
       <View ref={guardianRef} onLayout={measureGuardian}>
-        <Guardian gaze={gaze} />
+        <Guardian gaze={gaze} laughing={caught} />
         {blind && (
           <Text testID="smoke" accessibilityLabel="guardian blinded by smoke" style={styles.smoke}>
             💨💨
