@@ -22,7 +22,7 @@ export type PeekResponse =
       readonly cooldownMs: number;
     }
   | { readonly kind: 'caught'; readonly view: GameView; readonly cooldownMs: number }
-  | { readonly kind: 'rejected'; readonly reason: 'no-game' | 'game-over' }
+  | { readonly kind: 'rejected'; readonly reason: 'no-game' | 'game-over' | 'peg-up' }
   | { readonly kind: 'rejected'; readonly reason: 'cooling-down'; readonly punch?: Attack };
 
 export interface PeekSecret {

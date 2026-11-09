@@ -667,4 +667,16 @@ describe('Tick', () => {
 
     expect(response).toMatchObject({ kind: 'rejected', reason: 'cooling-down' });
   });
+
+  it('shouldRefusePeek_whileAnotherPegIsUp', () => {
+    const { clock, collectItem, peekSecret, tick } = startedGame([300000, 0], [0, 1, 30, 70]);
+    tick.execute();
+    clock.advance(8000);
+    collectShownItem(tick, collectItem);
+    peekSecret.execute({ index: 0 });
+
+    const response = peekSecret.execute({ index: 1 });
+
+    expect(response).toEqual({ kind: 'rejected', reason: 'peg-up' });
+  });
 });
