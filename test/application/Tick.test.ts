@@ -575,4 +575,17 @@ describe('Tick', () => {
 
     expect(response).toMatchObject({ kind: 'ticked', view: { life: 7 }, landed: 'hit' });
   });
+
+  it('shouldParryPunch_whenShieldIsInItsLane', () => {
+    const { clock, moveShield, peekSecret, tick } = startedGame([30000, 0]);
+    tick.execute();
+    peekSecret.execute({ index: 0 });
+    peekSecret.execute({ index: 1 });
+    moveShield.execute({ lane: 0 });
+    clock.advance(700);
+
+    const response = tick.execute();
+
+    expect(response).toMatchObject({ kind: 'ticked', view: { life: 8 }, landed: 'blocked' });
+  });
 });
