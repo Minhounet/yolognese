@@ -24,6 +24,25 @@ test('AC22: a colour dragged onto a slot lands in that slot, the others stay emp
   for (const slot of [0, 1, 3]) await expect(page.getByTestId(`slot-${slot}`)).toHaveAttribute('aria-label', 'empty peg');
 });
 
+test('AC22: the same drag with a finger (touch events, as on the phone)', async ({ page }) => {
+  await page.goto('/');
+  const start = await page.getByTestId('palette-purple').boundingBox();
+  const end = await page.getByTestId('slot-3').boundingBox();
+  const client = await page.context().newCDPSession(page);
+  const point = (box) => ({ x: box.x + box.width / 2, y: box.y + box.height / 2 });
+  const from = point(start);
+  const to = point(end);
+  await client.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [from] });
+  for (let step = 1; step <= 12; step += 1) {
+    const at = { x: from.x + ((to.x - from.x) * step) / 12, y: from.y + ((to.y - from.y) * step) / 12 };
+    await client.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [at] });
+  }
+  await client.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+
+  await expect(page.getByTestId('slot-3')).toHaveAttribute('aria-label', 'purple');
+  for (const slot of [0, 1, 2]) await expect(page.getByTestId(`slot-${slot}`)).toHaveAttribute('aria-label', 'empty peg');
+});
+
 test('AC22: dropping on a filled slot replaces its colour; a drop outside the slots changes nothing', async ({ page }) => {
   await page.goto('/');
   await page.getByTestId('palette-red').click(); // a tap still fills the first empty slot

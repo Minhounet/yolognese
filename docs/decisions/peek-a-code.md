@@ -4,8 +4,8 @@
 - Status: open
 - Mode: build
 - Yolo: on (see references/yolo.md of saiban-orchestrator)
-- Done: scaffold, plan and ACs; AC1-AC4, AC6-AC16, AC18-AC21 verified, AC5 waived (user); AC17 waits for the user's phone check; round 6 published to the feat-peek-a-code channel
-- Next: round 7 (user, screen only): AC22 drag a colour to a slot, AC23 the punch arm; AC17 still waits for the user's phone check
+- Done: scaffold, plan and ACs; AC1-AC4, AC6-AC16, AC18-AC23 verified, AC5 waived (user); AC17 waits for the user's phone check; round 7 published to the feat-peek-a-code channel
+- Next: the user's phone check of AC17 (tap a hidden peg while watched: caught), the feel of the drag and the punch arm; then merge (a pull request, not opened), more features, or tuning
 - Files: docs/ticket/PEEK-1/, src/
 - User preference: end every report with the Expo Go link: exp://u.expo.dev/90eceada-289a-4a45-b958-180a23ddedb8?channel-name=feat-peek-a-code&runtime-version=exposdk:58.0.0
 
@@ -321,3 +321,5 @@
 ## Round 7 - drag and drop, and the boxer's arm
 - Decided: both ACs are screen-only (No skill: React Native screen): no TDD run, no dev; proven by browser checks; the tap on a colour stays (fills the first empty slot); the arm retracts in 0.3 s after landing (orchestrator's number)
 - Asked user: no (yolo)
+- Decided (round 7 run): DraggableColor (drag after 6 px, a tap stays a tap), PunchArm (out 0.45 s, back 0.3 s); the AC23 check retimed once (it sampled the glove at the very end of its return); kenji-reviewer PASS with minors: a terminated drag no longer drops, a touch-event drag check added; open: the timing of the arm is not measured by the screen check
+- Verdict (round 7): GUILTY, 1 count: AC17 still unproven (the phone check); AC22, AC23 verified

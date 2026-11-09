@@ -5,6 +5,7 @@ import { Point } from '../domain/point';
 import { Peg } from './Peg';
 
 const DRAG_START_PX = 6;
+const NOWHERE: Point = { x: -1, y: -1 };
 
 interface DraggableColorProps {
   readonly color: Color;
@@ -26,7 +27,7 @@ export function DraggableColor({ color, onTap, onDrag, onDrop }: DraggableColorP
         onMoveShouldSetPanResponder: (_event, gesture) => Math.hypot(gesture.dx, gesture.dy) > DRAG_START_PX,
         onPanResponderMove: (_event, gesture) => handlers.current.onDrag(color, { x: gesture.moveX, y: gesture.moveY }),
         onPanResponderRelease: (_event, gesture) => handlers.current.onDrop(color, { x: gesture.moveX, y: gesture.moveY }),
-        onPanResponderTerminate: (_event, gesture) => handlers.current.onDrop(color, { x: gesture.moveX, y: gesture.moveY }),
+        onPanResponderTerminate: () => handlers.current.onDrop(color, NOWHERE), // an interrupted drag places nothing
       }),
     [color],
   );

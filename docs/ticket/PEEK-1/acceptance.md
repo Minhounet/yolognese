@@ -193,16 +193,16 @@ Order: AC10, AC11, AC12, AC14, AC13; then AC15 (user, after playing); then AC16,
 - Interpretation: dragging a colour from the palette and dropping it on one of the four guess slots puts that colour in that slot (replacing what was there); a drop outside the slots changes nothing; a tap on a colour still fills the first empty slot
 - Questions: none
 - Covered by: the screen (no game rule: the guess being built is the screen's)
-- Evidence:
-- Status: designed
+- Evidence: browser checks e2e/ac22-ac23.spec.js "a colour dragged onto a slot lands in that slot, the others stay empty" (mouse), "the same drag with a finger (touch events, as on the phone)" (touch through the browser's touch events), "dropping on a filled slot replaces its colour; a drop outside the slots changes nothing": 40 passed; an interrupted drag places nothing. kenji-reviewer: PASS with minors. The feel on the phone, by the user, pending
+- Status: verified
 
 ## AC23: The punch is a boxing glove on an arm that comes back (user, round 7)
 - Source: "Can the punch has a kind of \"extensible thing\" attached to the punch gant, it must go back to the ennemy like a boxer."
-- Interpretation: the punch is drawn as a glove on an arm stretching from the guardian to its lane while it flies (0.45 s), and the arm pulls the glove back to the guardian once it has landed
+- Interpretation: the punch is drawn as a glove on an arm stretching from the guardian to its lane while it flies (0.45 s), and the arm pulls the glove back to the guardian once it has landed (in 0.3 s, the orchestrator's number)
 - Questions: none
 - Covered by: the screen (the punch's rules are unchanged)
-- Evidence:
-- Status: designed
+- Evidence: browser check e2e/ac22-ac23.spec.js "the punch is a glove on an arm that stretches to its lane, then goes back to the guardian" (the arm stretched in flight, the glove halfway home 0.15 s after landing, gone after its return): 40 passed, three times in a row. It proves the arm and the return, not their timing (the 0.45 s flight is AC21's red 84). kenji-reviewer: PASS with minors
+- Status: verified
 
 ## Discrepancies
 
