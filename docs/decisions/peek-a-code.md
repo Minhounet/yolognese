@@ -4,8 +4,8 @@
 - Status: open
 - Mode: build
 - Yolo: on (see references/yolo.md of saiban-orchestrator)
-- Done: scaffold, plan and ACs; AC1-AC4, AC6-AC16, AC18, AC19 verified, AC5 waived (user); AC17 waits for the user's phone check; round 5 published to the feat-peek-a-code channel
-- Next: round 6 (user): AC21 punch 0.45 s, AC20 manual flip-back (caught if the guardian looks back with a peg up); AC17 still waits for the user's phone check
+- Done: scaffold, plan and ACs; AC1-AC4, AC6-AC16, AC18-AC21 verified, AC5 waived (user); AC17 waits for the user's phone check; round 6 published to the feat-peek-a-code channel
+- Next: the user's phone check of AC17 (tap a hidden peg while watched: caught), the feel of the hand flip-back and the 0.45 s punch; then merge (a pull request, not opened), more features, or tuning
 - Files: docs/ticket/PEEK-1/, src/
 - User preference: end every report with the Expo Go link: exp://u.expo.dev/90eceada-289a-4a45-b958-180a23ddedb8?channel-name=feat-peek-a-code&runtime-version=exposdk:58.0.0
 
@@ -316,3 +316,4 @@
 - Decided: kenji-reviewer, 1 blocking (a false caught after a new game) -> fixed, a check that fails without the fix; minors: guard 89 added, one-peg browser check added, records amended; open: HidePeg ignores its index and never answers 'not-up'
 - Super-green misses: 0
 - Asked user: no (yolo)
+- Verdict (round 6): GUILTY, 1 count: AC17 still unproven (the phone check); AC20 and AC21 verified, re-review PASS
