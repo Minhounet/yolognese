@@ -102,10 +102,10 @@ Order: AC10, AC11, AC12, AC14, AC13; then AC15 (user, after playing); then AC16,
 
 ## AC11: Cheat cooldown bar
 - Source: "Before cheating again there must be a cooling bar."
-- Interpretation: after a peek (revealed or caught), peeking is unavailable for 5 s, shown as a bar refilling; a peek during the cooldown is rejected and costs nothing
+- Interpretation: after a peek (revealed or caught), peeking is unavailable for 5 s, shown as a bar refilling; a peek during the cooldown is rejected (amended by AC19: it no longer "costs nothing": the guardian throws a punch, which costs 1 life unless parried)
 - Questions: none
 - Covered by: D-cooldown (round 2)
-- Evidence: reds 34-38 — PeekSecret.shouldRejectPeek_whenPeekedJustBefore, shouldRejectPeek_justBeforeCooldownEnds, shouldRejectPeek_whenCaughtJustBefore, shouldStartCooldown_whenPeekRevealed, shouldStartCooldown_whenCaught (guards 35 shouldAllowPeek_whenCooldownHasPassed and 36 shouldCostNothing_whenPeekRejectedDuringCooldown are not evidence); full build `npx jest && npx tsc --noEmit`: 41 passed, tsc clean. "Shown as a bar refilling": browser checks e2e/ac11.spec.js "after a peek the cooldown bar refills for 5 s, and a peek meanwhile is refused at no cost" (caught path) and "a revealed peek starts the cooldown too", passed on the web build (14 passed), Playwright clock; the bar's look, by the user, pending; kenji-reviewer: 6 minor, none blocking
+- Evidence: reds 34-38 — PeekSecret.shouldRejectPeek_whenPeekedJustBefore, shouldRejectPeek_justBeforeCooldownEnds, shouldRejectPeek_whenCaughtJustBefore, shouldStartCooldown_whenPeekRevealed, shouldStartCooldown_whenCaught (guards 35 shouldAllowPeek_whenCooldownHasPassed and 36 shouldCostNothing_whenPeekRejectedDuringCooldown are not evidence); full build `npx jest && npx tsc --noEmit`: 41 passed, tsc clean. "Shown as a bar refilling": browser checks e2e/ac11.spec.js "after a peek the cooldown bar refills for 5 s, and a peek meanwhile is refused at no cost" (caught path) and "a revealed peek starts the cooldown too", passed on the web build (14 passed), Playwright clock; the bar's look, by the user, pending; kenji-reviewer: 6 minor, none blocking. Round 5 (AC19): the refused peek now throws a punch: the check is renamed "a peek meanwhile is refused (its punch parried, nothing lost)" and parries it; still passing (34 passed)
 - Status: verified
 
 ## AC12: Time limit
@@ -158,10 +158,10 @@ Order: AC10, AC11, AC12, AC14, AC13; then AC15 (user, after playing); then AC16,
 
 ## AC18: Distracting can fail, and the guardian punches (user, round 4)
 - Source: "sometimes, distracting should fail and in place you can be attacked by a punch for example."
-- Interpretation: one distraction in four fails: the guardian keeps watching and punches the player for 1 life
+- Interpretation: one distraction in four fails: the guardian keeps watching and throws a punch at a lane (amended by AC19: was "punches the player for 1 life" at once; the punch is now parried by the shield in its lane, else costs 1 life)
 - Questions: none
 - Covered by: D-guardian (DistractGuardian draws luck from a RandomSource)
-- Evidence: red 76 DistractGuardian.shouldPunchPlayer_whenDistractionFails, red 77 shouldNotPunch_whenGameIsOver, guard 76 PeekSecret.shouldBeCaught_whenPeekingAfterBeingPunched; browser check e2e/ac16-ac18.spec.js "AC18: pointing fails: the guardian keeps watching and punches for 1 life" (luck fixed to 0); full build 85 passed. The rate one in four is the plan's value and is pinned by no test (ScriptedRandomSource ignores bounds); kenji-reviewer: minor notes only
+- Evidence: red 76 DistractGuardian.shouldPunchPlayer_whenDistractionFails, red 77 shouldNotPunch_whenGameIsOver, guard 76 PeekSecret.shouldBeCaught_whenPeekingAfterBeingPunched; browser check e2e/ac16-ac18.spec.js "AC18: pointing fails: the guardian keeps watching and punches for 1 life" (luck fixed to 0); full build 85 passed. Round 5 (AC19): red 80 changed shouldPunchPlayer_whenDistractionFails to a thrown punch (view life 10, punch lane 0, 700 ms); the browser check renamed "pointing fails: the guardian keeps watching and throws a punch, 1 life if not parried": 34 passed. The rate one in four is the plan's value and is pinned by no test (ScriptedRandomSource ignores bounds); kenji-reviewer: minor notes only
 - Status: verified
 
 ## AC19: Peeking during the cooldown gets a fast punch you can parry (user, round 5)
@@ -169,8 +169,8 @@ Order: AC10, AC11, AC12, AC14, AC13; then AC15 (user, after playing); then AC16,
 - Interpretation: a peek during the cooldown is still refused, and the guardian throws a punch at one of the 3 lanes that lands in 0.7 s; the shield in that lane parries it, otherwise it costs 1 life; the punch of a failed distraction (AC18) becomes the same parryable punch (amends AC11 "costs nothing" and AC18 "punches for 1 life" at once); no punch while a meatball or a punch is already on its way
 - Questions: none
 - Covered by: D-attack (an attack is a meatball or a punch), PeekSecret and DistractGuardian throw the punch, Tick lands it
-- Evidence:
-- Status: designed
+- Evidence: reds 78-83 — PeekSecret.shouldThrowPunch_whenPeekingDuringCooldown, Tick.shouldCostOneLife_whenPunchIsNotParried, DistractGuardian.shouldPunchPlayer_whenDistractionFails (changed), Tick.shouldNotThrowPunch_whenMeatballIsFalling, DistractGuardian.shouldNotThrowPunch_whenMeatballIsFalling, Tick.shouldWaitToThrowMeatball_whilePunchIsFlying (guard 79 shouldParryPunch_whenShieldIsInItsLane is not evidence); full build 91 passed, tsc clean. Browser checks e2e/ac19.spec.js "peeking during the cooldown throws a fast punch, parried by the shield in its lane" and "a punch not parried costs 1 life, and it is fast (gone within 0.8 s)": 34 passed (twice), Playwright clock. kenji-reviewer: 1 blocking (records not amended) fixed; open minors: a failed distraction while an attack flies answers 'punched' with no punch (a misleading name), the screen was changed before its checks were written. The feel on the phone, by the user, pending
+- Status: verified
 
 ## Discrepancies
 

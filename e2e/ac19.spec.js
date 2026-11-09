@@ -38,4 +38,5 @@ test('AC19: a punch not parried costs 1 life, and it is fast (gone within 0.8 s)
 
   await expect(page.getByTestId('attack-result')).toHaveText('👊 Punched! −1 life');
   await expect(page.getByTestId('life')).toHaveAttribute('aria-label', 'Life 7 of 10');
+  await expect(page.getByTestId('meatball')).toHaveCount(0); // the fist has landed and gone
 });

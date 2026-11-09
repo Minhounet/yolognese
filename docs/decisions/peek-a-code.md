@@ -294,3 +294,10 @@
 - Decided: structure: the Session's pending attack gets a kind (meatball 2 life, punch 1 life); PeekSecret takes a RandomSource for the punch's lane (constructor change in a red, traced); DistractGuardian draws the lane from its luck source after the fooled draw; the cooldown rejection carries the punch; Tick lands it like a meatball
 - Plan: make-room refactor first (the cooldown tests compare by fields), then reds from 78: 78 punch thrown on a cooldown peek, 79 an unparried punch costs 1, 80 the shield in its lane parries it, 81 (changed requirement) a failed distraction throws the punch instead of an instant hit, 82 no punch while an attack is on its way; dev: on, a fresh shonin-dev
 - Asked user: no (yolo)
+- Plan deviations (round 5): the parry red passed on write -> guard 79; "no punch while an attack flies" took two reds (81 PeekSecret, 82 DistractGuardian); red 83 added (no meatball wound up while a punch flies, from the dev's note)
+
+## Round 5 - run and review
+- Decided: refactor 77 make-room; reds 78-83 by the orchestrator, greens by a fresh shonin-dev; refactor 80 (punches.ts); screen: the fist flies like the meatball, Parried!/Punched!; checks: e2e/ac19.spec.js, AC11 and AC18 checks follow the thrown punch
+- Decided: kenji-reviewer, 1 blocking (AC11, AC18, AC19 records not amended) -> amended with evidence, conception.md round 3-5 decisions, retro; minors: a check claimed "gone" without asserting it -> asserted; open: 'punched' with no punch while an attack flies, screen before checks
+- Super-green misses: 0
+- Asked user: no (yolo)

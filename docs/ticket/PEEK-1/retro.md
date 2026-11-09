@@ -35,3 +35,6 @@
 - Round 4: the user saw every peek succeed on the phone; the web build catches a peek correctly, so the cause is a guess (the tap reaching the scene too). The fix is defensive and its check passes with or without it: AC17 waits for the user's phone check.
 - Round 4: random items could appear over the pegs, so a tap meant for a peg picked up the item (a flaky AC4 check showed it); items now stay below the secret row.
 - Round 4: AC18's random punch would make every check that distracts fail one time in four; the composition root takes a fixed luck draw from globalThis.yologneseLuck, set by e2e/fixtures.js (always fooled unless a check asks otherwise).
+- Round 5: AC19 changed AC11 ("costs nothing") and AC18 ("punches for 1 life"), but acceptance.md and conception.md were not amended until kenji-reviewer blocked on it: amend the ACs a change touches in the same commit as the new AC.
+- Round 5: the plan's parry red passed on write (green 79 reused the shield check) and became guard 79; red 83 (no meatball while a punch flies) was added from the dev's note; the order moved accordingly.
+- Round 5: the screen was written before its checks (shoko-playwright asks the check first); the checks still exercise the behaviour.

@@ -84,6 +84,12 @@ pegs, exact / misplaced feedback), not a copy of a commercial game.
 - None blocking. The exact tuning (1500 ms, shake threshold) may change
   after the user tries it on the phone.
 
+### Round 3-5 (AC15-AC19): decisions, approved by the orchestrator in yolo
+
+- D-attack (amended): an attack falls for 1.5 s (AC15 2.5 s, then AC16 1.5 s) in a lane, not marked; the shield follows the finger and blocks by the lane under its centre.
+- D-punch (AC18, AC19): a punch is an attack of its own kind (Session.attackIsPunch) that lands in 0.7 s and costs 1 life (a meatball costs 2); it is thrown by PeekSecret on a peek during the cooldown and by DistractGuardian when the guardian sees through a distraction (one in four, luck from a RandomSource); the lane is drawn from PeekSecret's RandomSource or after the luck draw; src/application/punches.ts holds the throw. One attack in flight at a time: no punch while one falls, no meatball wound up while a punch flies.
+- The composition root may fix the guardian's luck (globalThis.yologneseLuck) for the browser checks.
+
 ## Ruled out
 
 - One fat `GameService`: four operations with different rules and failures,
