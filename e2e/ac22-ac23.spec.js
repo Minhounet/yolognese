@@ -51,9 +51,11 @@ test('AC23: the punch is a glove on an arm that stretches to its lane, then goes
   await page.clock.runFor(300); // landed
   await expect(page.getByTestId('punch-returning')).toBeVisible();
   const guardian = await page.getByTestId('guardian').boundingBox();
-  await page.clock.runFor(250);
+  const landed = await page.getByTestId('punch-returning').boundingBox();
+  await page.clock.runFor(150); // halfway home (the return takes 0.3 s)
   const glove = await page.getByTestId('punch-returning').boundingBox();
-  expect(glove.y).toBeLessThan(guardian.y + guardian.height * 3); // pulled back up toward the guardian
-  await page.clock.runFor(200);
+  expect(glove.y).toBeLessThan(landed.y); // pulled back up toward the guardian
+  expect(glove.y).toBeGreaterThan(guardian.y);
+  await page.clock.runFor(300);
   await expect(page.getByTestId('punch-arm')).toHaveCount(0); // home again
 });
