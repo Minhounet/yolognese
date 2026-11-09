@@ -5,7 +5,7 @@ import { InMemoryGameRepository } from '../../src/infrastructure/InMemoryGameRep
 import { FakeClock } from '../support/FakeClock';
 import { ScriptedRandomSource } from '../support/ScriptedRandomSource';
 
-// the guardian's luck draw: 1 is fooled, 0 sees through it
+// the guardian's luck draw: 1 is fooled, 0 sees through it; after a 0, the next draw is the punch's lane
 const FOOLED = 1;
 const SEES_THROUGH = 0;
 
@@ -37,7 +37,7 @@ describe('DistractGuardian', () => {
 
     const response = distractGuardian.execute({ target: { x: 120, y: -40 } });
 
-    expect(response).toMatchObject({ kind: 'punched', view: { life: 9 } });
+    expect(response).toMatchObject({ kind: 'punched', punch: { lane: 0, landsInMs: 700 }, view: { life: 10 } });
   });
 
   it('shouldNotPunch_whenGameIsOver', () => {
