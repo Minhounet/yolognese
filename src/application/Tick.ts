@@ -129,7 +129,8 @@ export class TickImpl implements Tick {
 
   private windUpIfDue(session: Session, now: number, pendingLandsAt: number | undefined) {
     const attackAt = session.attackAt ?? scheduleAttackAt(now, this.random.nextInt(ATTACK_DELAY_SPREAD_MS));
-    const due = isAttackDue(attackAt, now) && !isDistracted(session.guardian, now);
+    const due =
+      pendingLandsAt === undefined && isAttackDue(attackAt, now) && !isDistracted(session.guardian, now);
     if (!due) {
       return { attack: undefined, stored: { attackAt, attackLandsAt: pendingLandsAt } };
     }
