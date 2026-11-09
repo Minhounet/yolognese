@@ -216,7 +216,7 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
     const response = useCases.distractGuardian.execute({ target });
     if (response.kind === 'punched') {
       setView(response.view);
-      throwPunch(response.punch);
+      if (response.punch !== undefined) throwPunch(response.punch);
       return;
     }
     if (response.kind !== 'distracted') return;
