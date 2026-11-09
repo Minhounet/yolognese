@@ -11,7 +11,7 @@ import { CooldownBar } from './CooldownBar';
 import { ShieldLanes } from './ShieldLanes';
 import { DraggableColor } from './DraggableColor';
 import { ITEM_ICONS, ItemSprite } from './ItemSprite';
-import { GiftKind, Item } from '../domain/items';
+import { Item, ItemKind } from '../domain/items';
 import { DustPuff } from './DustPuff';
 import { FallingMeatball } from './FallingMeatball';
 import { PunchArm } from './PunchArm';
@@ -43,12 +43,13 @@ const ATTACK_RESULT_SHOWN_MS = 1200;
 const ITEM_NOTE_SHOWN_MS = 1500;
 const SMOKE_SHOWN_MS = 4000; // the smoke's length in the rules (4 s): the response does not carry it
 
-const GIFT_NOTES: Readonly<Record<GiftKind, string>> = {
+const GIFT_NOTES: Readonly<Record<Exclude<ItemKind, 'present'>, string>> = {
   food: 'Yum! +3 life',
   smoke: 'Smoke bomb! The guardian is blind',
   xray: 'X-ray! A peg is revealed',
   hourglass: '+30 seconds',
   charm: 'Shield charm: the next meatball is blocked',
+  bomb: 'Bomb thrown away!',
 };
 const MS_PER_SECOND = 1000;
 const SECONDS_PER_MINUTE = 60;

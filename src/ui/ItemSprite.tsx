@@ -8,6 +8,7 @@ export const ITEM_ICONS: Readonly<Record<ItemKind, string>> = {
   hourglass: '⏳',
   charm: '🍀',
   present: '🎁',
+  bomb: '💣',
 };
 
 const LEFT_MARGIN_PERCENT = 5;
