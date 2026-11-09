@@ -46,6 +46,9 @@ export class PeekSecretImpl implements PeekSecret {
     }
     const now = this.clock.now();
     if (now < session.peekReadyAt) {
+      if (session.attackLandsAt !== undefined) {
+        return { kind: 'rejected', reason: 'cooling-down' };
+      }
       const punch = punchWindUp(this.random.nextInt(LANE_COUNT));
       this.repository.save(withPunchThrown(session, now, punch));
       return { kind: 'rejected', reason: 'cooling-down', punch };
