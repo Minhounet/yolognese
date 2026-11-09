@@ -346,3 +346,7 @@
 - Asked user: no (yolo)
 - Decided (round 10 review): kenji-reviewer PASS, 2 minor open (the cap untested on a tall screen, a fixed row height)
 - Verdict (round 10): GUILTY, 2 counts: AC17 (phone check), AC25 (the gesture); AC30 verified
+
+## Merge to main (user)
+- Decided (user): "Yes then merge": pull request #1 merged into main (merge commit db35fa8); main's parallel AC10-AC12 superseded by this branch's AC10-AC30 (merged with this branch's tree kept); main's README channel switch kept: the Expo channel is now main
+- Asked user: yes
