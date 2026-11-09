@@ -4,8 +4,8 @@
 - Status: open
 - Mode: build
 - Yolo: on (see references/yolo.md of saiban-orchestrator)
-- Done: scaffold, plan and ACs; AC1-AC4, AC6-AC16 and AC18 verified, AC5 waived (user); AC17 waits for the user's phone check; round 4 published to the feat-peek-a-code channel
-- Next: round 5 (user): AC19 the cooldown punch (and AC18's punch made parryable); AC17 still waits for the user's phone check
+- Done: scaffold, plan and ACs; AC1-AC4, AC6-AC16, AC18, AC19 verified, AC5 waived (user); AC17 waits for the user's phone check; round 5 published to the feat-peek-a-code channel
+- Next: the user's phone check of AC17 (tap a hidden peg while watched: caught) and the feel of the punch; then merge (a pull request, not opened), more features, or tuning
 - Files: docs/ticket/PEEK-1/, src/
 - User preference: end every report with the Expo Go link: exp://u.expo.dev/90eceada-289a-4a45-b958-180a23ddedb8?channel-name=feat-peek-a-code&runtime-version=exposdk:58.0.0
 
@@ -301,3 +301,4 @@
 - Decided: kenji-reviewer, 1 blocking (AC11, AC18, AC19 records not amended) -> amended with evidence, conception.md round 3-5 decisions, retro; minors: a check claimed "gone" without asserting it -> asserted; open: 'punched' with no punch while an attack flies, screen before checks
 - Super-green misses: 0
 - Asked user: no (yolo)
+- Verdict (round 5): GUILTY, 1 count: AC17 still unproven (the phone check); AC19 verified, re-review PASS
