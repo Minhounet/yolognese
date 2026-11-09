@@ -17,6 +17,7 @@ import {
   Item,
   appear,
   isBombLeft,
+  isInDarkness,
   isItemGone,
   isItemShown,
   scheduleItemAt,
@@ -81,7 +82,7 @@ export class TickImpl implements Tick {
     });
     return {
       kind: 'ticked',
-      view: { ...toGameView(game), pegUp, playerBlind: session.playerBlind },
+      view: { ...toGameView(game), pegUp, playerBlind: isInDarkness(session.darkUntil, now) },
       timeLeftMs,
       attack: attackState.attack,
       item: itemState.item,

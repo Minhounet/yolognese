@@ -8,6 +8,8 @@ const ITEM_SHOWN_MS = 4000;
 
 export const SMOKE_BLIND_MS = 4000;
 
+export const DARKNESS_MS = 4000;
+
 export const HOURGLASS_BONUS_MS = 30000;
 
 const FIELD_GIFT_KINDS = ['food', 'smoke', 'xray', 'hourglass', 'charm'] as const;
@@ -36,6 +38,10 @@ export function isItemShown(itemAt: number, now: number): boolean {
 
 export function isItemGone(itemAt: number, now: number): boolean {
   return itemAt + ITEM_SHOWN_MS <= now;
+}
+
+export function isInDarkness(darkUntil: number | undefined, now: number): boolean {
+  return darkUntil !== undefined && now < darkUntil;
 }
 
 export function appear(kindIndex: number, x: number, y: number): Item {

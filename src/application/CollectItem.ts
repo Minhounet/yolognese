@@ -1,6 +1,6 @@
 import { Game, hiddenPegs, isOver, restoreLife, revealPeg } from '../domain/game';
 import { blindUntil } from '../domain/guardian';
-import { GIFT_KINDS, GiftKind, HOURGLASS_BONUS_MS, ItemKind, SMOKE_BLIND_MS, isItemShown } from '../domain/items';
+import { DARKNESS_MS, GIFT_KINDS, GiftKind, HOURGLASS_BONUS_MS, ItemKind, SMOKE_BLIND_MS, isItemShown } from '../domain/items';
 import { toGameView } from './GameMapper';
 import { Clock, GameRepository, RandomSource, Session } from './ports';
 import { GameView } from './views';
@@ -66,7 +66,7 @@ export class CollectItemImpl implements CollectItem {
       case 'charm':
         return { ...session, charmed: true };
       case 'darkness':
-        return { ...session, playerBlind: true };
+        return { ...session, darkUntil: now + DARKNESS_MS };
       case 'bomb':
         return session;
     }

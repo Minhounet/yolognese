@@ -25,7 +25,7 @@ export interface Session {
   readonly attackIsPunch?: boolean;
   readonly shieldLane?: number;
   readonly charmed?: boolean;
-  readonly playerBlind?: boolean;
+  readonly darkUntil?: number;
   readonly pegUp?: RevealedPegView;
 }
 
