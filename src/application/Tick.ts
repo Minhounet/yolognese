@@ -21,6 +21,7 @@ import {
   scheduleItemAt,
 } from '../domain/items';
 import { toGameView } from './GameMapper';
+import { PEEK_COOLDOWN_MS } from './PeekSecret';
 import { Clock, GameRepository, RandomSource, Session } from './ports';
 import { GameView } from './views';
 
@@ -70,6 +71,7 @@ export class TickImpl implements Tick {
       ...itemState,
       game,
       pegUp,
+      peekReadyAt: caughtPeeking ? now + PEEK_COOLDOWN_MS : session.peekReadyAt,
       charmed: landing.charmed,
       attackIsPunch: landing.pendingIsPunch,
     });

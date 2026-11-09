@@ -7,7 +7,7 @@ import { withPunchThrown } from './punches';
 import { Clock, GameRepository, RandomSource } from './ports';
 import { GameView } from './views';
 
-const PEEK_COOLDOWN_MS = 5000;
+export const PEEK_COOLDOWN_MS = 5000;
 const NO_COOLDOWN_MS = 0;
 
 export interface PeekCommand {
