@@ -225,32 +225,32 @@ Order: AC10, AC11, AC12, AC14, AC13; then AC15 (user, after playing); then AC16,
 - Interpretation: the smoke bomb is thrown as a grenade at the guardian and a smoke cloud covers it while it is blind; the shield charm shows a green laser wall across the player's zone until it is used; the x-ray glasses fire a laser beam from where they were picked up to the revealed peg
 - Questions: none
 - Covered by: the screen
-- Evidence:
-- Status: designed
+- Evidence: browser checks e2e/ac26-ac29.spec.js "the x-ray glasses fire a beam that ends on the peg they reveal", "the smoke grenade leaves a cloud over the guardian", and e2e/ac13.spec.js's charm check (the green laser shows): 48 passed, three times. Not checked by a browser check: the grenade's flight (only its cloud), the laser going away once the charm is used. kenji-reviewer: minor findings only. The look on the phone, by the user, pending
+- Status: verified
 
 ## AC27: A smoother life bar that shows what was lost (user, round 9)
 - Source: "Lifebar can be smoother, when you lose some life, the life you lose should blink a little to make it visible. Like in most fighting game."
 - Interpretation: the life bar slides to its new length; the part just lost stays visible a moment and blinks before it shrinks away
 - Questions: none
 - Covered by: the screen (LifeBar)
-- Evidence:
-- Status: designed
+- Evidence: browser check e2e/ac26-ac29.spec.js "the life just lost blinks in the bar before it goes" (the lost part appears, then goes, the life ends at 8): 48 passed. The slide and the blink themselves are the look, not checked. kenji-reviewer: minor
+- Status: verified
 
 ## AC28: A bomb that explodes if left (user, round 9)
 - Source: "Need some negative items ... A bomb make you loose life after explosion."
 - Interpretation: a 💣 bomb can appear like an item; if it is still there when its 4 s end, it explodes and costs 2 life; tapping it before throws it away (no cost); a present can also turn into a bomb, which explodes at once (2 life)
 - Questions: none
 - Covered by: D-items (round 9)
-- Evidence:
-- Status: designed
+- Evidence: red 90 Tick.shouldExplode_whenBombIsLeftOnField, red 93 Tick.shouldExplodeAtOnce_whenPresentGivesBomb (guard 90 shouldNotExplode_whenBombIsTappedAway is not evidence); full build 102 passed, tsc clean. Browser checks e2e/ac26-ac29.spec.js "a bomb left on the field explodes when its 4 s end: 2 life" and "a bomb tapped in time is thrown away" (which found a screen bug: a thrown-away bomb showed an explosion, fixed): 48 passed. The present's bomb is unit-tested only. kenji-reviewer: minor
+- Status: verified
 
 ## AC29: Darkness blinds the player (user, round 9)
 - Source: "Need some negative items. You can be blind too and dont see what you are doing."
 - Interpretation: a present can turn into 🌑 darkness: for 4 s the player is blind: a dark veil covers the secret pegs, the board and the guess being built (the controls still work)
 - Questions: none
 - Covered by: D-items (round 9), the screen
-- Evidence:
-- Status: designed
+- Evidence: red 91 Tick.shouldBlindPlayer_whenPresentGivesDarkness, red 92 Tick.shouldSeeAgain_afterFourSecondsOfDarkness; browser checks e2e/ac26-ac29.spec.js "darkness veils the game for 4 s, then the player sees again" and e2e/ac13.spec.js's present check: 48 passed. kenji-reviewer: minor
+- Status: verified
 
 ## Discrepancies
 

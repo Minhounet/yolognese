@@ -4,7 +4,7 @@
 - Status: open
 - Mode: build
 - Yolo: on (see references/yolo.md of saiban-orchestrator)
-- Done: scaffold, plan and ACs; AC1-AC4, AC6-AC16, AC18-AC24 verified, AC5 waived (user); AC17 waits for the user's phone check, AC25 for the user's answer on the gesture; round 8 published to the feat-peek-a-code channel
+- Done: scaffold, plan and ACs; AC1-AC4, AC6-AC16, AC18-AC24, AC26-AC29 verified, AC5 waived (user); AC17 waits for the user's phone check, AC25 for the user's answer on the gesture; round 9 published to the feat-peek-a-code channel
 - Next: round 9 (user): AC28 bomb, AC29 darkness (rules, TDD), then AC26 item animations, AC27 life bar (screen); AC17 and AC25 still wait for the user
 - Files: docs/ticket/PEEK-1/, src/
 - User preference: end every report with the Expo Go link: exp://u.expo.dev/90eceada-289a-4a45-b958-180a23ddedb8?channel-name=feat-peek-a-code&runtime-version=exposdk:58.0.0
@@ -336,3 +336,7 @@
 - Plan: reds from 90: 90 a bomb left on the field explodes (Tick reports exploded, life 8), 91 a tapped bomb does not explode, 92 a present can give darkness (the view says the player is blind), 93 the player sees again after 4 s, 94 a present can give a bomb that explodes at once; dev: on, a fresh shonin-dev; then the screen (AC26, AC27) with browser checks
 - Asked user: no (yolo)
 - Deviation (round 9): green 90 widened the item kinds with 'bomb', and CollectItem could not compile without a case for it; the smallest case (a collected bomb has no effect) is what red 91 asked, so 91 becomes a guard
+- Numbering (round 9): red/green 90 (field bomb), guard 90 (tapped bomb, was the plan's red 91), red/green 91 darkness, 92 sees again, 93 present's bomb; the bomb's screen commit sits between green 90 and guard 90
+- Decided (round 9): a composition-root setting globalThis.yologneseItemDraw (like yologneseLuck): the browser checks draw items as untapped food unless a check chooses its item, since a random bomb could cost life in any long check (three flaky checks showed it); the AC13 charm check now moves the shield away so the charm is what blocks
+- Decided (round 9 review): kenji-reviewer, no blocking, minors: the x-ray check now asserts the beam ends on the peg; open: explode() clamps at 0 untested (copied from penalise), the grenade's flight and the laser's end not checked, the present's bomb unit-tested only
+- Verdict (round 9): GUILTY, 2 counts: AC17 (phone check), AC25 (the gesture); AC26-AC29 verified

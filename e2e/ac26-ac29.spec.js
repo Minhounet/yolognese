@@ -64,10 +64,19 @@ test('AC29: darkness veils the game for 4 s, then the player sees again', async 
   await expect(page.getByTestId('darkness')).toHaveCount(0);
 });
 
-test('AC26: the smoke bomb is a grenade with a cloud; the x-ray glasses fire a beam at a peg', async ({ page }) => {
+test('AC26: the x-ray glasses fire a beam that ends on the peg they reveal', async ({ page }) => {
   await startWithItem(page, 'xray');
   await tapAt(page, await waitForItem(page));
   await expect(page.getByTestId('xray-beam')).toBeVisible();
+  await page.clock.runFor(300); // the beam has reached its peg
+  const revealed = page.locator('[data-testid^="secret-"]:not([aria-label="hidden peg"])');
+  const peg = await revealed.boundingBox();
+  const ends = await page.getByTestId('xray-beam').evaluate((element) => {
+    const box = element.getBoundingClientRect();
+    return [{ x: box.left, y: box.top }, { x: box.right, y: box.bottom }, { x: box.left, y: box.bottom }, { x: box.right, y: box.top }];
+  });
+  const near = ends.some((end) => end.x >= peg.x - 12 && end.x <= peg.x + peg.width + 12 && end.y >= peg.y - 12 && end.y <= peg.y + peg.height + 12);
+  expect(near).toBe(true);
   await page.clock.runFor(700);
   await expect(page.getByTestId('xray-beam')).toHaveCount(0);
 });
