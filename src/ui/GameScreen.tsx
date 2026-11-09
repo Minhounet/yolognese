@@ -9,10 +9,12 @@ import { Guardian } from './Guardian';
 import { LifeBar } from './LifeBar';
 import { CooldownBar } from './CooldownBar';
 import { ShieldLanes } from './ShieldLanes';
+import { DraggableColor } from './DraggableColor';
 import { ITEM_ICONS, ItemSprite } from './ItemSprite';
 import { GiftKind, Item } from '../domain/items';
 import { DustPuff } from './DustPuff';
 import { FallingMeatball } from './FallingMeatball';
+import { PunchArm } from './PunchArm';
 import { Peg } from './Peg';
 import { SecretPeg } from './SecretPeg';
 import { THEME } from './theme';
@@ -24,6 +26,8 @@ const CAUGHT_SHOWN_MS = 1500;
 const TICK_MS = 100;
 const MIDDLE_LANE = 1;
 const CONTROL_TOUCH_MS = 600;
+const DRAGGED_HALF = 22;
+const PUNCH_RETURN_MS = 300;
 
 const ATTACK_LINES = {
   hit: '💥 Hit by a meatball! −2 life',
@@ -62,6 +66,14 @@ function isComplete(draft: Draft): draft is Code {
 function withColor(draft: Draft, color: Color): Draft {
   const slot = draft.indexOf(undefined);
   return slot === -1 ? draft : draft.map((current, index) => (index === slot ? color : current));
+}
+
+function laneTarget(ground: { readonly x: number; readonly y: number; readonly width: number }, lane: number): Point {
+  return { x: ground.x + ((lane + 0.5) * ground.width) / LANE_COUNT_SHOWN, y: ground.y };
+}
+
+function withColorAt(draft: Draft, slot: number, color: Color): Draft {
+  return draft.map((current, index) => (index === slot ? color : current));
 }
 
 function withoutSlot(draft: Draft, slot: number): Draft {
@@ -150,7 +162,9 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
       if (response.kind !== 'ticked') return;
       setTimeLeftMs(response.timeLeftMs);
       if (response.landed !== undefined) {
-        setAttackResult(warningRef.current?.punch ? (response.landed === 'hit' ? 'punch-hit' : 'parried') : response.landed);
+        const landedPunch = warningRef.current?.punch ? warningRef.current : undefined;
+        setAttackResult(landedPunch ? (response.landed === 'hit' ? 'punch-hit' : 'parried') : response.landed);
+        if (landedPunch) setReturningPunch(landedPunch.lane);
         setCharmed(false);
         showWarning(undefined);
       }
@@ -179,6 +193,27 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
     const timer = setTimeout(() => setCaught(false), CAUGHT_SHOWN_MS);
     return () => clearTimeout(timer);
   }, [caught]);
+
+  // AC23: after it lands, the glove is pulled back to the guardian
+  const [returningPunch, setReturningPunch] = useState<number | undefined>();
+  useEffect(() => {
+    if (returningPunch === undefined) return undefined;
+    const timer = setTimeout(() => setReturningPunch(undefined), PUNCH_RETURN_MS);
+    return () => clearTimeout(timer);
+  }, [returningPunch]);
+
+  // AC22: a colour dragged from the palette lands in the slot it is dropped on
+  const slotRefs = useRef<(ComponentRef<typeof View> | null)[]>([]);
+  const [dragging, setDragging] = useState<{ readonly color: Color; readonly at: Point } | undefined>();
+  const dropColor = (color: Color, at: Point) => {
+    setDragging(undefined);
+    slotRefs.current.forEach((slot, index) =>
+      slot?.measureInWindow((x, y, width, height) => {
+        const inside = at.x >= x && at.x <= x + width && at.y >= y && at.y <= y + height;
+        if (inside) setDraft((current) => withColorAt(current, index, color));
+      }),
+    );
+  };
 
   // the peg the player turned up stays up until they tap it again (AC20); the game catches one left up
   const pegUpRef = useRef<number | undefined>(undefined);
@@ -322,12 +357,20 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
         <View style={styles.controls} onTouchStart={touchedControl}>
           <View style={styles.row}>
             {draft.map((color, slot) => (
-              <Peg key={slot} testID={`slot-${slot}`} color={color} onPress={() => setDraft(withoutSlot(draft, slot))} />
+              <View key={slot} ref={(element) => { slotRefs.current[slot] = element; }}>
+                <Peg testID={`slot-${slot}`} color={color} onPress={() => setDraft(withoutSlot(draft, slot))} />
+              </View>
             ))}
           </View>
           <View style={styles.row}>
             {COLORS.map((color) => (
-              <Peg key={color} testID={`palette-${color}`} color={color} size={44} onPress={() => setDraft(withColor(draft, color))} />
+              <DraggableColor
+                key={color}
+                color={color}
+                onTap={() => setDraft((current) => withColor(current, color))}
+                onDrag={(dragged, at) => setDragging({ color: dragged, at })}
+                onDrop={dropColor}
+              />
             ))}
           </View>
           <Pressable
@@ -355,13 +398,19 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
         <LifeBar life={view.life} maxLife={view.maxLife} />
       </View>
       {playing && warning !== undefined && ground !== undefined && (
-        <FallingMeatball
-          from={guardianCentre.current}
-          to={{ x: ground.x + ((warning.lane + 0.5) * ground.width) / LANE_COUNT_SHOWN, y: ground.y }}
-          durationMs={warning.fallMs}
-          lane={warning.lane}
-          punch={warning.punch}
-        />
+        warning.punch ? (
+          <PunchArm from={guardianCentre.current} to={laneTarget(ground, warning.lane)} durationMs={warning.fallMs} phase="out" lane={warning.lane} />
+        ) : (
+          <FallingMeatball from={guardianCentre.current} to={laneTarget(ground, warning.lane)} durationMs={warning.fallMs} lane={warning.lane} />
+        )
+      )}
+      {playing && returningPunch !== undefined && ground !== undefined && (
+        <PunchArm from={guardianCentre.current} to={laneTarget(ground, returningPunch)} durationMs={PUNCH_RETURN_MS} phase="back" lane={returningPunch} />
+      )}
+      {dragging !== undefined && (
+        <View pointerEvents="none" testID="dragged-color" style={[styles.dragged, { left: dragging.at.x - DRAGGED_HALF, top: dragging.at.y - DRAGGED_HALF }]}>
+          <Peg color={dragging.color} size={DRAGGED_HALF * 2} />
+        </View>
       )}
       {puffs.map((puff) => (
         <DustPuff key={puff.id} at={puff.at} onDone={() => removePuff(puff.id)} />
@@ -383,6 +432,7 @@ const styles = StyleSheet.create({
   caught: { color: THEME.sauce, fontWeight: 'bold' },
   smoke: { position: 'absolute', alignSelf: 'center', top: 20, fontSize: 40 },
   itemNote: { color: THEME.ink, fontWeight: 'bold', minHeight: 20 },
+  dragged: { position: 'absolute', opacity: 0.85 },
   playerZone: { alignSelf: 'stretch', alignItems: 'center', marginTop: 4 },
   attackResult: { color: THEME.sauce, fontWeight: 'bold', minHeight: 20 },
   timer: { color: THEME.ink, fontSize: 16, fontWeight: 'bold', fontVariant: ['tabular-nums'] },
