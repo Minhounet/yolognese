@@ -1,4 +1,5 @@
 import { DistractGuardianImpl } from '../../src/application/DistractGuardian';
+import { HidePegImpl } from '../../src/application/HidePeg';
 import { PeekSecretImpl } from '../../src/application/PeekSecret';
 import { StartGameImpl } from '../../src/application/StartGame';
 import { SubmitGuessImpl } from '../../src/application/SubmitGuess';
@@ -18,6 +19,7 @@ function startedGame(luck: readonly number[] = [FOOLED], punchLanes: readonly nu
     distractGuardian: new DistractGuardianImpl(repository, clock, new ScriptedRandomSource(luck)),
     peekSecret: new PeekSecretImpl(repository, clock, new ScriptedRandomSource(punchLanes)),
     submitGuess: new SubmitGuessImpl(repository),
+    hidePeg: new HidePegImpl(repository),
   };
 }
 
@@ -131,9 +133,10 @@ describe('PeekSecret', () => {
   });
 
   it('shouldAllowPeek_whenCooldownHasPassed', () => {
-    const { clock, distractGuardian, peekSecret } = startedGame();
+    const { clock, distractGuardian, hidePeg, peekSecret } = startedGame();
     distractGuardian.execute(AWAY);
     peekSecret.execute({ index: 0 });
+    hidePeg.execute({ index: 0 });
     clock.advance(5000);
     distractGuardian.execute(AWAY);
 
