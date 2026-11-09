@@ -14,7 +14,7 @@ export const HOURGLASS_BONUS_MS = 30000;
 
 const FIELD_GIFT_KINDS = ['food', 'smoke', 'xray', 'hourglass', 'charm'] as const;
 
-export const GIFT_KINDS = [...FIELD_GIFT_KINDS, 'darkness'] as const;
+export const GIFT_KINDS = [...FIELD_GIFT_KINDS, 'darkness', 'bomb'] as const;
 
 export type GiftKind = (typeof GIFT_KINDS)[number];
 

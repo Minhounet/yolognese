@@ -1,4 +1,4 @@
-import { Game, hiddenPegs, isOver, restoreLife, revealPeg } from '../domain/game';
+import { Game, explode, hiddenPegs, isOver, restoreLife, revealPeg } from '../domain/game';
 import { blindUntil } from '../domain/guardian';
 import { DARKNESS_MS, GIFT_KINDS, GiftKind, HOURGLASS_BONUS_MS, ItemKind, SMOKE_BLIND_MS, isItemShown } from '../domain/items';
 import { toGameView } from './GameMapper';
@@ -43,17 +43,17 @@ export class CollectItemImpl implements CollectItem {
       return { kind: 'rejected', reason: 'no-item' };
     }
     const received = item.kind === 'present' ? this.drawGift() : item.kind;
-    const affected = this.effectOf(received, session, now);
+    const affected = item.kind === 'bomb' ? session : this.effectOf(received, session, now);
     this.repository.save({ ...affected, item: undefined, itemCollected: true });
     return {
       kind: 'collected',
       item: item.kind,
-      gift: item.kind === 'present' && received !== 'bomb' ? received : undefined,
+      gift: item.kind === 'present' ? received : undefined,
       view: toGameView(affected.game),
     };
   }
 
-  private effectOf(kind: GiftKind | 'bomb', session: Session, now: number): Session {
+  private effectOf(kind: GiftKind, session: Session, now: number): Session {
     switch (kind) {
       case 'food':
         return { ...session, game: restoreLife(session.game) };
@@ -68,7 +68,7 @@ export class CollectItemImpl implements CollectItem {
       case 'darkness':
         return { ...session, darkUntil: now + DARKNESS_MS };
       case 'bomb':
-        return session;
+        return { ...session, game: explode(session.game) };
     }
   }
 
