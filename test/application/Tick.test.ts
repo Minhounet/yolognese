@@ -706,4 +706,17 @@ describe('Tick', () => {
 
     expect(response).toMatchObject({ kind: 'ticked', view: { life: 8 }, exploded: true });
   });
+
+  it('shouldNotExplode_whenBombIsTappedAway', () => {
+    const { clock, collectItem, tick } = startedGame([300000, 0], [0, 6, 30, 70]);
+    tick.execute();
+    clock.advance(8000);
+    collectShownItem(tick, collectItem);
+    clock.advance(4000);
+
+    const response = tick.execute();
+
+    expect(response).toMatchObject({ kind: 'ticked', view: { life: 10 } });
+    expect(response.kind === 'ticked' && response.exploded).toBeFalsy();
+  });
 });
