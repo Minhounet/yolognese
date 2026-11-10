@@ -4,10 +4,10 @@
 - Status: open
 - Mode: build
 - Yolo: on (see references/yolo.md of saiban-orchestrator)
-- Done: AC1-AC4, AC6-AC16, AC18-AC24, AC26-AC31 verified, AC5 waived (user); rounds 2-10 merged into main (PR #1, Expo channel main); round 11 (AC31, results as two numbers) on this branch and the feat-peek-a-code channel, not yet on main
-- Next: ask the user: merge AC31 into main (PR #2), and whether to merge each change without asking; the user's phone check of AC17 (tap a hidden peg while watched: caught); the user's answer on AC25 (is 🫵 the gesture meant?); pass-and-play multiplayer if the user wants it (the first step proposed); known open minors in acceptance.md and the round entries
+- Done: AC1-AC4, AC6-AC16, AC18-AC31 verified, AC5 waived (user); everything merged into main (PR #1 rounds 2-10, PR #2 rounds 11-12), published on the Expo channel main
+- Next: the user's phone check of AC17 (with the guardian watching, tap a hidden peg: "Caught peeking! −2 life", the peg stays hidden) — the one open count; the user's look on the phone of the screen ACs; ask whether to merge each change into main without asking; pass-and-play multiplayer if the user wants it (proposed first step); open minors in acceptance.md and the round entries. To resume: a new session, say "resume peek-a-code"
 - Files: docs/ticket/PEEK-1/, src/
-- User preference: end every report with the Expo Go link: exp://u.expo.dev/90eceada-289a-4a45-b958-180a23ddedb8?channel-name=main&runtime-version=exposdk:58.0.0 (main since PR #1; feat-peek-a-code holds the same game)
+- User preference: end every report with the Expo Go link: exp://u.expo.dev/90eceada-289a-4a45-b958-180a23ddedb8?channel-name=main&runtime-version=exposdk:58.0.0
 
 ## Start - scope and mode
 - Decided: build mode, yolo; ACs from the user's request (no ticket), ticket folder PEEK-1
@@ -358,3 +358,8 @@
 
 ## Pause - new session (user)
 - Decided (user asked whether to start a new session; recommended: the context is long and costly): Resume block updated; resume with "resume peek-a-code"
+
+## Round 12 - the finger, then main (user)
+- Decided (user): AC25's pointing finger confirmed, "it must be draw to see it clearly": 72 px, pops out at the player beside the laughing face; checked over 60 px tall
+- Decided (user): "write so I can resume, and merge to main": Resume block rewritten, PR #2 merges rounds 11-12 into main, published on the channel main
+- Asked user: yes
