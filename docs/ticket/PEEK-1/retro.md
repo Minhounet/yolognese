@@ -42,3 +42,4 @@
 - Round 6: the screen kept its own memory of the peg up (pegUpRef), not reset by a new game: a false "Caught peeking" at the start of the next game (kenji-reviewer, blocking). The first check of it passed with the bug: the taps it made under the frozen clock did not leave the peg up; a probe script showed it, and the check now taps like the probe.
 - Round 9: adding the bomb made random items dangerous in every long browser check (three became flaky); the checks now fix the item draw through the composition root unless they choose their item, like the guardian's luck.
 - Round 9: the item checks fix Math.random to (k + 0.5) / n; adding a seventh kind moved every draw, and the present's draw now picks darkness: a check tied to a count of kinds breaks when a kind is added.
+- Round 12: the AC24 check was flaky under load: Playwright's installed clock keeps running in real time between steps; the check now pauses the clock (pauseAt), so only runFor moves time

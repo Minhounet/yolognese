@@ -7,8 +7,9 @@ async function tapAt(page, locator) {
 }
 
 test('AC24: the punch arm is a zig-zag spring, and the glove grows as it comes at the player', async ({ page }) => {
-  await page.clock.install();
+  await page.clock.install({ time: new Date('2026-01-01T00:00:00Z') });
   await page.goto('/');
+  await page.clock.pauseAt(new Date('2026-01-01T00:00:01Z')); // time moves only when the check says (the arm's samples are tight)
   await tapAt(page, page.getByTestId('secret-0')); // caught: the cooldown starts
   await page.clock.runFor(1600); // the laugh is over
   await tapAt(page, page.getByTestId('secret-1')); // during the cooldown: a punch
