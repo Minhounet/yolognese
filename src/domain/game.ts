@@ -13,10 +13,14 @@ export interface Game {
   readonly turns: readonly Turn[];
   readonly life: number;
   readonly outOfTime: boolean;
+  /** Race: a rival cracked the code first. */
+  readonly beaten: boolean;
+  /** Race: every rival is out, so this player wins. */
+  readonly lastStanding: boolean;
 }
 
 export function newGame(secret: Code): Game {
-  return { secret, turns: [], life: MAX_LIFE, outOfTime: false };
+  return { secret, turns: [], life: MAX_LIFE, outOfTime: false, beaten: false, lastStanding: false };
 }
 
 function countExact(game: Game, guess: Code): number {
@@ -50,8 +54,16 @@ export function runOutOfTime(game: Game): Game {
   return { ...game, outOfTime: true };
 }
 
-export function isWon(game: Game): boolean {
+export function isCracked(game: Game): boolean {
   return game.turns.some(({ exact }) => exact === game.secret.length);
+}
+
+export function isWon(game: Game): boolean {
+  return isCracked(game) || game.lastStanding;
+}
+
+export function bestExact(game: Game): number {
+  return Math.max(0, ...game.turns.map(({ exact }) => exact));
 }
 
 /** A guess that does not win costs 1 life. */
@@ -66,7 +78,7 @@ export function play(game: Game, guess: Code): Game {
 }
 
 export function isLost(game: Game): boolean {
-  return !isWon(game) && (game.life === 0 || game.outOfTime);
+  return !isWon(game) && (game.life === 0 || game.outOfTime || game.beaten);
 }
 
 export function isOver(game: Game): boolean {

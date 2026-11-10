@@ -14,6 +14,7 @@ async function distract(page) {
 test('AC6: a peeked peg flips back within half a second', async ({ page }) => {
   await page.clock.install();
   await page.goto('/');
+  await page.getByTestId('solo').click();
   const peg = page.getByTestId('secret-1');
   await distract(page);
 
@@ -32,6 +33,7 @@ test('AC6: a peeked peg flips back within half a second', async ({ page }) => {
 test('AC6: a peeked peg flips back as soon as the guardian looks back', async ({ page }) => {
   await page.clock.install();
   await page.goto('/');
+  await page.getByTestId('solo').click();
   const peg = page.getByTestId('secret-1');
   await distract(page);
   await page.clock.runFor(1400);
@@ -46,6 +48,7 @@ test('AC6: a peeked peg flips back as soon as the guardian looks back', async ({
 test('AC7: the eyes change colour while the guardian looks away, and come back when it watches', async ({ page }) => {
   await page.clock.install();
   await page.goto('/');
+  await page.getByTestId('solo').click();
   const pupil = page.getByTestId('pupil-left');
   const other = page.getByTestId('pupil-right');
   await expect(pupil).toHaveAttribute('fill', INK);
@@ -66,6 +69,7 @@ test('AC7: the eyes change colour while the guardian looks away, and come back w
 test('AC8: hitting the screen raises a puff of dust where it was hit, which fades', async ({ page }) => {
   await page.clock.install();
   await page.goto('/');
+  await page.getByTestId('solo').click();
 
   await page.touchscreen.tap(60, 120);
 

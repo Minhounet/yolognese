@@ -1,4 +1,5 @@
 import { Round } from '../domain/round';
+import { RaceEvent } from '../domain/race';
 
 export interface RandomSource {
   nextInt(maxExclusive: number): number;
@@ -14,4 +15,9 @@ export type Session = Round;
 export interface GameRepository {
   load(): Session | undefined;
   save(session: Session): void;
+}
+
+/** The race room, seen from the game: where this player's events go. */
+export interface RaceLink {
+  send(event: RaceEvent): void;
 }

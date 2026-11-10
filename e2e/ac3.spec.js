@@ -9,6 +9,7 @@ async function leftPupilX(page) {
 test('AC3: pointing makes the guardian look at the spot for 1.5 s, then it watches again', async ({ page }) => {
   await page.clock.install();
   await page.goto('/');
+  await page.getByTestId('solo').click();
   const guardian = page.getByTestId('guardian');
   await expect(guardian).toHaveAttribute('aria-label', 'guardian watching');
   const watchingX = await leftPupilX(page);

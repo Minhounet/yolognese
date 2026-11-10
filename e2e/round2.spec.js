@@ -12,6 +12,7 @@ test.beforeEach(async ({ page }) => {
   await scriptChance(page);
   await page.clock.install();
   await page.goto('/');
+  await page.getByTestId('solo').click();
 });
 
 const life = (page) => page.getByTestId('life-bar');

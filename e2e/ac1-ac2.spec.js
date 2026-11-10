@@ -12,6 +12,7 @@ async function guess(page, colors) {
 
 test('AC1: a guess shows exact and misplaced feedback and stays listed', async ({ page }) => {
   await page.goto(BASE);
+  await page.getByTestId('solo').click();
   await guess(page, MISS);
   await guess(page, ['blue', 'green', 'yellow', 'orange']);
   await expect(page.getByTestId('turn-0')).toBeVisible();
@@ -21,6 +22,7 @@ test('AC1: a guess shows exact and misplaced feedback and stays listed', async (
 
 test('AC2: losing reveals the secret, and a new game starts fresh', async ({ page }) => {
   await page.goto(BASE);
+  await page.getByTestId('solo').click();
   for (let attempt = 0; attempt < 10; attempt += 1) {
     if (await page.getByTestId('new-game').isVisible()) break;
     await guess(page, MISS);

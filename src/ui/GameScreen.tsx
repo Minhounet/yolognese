@@ -2,7 +2,8 @@ import { ComponentRef, useCallback, useEffect, useRef, useState } from 'react';
 import { GestureResponderEvent, LayoutChangeEvent, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { ActionResponse } from '../application/RoundAction';
 import { GameView } from '../application/views';
-import { UseCases } from '../compositionRoot';
+import { RaceUseCases, UseCases } from '../compositionRoot';
+import { RaceEvent } from '../domain/race';
 import { COLORS, Color } from '../domain/color';
 import { isComplete } from '../domain/draft';
 import { Point } from '../domain/point';
@@ -14,6 +15,7 @@ import { Guardian } from './Guardian';
 import { HeaderBars } from './HeaderBars';
 import { Items } from './Items';
 import { Peg } from './Peg';
+import { Rivals } from './Rivals';
 import { SecretPeg } from './SecretPeg';
 import { THEME } from './theme';
 
@@ -42,10 +44,28 @@ const NOTICE_TEXT: Readonly<Record<NoticeKind, string>> = {
   blocked: '🛡️ Blocked!',
   stolen: '🍴 The fork stole one of your pegs!',
   'grab-missed': '🍴 The fork found nothing to steal',
+  sabotage: '😈 Sabotage sent to a rival!',
+  beaten: 'Too slow!',
+  'last-standing': 'Everyone else is out!',
 };
 
-export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
-  const [view, setView] = useState<GameView>(() => useCases.startGame.execute());
+/** A race in progress: its use cases, and the room's events (other than start) handed to the game. */
+export interface RaceProps {
+  readonly useCases: RaceUseCases;
+  readonly subscribe: (onEvent: (event: RaceEvent) => void) => () => void;
+}
+
+interface GameScreenProps {
+  readonly useCases: UseCases;
+  /** The view to begin with (a race already started); otherwise a solo game starts. */
+  readonly initialView?: GameView;
+  readonly race?: RaceProps;
+  /** Back to the menu (solo) or to the room (race). */
+  readonly onBack?: () => void;
+}
+
+export function GameScreen({ useCases, initialView, race, onBack }: GameScreenProps) {
+  const [view, setView] = useState<GameView>(() => initialView ?? useCases.startGame.execute());
   const playing = view.status === 'playing';
   const [gaze, setGaze] = useState<Point | undefined>(undefined);
   const guardianCentre = useRef<Point>({ x: 0, y: 0 });
@@ -57,9 +77,24 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
   const nextPuff = useRef(0);
   const [scene, setScene] = useState({ width: 0, height: 0 });
 
-  const show = useCallback((response: ActionResponse) => {
-    if (response.kind === 'done') setView(response.view);
-  }, []);
+  const flush = useCallback(() => race?.useCases.flushRace.execute(), [race]);
+
+  const show = useCallback(
+    (response: ActionResponse) => {
+      if (response.kind === 'done') setView(response.view);
+      flush();
+    },
+    [flush],
+  );
+
+  useEffect(
+    () =>
+      race?.subscribe((event) => {
+        const changed = race.useCases.receiveRace.execute(event);
+        if (changed !== undefined) setView(changed);
+      }),
+    [race],
+  );
 
   useEffect(() => {
     if (!playing) return undefined;
@@ -93,6 +128,7 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
       setView(response.view);
       setCaught(true);
     }
+    flush();
   };
 
   useEffect(() => {
@@ -127,6 +163,7 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
     if (!isComplete(draft)) return;
     const response = useCases.submitGuess.execute({ guess: draft });
     if (response.kind === 'played') setView(response.view);
+    flush();
   };
 
   const newGame = () => {
@@ -147,7 +184,10 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
 
   const statusText = (): string => {
     if (caught) return 'Caught peeking! −2 life';
+    if (view.attack?.fromName !== undefined && playing) return `😈 ${view.attack.fromName} threw a ${view.attack.kind} at you!`;
     if (view.notice !== undefined && playing) return NOTICE_TEXT[view.notice];
+    if (view.lostBy === 'beaten') return `${view.race?.beatenBy ?? 'A rival'} cracked it first!`;
+    if (view.lastStanding) return 'Everyone else is out. You win! 🏆';
     if (view.lostBy === 'time') return TIME_UP;
     return STATUS_TEXT[view.status];
   };
@@ -155,7 +195,15 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
 
   return (
     <Pressable testID="scene" style={styles.screen} onPress={pointAt} onLayout={measureScene}>
-      <Text style={styles.title}>Yolognese</Text>
+      <View style={styles.titleLine}>
+        {onBack !== undefined && (
+          <Pressable testID="back" accessibilityRole="button" onPress={onBack} style={styles.back}>
+            <Text style={styles.backText}>{race ? '‹ Room' : '‹ Menu'}</Text>
+          </Pressable>
+        )}
+        <Text style={styles.title}>Yolognese</Text>
+      </View>
+      {view.race !== undefined && <Rivals rivals={view.race.rivals} />}
       <HeaderBars life={view.life} maxLife={view.maxLife} timeLeftMs={view.timeLeftMs} cooldownMs={view.cooldownMs} />
       <View ref={guardianRef} onLayout={measureGuardian}>
         <Guardian gaze={gaze} blind={view.blindMs > 0} angry={view.attack !== undefined} />
@@ -214,8 +262,13 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
           />
         </View>
       ) : (
-        <Pressable testID="new-game" accessibilityRole="button" onPress={newGame} style={[styles.button, styles.newGame]}>
-          <Text style={styles.buttonText}>New game</Text>
+        <Pressable
+          testID="new-game"
+          accessibilityRole="button"
+          onPress={race && onBack ? onBack : newGame}
+          style={[styles.button, styles.newGame]}
+        >
+          <Text style={styles.buttonText}>{race ? 'Back to the room' : 'New game'}</Text>
         </Pressable>
       )}
       <Items items={view.items} width={scene.width} height={scene.height} onCollect={(id) => show(useCases.collectItem.execute({ id }))} />
@@ -228,7 +281,10 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: THEME.background, alignItems: 'center', paddingTop: 32, paddingBottom: 16 },
-  title: { fontSize: 20, fontWeight: 'bold', color: THEME.sauce, marginBottom: 4 },
+  titleLine: { alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
+  title: { fontSize: 20, fontWeight: 'bold', color: THEME.sauce },
+  back: { position: 'absolute', left: 12, paddingVertical: 4, paddingHorizontal: 8 },
+  backText: { color: THEME.sauce, fontSize: 15, fontWeight: 'bold' },
   status: { color: THEME.ink, fontSize: 15, marginVertical: 6, marginHorizontal: 16, textAlign: 'center' },
   board: { flex: 1, alignSelf: 'stretch', marginHorizontal: 16, backgroundColor: THEME.board, borderRadius: 12 },
   boardContent: { alignItems: 'center', paddingVertical: 8 },

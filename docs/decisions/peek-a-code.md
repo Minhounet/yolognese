@@ -127,3 +127,11 @@
 - Not set up: `expo lint` (no ESLint config in the repo; the first run installs one and reports React-compiler errors in older files too)
 - Asked user: no (yolo)
 - Not verified: the feel on the phone (shield drag, item size, attack pace) (HUMAN)
+
+## PEEK-2 - race friends (user chose the race; dedicated Supabase project)
+- Decided: Supabase Realtime presence + broadcast, no table, publishable key in the app; see docs/ticket/PEEK-2/conception.md
+- Decided: environment allows the project host (uppezappkwsizsdyoalo.supabase.co), approved by the user; Node's WebSocket ignores the container proxy, so the first check used ws through the proxy; the browser check passes the proxy to Chromium
+- Decided: a menu (Solo / Race friends) before the game; the solo checks tap Solo first
+- Evidence: 75 unit tests, tsc clean, 24 browser checks including a real two-player race
+- Not verified: Supabase in Expo Go on a phone (docs.expo.dev unreachable from here: no URL polyfill added; if the phone fails to join, that is the first suspect) (HUMAN)
+- Asked user: no (yolo), apart from the network host

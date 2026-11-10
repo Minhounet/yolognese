@@ -9,6 +9,7 @@ export const ITEM_EMOJI: Readonly<Record<ItemKind, string>> = {
   hourglass: '⏳',
   charm: '🧿',
   present: '🎁',
+  sabotage: '😈',
 };
 
 const SIZE = 48;

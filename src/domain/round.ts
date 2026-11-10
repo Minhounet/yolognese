@@ -1,6 +1,7 @@
 import { Code, Color } from './color';
 import { Draft, EMPTY_DRAFT, clearSlot, filledSlots, placeColor, swapSlots } from './draft';
 import { Game, heal, hurt, isOver, newGame, play, runOutOfTime } from './game';
+import { Race, RaceEvent, hear, newRace, sabotage, takeOutbox } from './race';
 import { Guardian, WATCHING, blindUntil, distractUntil, isBlind, isWatching } from './guardian';
 
 /** Draws an integer in [0, maxExclusive): the only source of chance in the rules. */
@@ -28,13 +29,15 @@ const ATTACK_DELAY_MIN_MS = 10_000;
 const ATTACK_DELAY_SPREAD_MS = 10_000;
 
 /** What can appear on the screen. */
-export const ITEM_KINDS = ['food', 'smoke', 'xray', 'hourglass', 'charm', 'present'] as const;
+export const ITEM_KINDS = ['food', 'smoke', 'xray', 'hourglass', 'charm', 'present', 'sabotage'] as const;
 export type ItemKind = (typeof ITEM_KINDS)[number];
+/** Sabotage (the last kind) only shows in a race: it throws an attack at a rival. */
+const SOLO_KINDS = ITEM_KINDS.length - 1;
 
 /** What a present can hold: a good thing, or (one time in two) a bad one. */
 const GOOD_GIFTS = ['food', 'smoke', 'xray', 'hourglass', 'charm'] as const;
 const BAD_GIFTS = ['mixup', 'chili'] as const;
-export type Effect = (typeof GOOD_GIFTS)[number] | (typeof BAD_GIFTS)[number];
+export type Effect = (typeof GOOD_GIFTS)[number] | (typeof BAD_GIFTS)[number] | 'sabotage';
 
 export interface Item {
   readonly id: number;
@@ -52,9 +55,11 @@ export interface Attack {
   readonly kind: AttackKind;
   readonly lane: number;
   readonly landsAt: number;
+  /** Race: the rival who threw it; none for the guardian's own throws. */
+  readonly from?: string;
 }
 
-export type NoticeKind = Effect | 'hit' | 'blocked' | 'stolen' | 'grab-missed';
+export type NoticeKind = Effect | 'hit' | 'blocked' | 'stolen' | 'grab-missed' | 'beaten' | 'last-standing';
 
 export interface Notice {
   readonly kind: NoticeKind;
@@ -76,6 +81,8 @@ export interface Round {
   readonly shieldLane: number;
   readonly charm: boolean;
   readonly notice?: Notice;
+  /** Present in a race only. */
+  readonly race?: Race;
 }
 
 const itemDelay = (draw: Draw) => ITEM_DELAY_MIN_MS + draw(ITEM_DELAY_SPREAD_MS + 1);
@@ -162,6 +169,7 @@ const EFFECTS: Readonly<Record<Effect, (round: Round, now: number, draw: Draw) =
   charm: (round) => ({ ...round, charm: true }),
   mixup: (round, _now, draw) => ({ ...round, draft: switchTwo(round.draft, draw) }),
   chili: (round) => ({ ...round, game: hurt(round.game, CHILI_COST) }),
+  sabotage: (round, _now, draw) => (round.race === undefined ? round : { ...round, race: sabotage(round.race, draw) }),
 };
 
 /** Swaps two placed pegs chosen at random; fewer than two placed: unchanged. */
@@ -200,7 +208,7 @@ function spawnItem(round: Round, now: number, draw: Draw): Round {
   if (now < round.nextItemAt) return round;
   const item: Item = {
     id: round.nextItemId,
-    kind: ITEM_KINDS[draw(ITEM_KINDS.length)],
+    kind: ITEM_KINDS[draw(round.race === undefined ? SOLO_KINDS : ITEM_KINDS.length)],
     x: spot(draw),
     y: spot(draw),
     until: now + ITEM_SHOWN_MS,
@@ -209,7 +217,13 @@ function spawnItem(round: Round, now: number, draw: Draw): Round {
 }
 
 function startAttack(round: Round, now: number, draw: Draw): Round {
-  if (round.attack !== undefined || now < round.nextAttackAt) return round;
+  if (round.attack !== undefined) return round;
+  const thrown = round.race?.incoming[0];
+  if (round.race !== undefined && thrown !== undefined) {
+    const race = { ...round.race, incoming: round.race.incoming.slice(1) };
+    return { ...round, race, attack: { kind: thrown.kind, lane: thrown.lane, from: thrown.from, landsAt: now + ATTACK_WINDUP_MS } };
+  }
+  if (now < round.nextAttackAt) return round;
   if (!isWatching(round.guardian, now)) return { ...round, nextAttackAt: now + ATTACK_POSTPONE_MS };
   const kind: AttackKind = draw(3) === 2 ? 'fork' : 'meatball';
   return { ...round, attack: { kind, lane: draw(LANES), landsAt: now + ATTACK_WINDUP_MS } };
@@ -218,11 +232,44 @@ function startAttack(round: Round, now: number, draw: Draw): Round {
 function resolveAttack(round: Round, now: number, draw: Draw): Round {
   const { attack } = round;
   if (attack === undefined || now < attack.landsAt) return round;
-  const done = { ...round, attack: undefined, nextAttackAt: now + attackDelay(draw) };
+  const nextAttackAt = attack.from === undefined ? now + attackDelay(draw) : round.nextAttackAt;
+  const done = { ...round, attack: undefined, nextAttackAt };
   if (attack.lane === round.shieldLane) return notify(done, 'blocked', now);
   if (round.charm) return notify({ ...done, charm: false }, 'blocked', now);
   if (attack.kind === 'meatball') return notify({ ...done, game: hurt(done.game, ATTACK_COST) }, 'hit', now);
   const filled = filledSlots(round.draft);
   if (filled.length === 0) return notify(done, 'grab-missed', now);
   return notify({ ...done, draft: clearSlot(round.draft, filled[draw(filled.length)]) }, 'stolen', now);
+}
+
+// ---- racing
+
+/** Starts a race round: the same secret for everyone, the other players as rivals. */
+export function newRaceRound(
+  secret: Code,
+  me: string,
+  players: readonly { readonly id: string; readonly name: string }[],
+  now: number,
+  draw: Draw,
+): Round {
+  const round = newRound(secret, now, draw);
+  return { ...round, race: newRace(me, players, round.game.life) };
+}
+
+/** Applies a rival's event: their progress, an attack thrown at this player, their crack or their exit. */
+export function receive(round: Round, event: RaceEvent, now: number): Round {
+  if (round.race === undefined) return round;
+  const heard = hear(round.race, event);
+  const changed = { ...round, race: heard.race };
+  if (isOver(round.game)) return changed;
+  if (heard.beaten) return notify({ ...changed, game: { ...changed.game, beaten: true } }, 'beaten', now);
+  if (heard.lastStanding) return notify({ ...changed, game: { ...changed.game, lastStanding: true } }, 'last-standing', now);
+  return changed;
+}
+
+/** Takes the events this player must send to the room now. */
+export function flush(round: Round): { readonly round: Round; readonly events: readonly RaceEvent[] } {
+  if (round.race === undefined) return { round, events: [] };
+  const { race, events } = takeOutbox(round.race, round.game);
+  return { round: { ...round, race }, events };
 }

@@ -9,6 +9,7 @@ test.beforeEach(async ({ page }) => {
   await scriptChance(page);
   await page.clock.install();
   await page.goto('/');
+  await page.getByTestId('solo').click();
 });
 
 test('AC4: a peek while the guardian looks away shows the colour briefly', async ({ page }) => {

@@ -3,6 +3,8 @@ import { DistractGuardian, DistractGuardianImpl } from './application/DistractGu
 import { EditDraft, EditDraftImpl } from './application/EditDraft';
 import { MoveShield, MoveShieldImpl } from './application/MoveShield';
 import { PeekSecret, PeekSecretImpl } from './application/PeekSecret';
+import { FlushRace, FlushRaceImpl, ReceiveRace, ReceiveRaceImpl, StartRace, StartRaceImpl } from './application/Race';
+import { RaceLink } from './application/ports';
 import { RoundAction } from './application/RoundAction';
 import { StartGame, StartGameImpl } from './application/StartGame';
 import { SubmitGuess, SubmitGuessImpl } from './application/SubmitGuess';
@@ -20,6 +22,14 @@ export interface UseCases {
   readonly collectItem: CollectItem;
   readonly moveShield: MoveShield;
   readonly tick: Tick;
+  /** The race use cases, talking to the given room. */
+  readonly race: (link: RaceLink) => RaceUseCases;
+}
+
+export interface RaceUseCases {
+  readonly startRace: StartRace;
+  readonly receiveRace: ReceiveRace;
+  readonly flushRace: FlushRace;
 }
 
 export function createUseCases(): UseCases {
@@ -36,5 +46,10 @@ export function createUseCases(): UseCases {
     collectItem: new CollectItemImpl(action),
     moveShield: new MoveShieldImpl(action),
     tick: new TickImpl(action),
+    race: (link) => ({
+      startRace: new StartRaceImpl(random, repository, clock),
+      receiveRace: new ReceiveRaceImpl(repository, clock),
+      flushRace: new FlushRaceImpl(repository, link),
+    }),
   };
 }

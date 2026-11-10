@@ -21,12 +21,29 @@ export interface AttackView {
   readonly kind: AttackKind;
   readonly lane: number;
   readonly msToLand: number;
+  /** Race: the rival who threw it. */
+  readonly fromName?: string;
+}
+
+export interface RivalView {
+  readonly name: string;
+  readonly life: number;
+  readonly bestExact: number;
+  readonly out: boolean;
+  readonly cracked: boolean;
+}
+
+export interface RaceView {
+  readonly rivals: readonly RivalView[];
+  readonly beatenBy?: string;
 }
 
 export interface GameView {
   readonly status: GameStatus;
   /** Why a lost game was lost. */
-  readonly lostBy?: 'life' | 'time';
+  readonly lostBy?: 'life' | 'time' | 'beaten';
+  /** Race: won as the last player still in. */
+  readonly lastStanding: boolean;
   readonly life: number;
   readonly maxLife: number;
   readonly secret?: Code;
@@ -43,6 +60,7 @@ export interface GameView {
   readonly charm: boolean;
   /** What just happened (an item's effect, an attack's outcome), while it is fresh. */
   readonly notice?: NoticeKind;
+  readonly race?: RaceView;
 }
 
 export interface GuardianView {

@@ -8,6 +8,11 @@ You have a life bar and 3 minutes. Items pop up: 🍝 food, 💨 smoke bomb,
 it can switch your pegs or burn you). The guardian throws meatballs, and
 forks that steal a peg from your row: drag the 🛡️ shield into the warned lane.
 
+**Race friends:** everyone joins the same room code on their own phone, the
+first one in starts. Same secret for all; first to crack it wins, or the last
+one still in. Grab 😈 to throw a meatball or a fork at a rival. Rooms run on
+Supabase Realtime (no database tables). Design in `docs/ticket/PEEK-2/`.
+
 Built in yolo mode with the aixlper skills; design and acceptance criteria
 in `docs/ticket/PEEK-1/`, decisions in `docs/decisions/peek-a-code.md`.
 
