@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Ellipse, Path } from 'react-native-svg';
 import { Point } from '../domain/point';
 import { PEG_COLORS, THEME } from './theme';
@@ -25,6 +25,28 @@ export function pupilOffset(gaze: Point): Point {
   return { x: gaze.x * scale, y: gaze.y * scale };
 }
 
+const FINGER_POP_MS = 250;
+
+/** AC25: a big pointing finger popping out of the screen at the player holding the phone. */
+function PointingFinger() {
+  const pop = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const out = Animated.timing(pop, { toValue: 1, duration: FINGER_POP_MS, easing: Easing.out(Easing.back(2)), useNativeDriver: true });
+    out.start();
+    return () => out.stop();
+  }, [pop]);
+  const scale = pop.interpolate({ inputRange: [0, 1], outputRange: [0.3, 1] });
+  return (
+    <Animated.Text
+      testID="guardian-points"
+      accessibilityLabel="the guardian points at you"
+      style={[styles.finger, { opacity: pop, transform: [{ scale }] }]}
+    >
+      🫵
+    </Animated.Text>
+  );
+}
+
 export function Guardian({ gaze, size = 120, laughing = false }: GuardianProps) {
   const pupil = pupilOffset(gaze ?? AT_THE_PLAYER);
   const looksAway = gaze !== undefined;
@@ -44,9 +66,7 @@ export function Guardian({ gaze, size = 120, laughing = false }: GuardianProps) 
           <Text testID="guardian-laugh" accessibilityLabel="the guardian laughs at you" style={styles.laugh}>
             HA HA HA!
           </Text>
-          <Text testID="guardian-points" accessibilityLabel="the guardian points at you" style={styles.finger}>
-            🫵
-          </Text>
+          <PointingFinger />
         </>
       )}
       <Svg width={size} height={size * 0.8} viewBox="0 0 100 80">
@@ -78,5 +98,13 @@ export function Guardian({ gaze, size = 120, laughing = false }: GuardianProps) 
 
 const styles = StyleSheet.create({
   laugh: { position: 'absolute', top: -14, right: -60, color: THEME.sauce, fontWeight: 'bold', fontSize: 16, zIndex: 1 },
-  finger: { position: 'absolute', bottom: -6, right: -34, fontSize: 40, zIndex: 1 },
+  finger: {
+    position: 'absolute',
+    bottom: -34,
+    right: -62,
+    fontSize: 72,
+    zIndex: 2,
+    textShadowColor: 'rgba(0,0,0,0.35)',
+    textShadowRadius: 8,
+  },
 });

@@ -42,7 +42,10 @@ test('AC25: when the player is caught, the guardian laughs and points at them, t
 
   await expect(page.getByTestId('guardian-laugh')).toHaveText('HA HA HA!');
   await expect(page.getByTestId('guardian-points')).toBeVisible();
-  await page.clock.runFor(1400);
+  await page.clock.runFor(300); // the finger has popped out
+  const finger = await page.getByTestId('guardian-points').boundingBox();
+  expect(finger.height).toBeGreaterThan(60); // drawn big enough to see clearly (user)
+  await page.clock.runFor(1100);
   await expect(page.getByTestId('guardian-laugh')).toBeVisible(); // still laughing just before 1.5 s
   await page.clock.runFor(200);
   await expect(page.getByTestId('guardian-laugh')).toHaveCount(0);

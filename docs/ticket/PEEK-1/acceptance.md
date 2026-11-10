@@ -215,10 +215,10 @@ Order: AC10, AC11, AC12, AC14, AC13; then AC15 (user, after playing); then AC16,
 ## AC25: Caught, the guardian laughs and points at the player (user, round 8)
 - Source: "When caught the enemy must laugh and raise a finger to me (the real me which is holding the phone)"
 - Interpretation: when the player is caught peeking, the guardian laughs (squinting eyes, open mouth, "HA HA HA!") and points its finger out of the screen at the player (🫵, the reading of the orchestrator: a mocking point, not a rude gesture), for as long as the "Caught peeking" line shows (1.5 s)
-- Questions: open, for the user: is the pointing finger 🫵 the gesture meant by "raise a finger to me"? (assumption of the orchestrator)
+- Questions: is the pointing finger 🫵 the gesture meant? Answered by the user: "yes, but it must be draw to see it clearly": the finger is now big (72 px), pops out at the player, beside the laughing face
 - Covered by: the screen (src/ui/Guardian.tsx)
-- Evidence: browser check e2e/ac24-ac25.spec.js "when the player is caught, the guardian laughs and points at them, then calms down" (the laugh and the finger shown, still shown at 1.4 s, gone at 1.6 s): 42 passed. The squinting eyes and open mouth are the look, not checked; kenji-reviewer: minor findings only
-- Status: designed (pending the user's answer on the gesture)
+- Evidence: browser check e2e/ac24-ac25.spec.js "when the player is caught, the guardian laughs and points at them, then calms down" (the laugh and the finger shown, the finger over 60 px tall, still shown at 1.4 s, gone at 1.6 s): passed. The squinting eyes and open mouth are the look, not checked; kenji-reviewer: minor findings only; the gesture confirmed by the user
+- Status: verified
 
 ## AC26: Item animations (user, round 9)
 - Source: "Can we improve the items animation ? Blinding can be like smoke grenade., shield can be a green laser protecting us. The glasses can launch a laser beam to a peg."
