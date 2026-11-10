@@ -1,4 +1,5 @@
 import { StartGameImpl } from '../../src/application/StartGame';
+import { FakeClock } from '../support/FakeClock';
 import { SubmitGuess, SubmitGuessImpl } from '../../src/application/SubmitGuess';
 import { InMemoryGameRepository } from '../../src/infrastructure/InMemoryGameRepository';
 import { ScriptedRandomSource } from '../support/ScriptedRandomSource';
@@ -8,8 +9,8 @@ const RED_YELLOW_GREEN_BLUE = [0, 1, 2, 3];
 
 function startedGame(secretIndexes: readonly number[]): SubmitGuess {
   const repository = new InMemoryGameRepository();
-  new StartGameImpl(new ScriptedRandomSource(secretIndexes), repository).execute();
-  return new SubmitGuessImpl(repository);
+  new StartGameImpl(new ScriptedRandomSource(secretIndexes), repository, new FakeClock()).execute();
+  return new SubmitGuessImpl(repository, new FakeClock());
 }
 
 describe('SubmitGuess', () => {
@@ -106,7 +107,7 @@ describe('SubmitGuess', () => {
 
     const response = submitGuess.execute({ guess: ['purple', 'purple', 'orange', 'orange'] });
 
-    expect(response).toMatchObject({ kind: 'played', view: { attemptsLeft: 9 } });
+    expect(response).toMatchObject({ kind: 'played', view: { life: 9 } });
   });
 
   it('shouldBeLost_whenTenthGuessMisses', () => {
@@ -116,7 +117,7 @@ describe('SubmitGuess', () => {
 
     const response = submitGuess.execute(miss);
 
-    expect(response).toMatchObject({ kind: 'played', view: { status: 'lost', attemptsLeft: 0 } });
+    expect(response).toMatchObject({ kind: 'played', view: { status: 'lost', life: 0 } });
   });
 
   it('shouldRejectGuess_whenGameIsOver', () => {

@@ -7,7 +7,7 @@ const INK = '#3b2314';
 
 async function distract(page) {
   const box = await page.getByTestId('guardian').boundingBox();
-  await page.touchscreen.tap(box.x + box.width + 120, box.y);
+  await page.touchscreen.tap(box.x + box.width + 100, box.y + box.height / 2);
   await expect(page.getByTestId('guardian')).toHaveAttribute('aria-label', 'guardian looking away');
 }
 

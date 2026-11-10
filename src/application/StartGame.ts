@@ -1,8 +1,7 @@
 import { COLORS, Code } from '../domain/color';
-import { newGame } from '../domain/game';
-import { WATCHING } from '../domain/guardian';
+import { newRound } from '../domain/round';
 import { toGameView } from './GameMapper';
-import { GameRepository, RandomSource } from './ports';
+import { Clock, GameRepository, RandomSource } from './ports';
 import { GameView } from './views';
 
 export interface StartGame {
@@ -13,12 +12,14 @@ export class StartGameImpl implements StartGame {
   constructor(
     private readonly random: RandomSource,
     private readonly repository: GameRepository,
+    private readonly clock: Clock,
   ) {}
 
   execute(): GameView {
-    const game = newGame(this.drawSecret());
-    this.repository.save({ game, guardian: WATCHING });
-    return toGameView(game);
+    const now = this.clock.now();
+    const round = newRound(this.drawSecret(), now, (max) => this.random.nextInt(max));
+    this.repository.save(round);
+    return toGameView(round, now);
   }
 
   private drawSecret(): Code {

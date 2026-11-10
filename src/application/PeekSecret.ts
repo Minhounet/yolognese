@@ -1,6 +1,6 @@
 import { Color } from '../domain/color';
-import { isOver, penalise } from '../domain/game';
-import { isDistracted } from '../domain/guardian';
+import { isOver } from '../domain/game';
+import { peek } from '../domain/round';
 import { toGameView } from './GameMapper';
 import { Clock, GameRepository } from './ports';
 import { GameView } from './views';
@@ -10,9 +10,9 @@ export interface PeekCommand {
 }
 
 export type PeekResponse =
-  | { readonly kind: 'revealed'; readonly index: number; readonly color: Color }
+  | { readonly kind: 'revealed'; readonly index: number; readonly color: Color; readonly view: GameView }
   | { readonly kind: 'caught'; readonly view: GameView }
-  | { readonly kind: 'rejected'; readonly reason: 'no-game' | 'game-over' };
+  | { readonly kind: 'rejected'; readonly reason: 'no-game' | 'game-over' | 'cooling-down' };
 
 export interface PeekSecret {
   execute(command: PeekCommand): PeekResponse;
@@ -32,11 +32,16 @@ export class PeekSecretImpl implements PeekSecret {
     if (isOver(session.game)) {
       return { kind: 'rejected', reason: 'game-over' };
     }
-    if (!isDistracted(session.guardian, this.clock.now())) {
-      const game = penalise(session.game);
-      this.repository.save({ ...session, game });
-      return { kind: 'caught', view: toGameView(game) };
+    const now = this.clock.now();
+    const { round, outcome } = peek(session, now);
+    if (outcome === 'cooling-down') {
+      return { kind: 'rejected', reason: 'cooling-down' };
     }
-    return { kind: 'revealed', index: command.index, color: session.game.secret[command.index] };
+    this.repository.save(round);
+    const view = toGameView(round, now);
+    if (outcome === 'caught') {
+      return { kind: 'caught', view };
+    }
+    return { kind: 'revealed', index: command.index, color: round.game.secret[command.index], view };
   }
 }

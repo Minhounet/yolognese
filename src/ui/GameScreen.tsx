@@ -1,44 +1,51 @@
 import { ComponentRef, useCallback, useEffect, useRef, useState } from 'react';
-import { GestureResponderEvent, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { GestureResponderEvent, LayoutChangeEvent, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActionResponse } from '../application/RoundAction';
 import { GameView } from '../application/views';
 import { UseCases } from '../compositionRoot';
-import { COLORS, Code, Color } from '../domain/color';
+import { COLORS, Color } from '../domain/color';
+import { isComplete } from '../domain/draft';
 import { Point } from '../domain/point';
+import { NoticeKind } from '../domain/round';
+import { Arena } from './Arena';
+import { DustPuff } from './DustPuff';
 import { Feedback, FeedbackLegend } from './Feedback';
 import { Guardian } from './Guardian';
-import { DustPuff } from './DustPuff';
+import { HeaderBars } from './HeaderBars';
+import { Items } from './Items';
 import { Peg } from './Peg';
 import { SecretPeg } from './SecretPeg';
 import { THEME } from './theme';
 
-type Draft = readonly (Color | undefined)[];
-
-const EMPTY_DRAFT: Draft = [undefined, undefined, undefined, undefined];
+const HIDDEN_ROW = [undefined, undefined, undefined, undefined] as const;
 const PEEK_SHOWN_MS = 400;
 const CAUGHT_SHOWN_MS = 1500;
-
-function isComplete(draft: Draft): draft is Code {
-  return draft.every((color) => color !== undefined);
-}
-
-function withColor(draft: Draft, color: Color): Draft {
-  const slot = draft.indexOf(undefined);
-  return slot === -1 ? draft : draft.map((current, index) => (index === slot ? color : current));
-}
-
-function withoutSlot(draft: Draft, slot: number): Draft {
-  return draft.map((current, index) => (index === slot ? undefined : current));
-}
+const TICK_MS = 100;
 
 const STATUS_TEXT: Readonly<Record<GameView['status'], string>> = {
   playing: 'Crack the secret sauce!',
   won: 'You cracked it! 🍝',
-  lost: 'Out of attempts. The guardian wins.',
+  lost: 'Out of life. The guardian wins.',
+};
+
+const TIME_UP = "Time's up! The guardian wins.";
+
+const NOTICE_TEXT: Readonly<Record<NoticeKind, string>> = {
+  food: '🍝 Yum! +3 life',
+  smoke: '💨 Smoke bomb! The guardian is blind: peek freely',
+  xray: '👓 X-ray: one peg, quick!',
+  hourglass: '⏳ +30 seconds',
+  charm: '🧿 Charm: the next attack is blocked',
+  mixup: '🌀 Bad present! Two of your pegs switched places',
+  chili: '🌶️ Bad present! Too hot: −2 life',
+  hit: '🧆 Ouch! −2 life',
+  blocked: '🛡️ Blocked!',
+  stolen: '🍴 The fork stole one of your pegs!',
+  'grab-missed': '🍴 The fork found nothing to steal',
 };
 
 export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
   const [view, setView] = useState<GameView>(() => useCases.startGame.execute());
-  const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
   const playing = view.status === 'playing';
   const [gaze, setGaze] = useState<Point | undefined>(undefined);
   const guardianCentre = useRef<Point>({ x: 0, y: 0 });
@@ -48,6 +55,17 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
   const [caught, setCaught] = useState(false);
   const [puffs, setPuffs] = useState<readonly { readonly id: number; readonly at: Point }[]>([]);
   const nextPuff = useRef(0);
+  const [scene, setScene] = useState({ width: 0, height: 0 });
+
+  const show = useCallback((response: ActionResponse) => {
+    if (response.kind === 'done') setView(response.view);
+  }, []);
+
+  useEffect(() => {
+    if (!playing) return undefined;
+    const timer = setInterval(() => show(useCases.tick.execute()), TICK_MS);
+    return () => clearInterval(timer);
+  }, [playing, show, useCases]);
 
   useEffect(() => {
     if (gaze === undefined) setPeeked(undefined);
@@ -67,7 +85,10 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
 
   const peek = (index: number) => {
     const response = useCases.peekSecret.execute({ index });
-    if (response.kind === 'revealed') setPeeked({ index, color: response.color });
+    if (response.kind === 'revealed') {
+      setView(response.view);
+      setPeeked({ index, color: response.color });
+    }
     if (response.kind === 'caught') {
       setView(response.view);
       setCaught(true);
@@ -102,34 +123,50 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
   const removePuff = useCallback((id: number) => setPuffs((current) => current.filter((puff) => puff.id !== id)), []);
 
   const submit = () => {
+    const { draft } = view;
     if (!isComplete(draft)) return;
     const response = useCases.submitGuess.execute({ guess: draft });
     if (response.kind === 'played') setView(response.view);
-    setDraft(EMPTY_DRAFT);
   };
 
   const newGame = () => {
     setView(useCases.startGame.execute());
-    setDraft(EMPTY_DRAFT);
+    setGaze(undefined);
   };
 
+  const measureScene = (event: LayoutChangeEvent) => {
+    const { width, height } = event.nativeEvent.layout;
+    setScene({ width, height });
+  };
+
+  const shownAt = (slot: number): Color | undefined => {
+    if (view.secret !== undefined) return view.secret[slot];
+    if (peeked?.index === slot) return peeked.color;
+    return view.xray?.index === slot ? view.xray.color : undefined;
+  };
+
+  const statusText = (): string => {
+    if (caught) return 'Caught peeking! −2 life';
+    if (view.notice !== undefined && playing) return NOTICE_TEXT[view.notice];
+    if (view.lostBy === 'time') return TIME_UP;
+    return STATUS_TEXT[view.status];
+  };
+  const alarming = caught || view.notice === 'hit' || view.notice === 'stolen' || view.notice === 'mixup' || view.notice === 'chili';
+
   return (
-    <Pressable testID="scene" style={styles.screen} onPress={pointAt}>
+    <Pressable testID="scene" style={styles.screen} onPress={pointAt} onLayout={measureScene}>
       <Text style={styles.title}>Yolognese</Text>
+      <HeaderBars life={view.life} maxLife={view.maxLife} timeLeftMs={view.timeLeftMs} cooldownMs={view.cooldownMs} />
       <View ref={guardianRef} onLayout={measureGuardian}>
-        <Guardian gaze={gaze} />
+        <Guardian gaze={gaze} blind={view.blindMs > 0} angry={view.attack !== undefined} />
       </View>
       <View style={styles.row} testID="secret">
-        {(view.secret ?? EMPTY_DRAFT).map((color, slot) => {
-          const shown = view.secret === undefined && peeked?.index === slot ? peeked.color : color;
-          return (
-            <SecretPeg key={slot} testID={`secret-${slot}`} color={shown} onPress={playing ? () => peek(slot) : undefined} />
-          );
-        })}
+        {HIDDEN_ROW.map((_, slot) => (
+          <SecretPeg key={slot} testID={`secret-${slot}`} color={shownAt(slot)} onPress={playing ? () => peek(slot) : undefined} />
+        ))}
       </View>
-      <Text testID="status" style={[styles.status, caught && styles.caught]}>
-        {caught ? 'Caught peeking! −1 attempt' : STATUS_TEXT[view.status]}
-        {playing ? ` · ${view.attemptsLeft} attempts left` : ''}
+      <Text testID="status" style={[styles.status, alarming && styles.alarm]}>
+        {statusText()}
       </Text>
       <FeedbackLegend />
       <ScrollView style={styles.board} contentContainerStyle={styles.boardContent}>
@@ -145,30 +182,43 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
       {playing ? (
         <View style={styles.controls}>
           <View style={styles.row}>
-            {draft.map((color, slot) => (
-              <Peg key={slot} testID={`slot-${slot}`} color={color} onPress={() => setDraft(withoutSlot(draft, slot))} />
+            {view.draft.map((color, slot) => (
+              <Peg key={slot} testID={`slot-${slot}`} color={color} onPress={() => show(useCases.editDraft.execute({ kind: 'clear', slot }))} />
             ))}
+            <Pressable
+              testID="submit"
+              accessibilityRole="button"
+              disabled={!isComplete(view.draft)}
+              onPress={submit}
+              style={[styles.button, !isComplete(view.draft) && styles.disabled]}
+            >
+              <Text style={styles.buttonText}>Guess</Text>
+            </Pressable>
           </View>
           <View style={styles.row}>
             {COLORS.map((color) => (
-              <Peg key={color} testID={`palette-${color}`} color={color} size={44} onPress={() => setDraft(withColor(draft, color))} />
+              <Peg
+                key={color}
+                testID={`palette-${color}`}
+                color={color}
+                size={44}
+                onPress={() => show(useCases.editDraft.execute({ kind: 'place', color }))}
+              />
             ))}
           </View>
-          <Pressable
-            testID="submit"
-            accessibilityRole="button"
-            disabled={!isComplete(draft)}
-            onPress={submit}
-            style={[styles.button, !isComplete(draft) && styles.disabled]}
-          >
-            <Text style={styles.buttonText}>Guess</Text>
-          </Pressable>
+          <Arena
+            shieldLane={view.shieldLane}
+            attack={view.attack}
+            charm={view.charm}
+            onMove={(lane) => show(useCases.moveShield.execute({ lane }))}
+          />
         </View>
       ) : (
-        <Pressable testID="new-game" accessibilityRole="button" onPress={newGame} style={styles.button}>
+        <Pressable testID="new-game" accessibilityRole="button" onPress={newGame} style={[styles.button, styles.newGame]}>
           <Text style={styles.buttonText}>New game</Text>
         </Pressable>
       )}
+      <Items items={view.items} width={scene.width} height={scene.height} onCollect={(id) => show(useCases.collectItem.execute({ id }))} />
       {puffs.map((puff) => (
         <DustPuff key={puff.id} at={puff.at} onDone={() => removePuff(puff.id)} />
       ))}
@@ -177,15 +227,16 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: THEME.background, alignItems: 'center', paddingTop: 36, paddingBottom: 24 },
-  title: { fontSize: 24, fontWeight: 'bold', color: THEME.sauce, marginBottom: 8 },
-  status: { color: THEME.ink, fontSize: 16, marginVertical: 8 },
+  screen: { flex: 1, backgroundColor: THEME.background, alignItems: 'center', paddingTop: 32, paddingBottom: 16 },
+  title: { fontSize: 20, fontWeight: 'bold', color: THEME.sauce, marginBottom: 4 },
+  status: { color: THEME.ink, fontSize: 15, marginVertical: 6, marginHorizontal: 16, textAlign: 'center' },
   board: { flex: 1, alignSelf: 'stretch', marginHorizontal: 16, backgroundColor: THEME.board, borderRadius: 12 },
   boardContent: { alignItems: 'center', paddingVertical: 8 },
   row: { flexDirection: 'row', alignItems: 'center' },
-  controls: { alignItems: 'center', marginTop: 8 },
-  button: { backgroundColor: THEME.sauce, borderRadius: 24, paddingHorizontal: 32, paddingVertical: 12, marginTop: 8 },
+  controls: { alignItems: 'center', alignSelf: 'stretch', marginTop: 6 },
+  button: { backgroundColor: THEME.sauce, borderRadius: 22, paddingHorizontal: 18, paddingVertical: 10, marginLeft: 8 },
+  newGame: { marginTop: 8, marginLeft: 0, paddingHorizontal: 32 },
   disabled: { opacity: 0.4 },
-  caught: { color: THEME.sauce, fontWeight: 'bold' },
-  buttonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
+  alarm: { color: THEME.sauce, fontWeight: 'bold' },
+  buttonText: { color: '#fff', fontSize: 17, fontWeight: 'bold' },
 });

@@ -1,8 +1,12 @@
 # Yolognese
 
 A code-breaking game with a twist: a meatball guardian watches the hidden
-code. Point somewhere (or shake your phone) and its eyes follow, then peek at
-a hidden peg while it looks away. Get caught and you lose an attempt.
+code. Tap somewhere and its eyes follow, then peek at a hidden peg while it
+looks away (then wait for the cooldown bar). Get caught and you lose 2 life.
+You have a life bar and 3 minutes. Items pop up: 🍝 food, 💨 smoke bomb,
+👓 x-ray glasses (one peg, quick), ⏳ +30 s, 🧿 charm, 🎁 present (a gamble:
+it can switch your pegs or burn you). The guardian throws meatballs, and
+forks that steal a peg from your row: drag the 🛡️ shield into the warned lane.
 
 Built in yolo mode with the aixlper skills; design and acceptance criteria
 in `docs/ticket/PEEK-1/`, decisions in `docs/decisions/peek-a-code.md`.

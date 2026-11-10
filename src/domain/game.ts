@@ -1,6 +1,6 @@
 import { Code, COLORS, Color } from './color';
 
-const MAX_ATTEMPTS = 10;
+export const MAX_LIFE = 10;
 
 export interface Turn {
   readonly guess: Code;
@@ -11,11 +11,12 @@ export interface Turn {
 export interface Game {
   readonly secret: Code;
   readonly turns: readonly Turn[];
-  readonly penalties: number;
+  readonly life: number;
+  readonly outOfTime: boolean;
 }
 
 export function newGame(secret: Code): Game {
-  return { secret, turns: [], penalties: 0 };
+  return { secret, turns: [], life: MAX_LIFE, outOfTime: false };
 }
 
 function countExact(game: Game, guess: Code): number {
@@ -37,29 +38,35 @@ function countMisplaced(game: Game, guess: Code): number {
   return countSharedColours(game.secret, guess) - countExact(game, guess);
 }
 
-export function play(game: Game, guess: Code): Game {
-  const turn: Turn = {
-    guess,
-    exact: countExact(game, guess),
-    misplaced: countMisplaced(game, guess),
-  };
-  return { ...game, turns: [...game.turns, turn] };
+export function hurt(game: Game, amount: number): Game {
+  return { ...game, life: Math.max(0, game.life - amount) };
 }
 
-export function penalise(game: Game): Game {
-  return { ...game, penalties: game.penalties + 1 };
+export function heal(game: Game, amount: number): Game {
+  return { ...game, life: Math.min(MAX_LIFE, game.life + amount) };
+}
+
+export function runOutOfTime(game: Game): Game {
+  return { ...game, outOfTime: true };
 }
 
 export function isWon(game: Game): boolean {
   return game.turns.some(({ exact }) => exact === game.secret.length);
 }
 
-export function attemptsLeft(game: Game): number {
-  return MAX_ATTEMPTS - game.turns.length - game.penalties;
+/** A guess that does not win costs 1 life. */
+export function play(game: Game, guess: Code): Game {
+  const turn: Turn = {
+    guess,
+    exact: countExact(game, guess),
+    misplaced: countMisplaced(game, guess),
+  };
+  const played = { ...game, turns: [...game.turns, turn] };
+  return isWon(played) ? played : hurt(played, 1);
 }
 
 export function isLost(game: Game): boolean {
-  return !isWon(game) && attemptsLeft(game) === 0;
+  return !isWon(game) && (game.life === 0 || game.outOfTime);
 }
 
 export function isOver(game: Game): boolean {

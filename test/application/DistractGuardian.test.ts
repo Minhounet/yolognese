@@ -6,7 +6,7 @@ import { ScriptedRandomSource } from '../support/ScriptedRandomSource';
 
 function startedGame(clock: FakeClock): DistractGuardian {
   const repository = new InMemoryGameRepository();
-  new StartGameImpl(new ScriptedRandomSource([0, 1, 2, 3]), repository).execute();
+  new StartGameImpl(new ScriptedRandomSource([0, 1, 2, 3]), repository, clock).execute();
   return new DistractGuardianImpl(repository, clock);
 }
 

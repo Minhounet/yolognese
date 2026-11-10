@@ -10,12 +10,12 @@ import { ScriptedRandomSource } from '../support/ScriptedRandomSource';
 function startedGame() {
   const clock = new FakeClock();
   const repository = new InMemoryGameRepository();
-  new StartGameImpl(new ScriptedRandomSource([0, 1, 2, 3]), repository).execute();
+  new StartGameImpl(new ScriptedRandomSource([0, 1, 2, 3]), repository, clock).execute();
   return {
     clock,
     distractGuardian: new DistractGuardianImpl(repository, clock),
     peekSecret: new PeekSecretImpl(repository, clock),
-    submitGuess: new SubmitGuessImpl(repository),
+    submitGuess: new SubmitGuessImpl(repository, clock),
   };
 }
 
@@ -28,7 +28,7 @@ describe('PeekSecret', () => {
 
     const response = peekSecret.execute({ index: 2 });
 
-    expect(response).toEqual({ kind: 'revealed', index: 2, color: 'green' });
+    expect(response).toMatchObject({ kind: 'revealed', index: 2, color: 'green' });
   });
 
   it('shouldBeCaught_whenPeekingWhileWatched', () => {
@@ -56,15 +56,15 @@ describe('PeekSecret', () => {
 
     const response = peekSecret.execute({ index: 0 });
 
-    expect(response).toEqual({ kind: 'revealed', index: 0, color: 'red' });
+    expect(response).toMatchObject({ kind: 'revealed', index: 0, color: 'red' });
   });
 
-  it('shouldCostOneAttempt_whenCaught', () => {
+  it('shouldCostTwoLife_whenCaught', () => {
     const { peekSecret } = startedGame();
 
     const response = peekSecret.execute({ index: 2 });
 
-    expect(response).toMatchObject({ kind: 'caught', view: { attemptsLeft: 9 } });
+    expect(response).toMatchObject({ kind: 'caught', view: { life: 8 } });
   });
 
   it('shouldLoseGame_whenCaughtOnLastAttempt', () => {
@@ -74,7 +74,7 @@ describe('PeekSecret', () => {
 
     const response = peekSecret.execute({ index: 2 });
 
-    expect(response).toMatchObject({ kind: 'caught', view: { status: 'lost', attemptsLeft: 0 } });
+    expect(response).toMatchObject({ kind: 'caught', view: { status: 'lost', life: 0 } });
   });
 
   it('shouldRejectPeek_whenGameIsOver', () => {
@@ -93,6 +93,6 @@ describe('PeekSecret', () => {
 
     const response = submitGuess.execute({ guess: ['purple', 'purple', 'orange', 'orange'] });
 
-    expect(response).toMatchObject({ kind: 'played', view: { attemptsLeft: 8 } });
+    expect(response).toMatchObject({ kind: 'played', view: { life: 7 } });
   });
 });

@@ -14,7 +14,7 @@ test('AC3: pointing makes the guardian look at the spot for 1.5 s, then it watch
   const watchingX = await leftPupilX(page);
 
   const box = await guardian.boundingBox();
-  await page.touchscreen.tap(box.x + box.width + 120, box.y); // to the right of the guardian, on empty space
+  await page.touchscreen.tap(box.x + box.width + 100, box.y + box.height / 2); // to the right of the guardian, on empty space
 
   await expect(guardian).toHaveAttribute('aria-label', 'guardian looking away');
   expect(await leftPupilX(page)).toBeGreaterThan(watchingX);

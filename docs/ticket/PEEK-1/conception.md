@@ -80,6 +80,15 @@ pegs, exact / misplaced feedback), not a copy of a commercial game.
 - D-items and D-attack need time to pass with no player action, so a new use case `Tick` (constructor(GameRepository, Clock, RandomSource)), called by the screen every 100 ms, spawns and expires items and resolves attacks; `CollectItem` (item id) applies an item; `MoveShield` (lane 0-2) stores the shield lane. Item kinds and attack timings are pure domain (src/domain/items.ts, src/domain/attack.ts); randomness only through RandomSource, time only through Clock, so every rule is test-driven with the scripted random source and the fake clock.
 - The shield drag is UI (a PanResponder snapping to the nearest lane) calling MoveShield; the screen shows the life bar, cooldown bar, countdown, items and the attack warning from the views.
 
+### Round 2 as built, and round 3 (AC15, AC16)
+
+- Deviation: the Session became the domain `Round` (src/domain/round.ts): game, guardian (now with `blindUntil`), draft, `endsAt`, `peekReadyAt`, x-ray, items, attack, shield lane, charm, last notice. Every rule is a pure function of (round, now, draw); `Draw` is the RandomSource seen from the domain.
+- Deviation: one `GameView` for everything (life, timer, cooldown, items, attack, shield, notice), computed by `toGameView(round, now)`, so the screen just shows the latest view. EditDraft, CollectItem, MoveShield and Tick share `RoundAction` (load, refuse no-game / game-over / gone, apply, save, view).
+- D-draft (round 3): the row being composed lives in the round, not the screen (`EditDraft`: place / clear), because the fork (AC16) and the mix-up (AC15) change it. SubmitGuess empties it.
+- D-xray (round 3): one random peg for 1200 ms (was: for the rest of the game).
+- D-present (round 3): good one time in two; bad gifts 🌀 mix-up and 🌶️ chili exist only inside presents.
+- The browser checks script chance through `window.__yologneseRandom` (read by MathRandomSource): other code on the page also calls Math.random.
+
 
 - None blocking. The exact tuning (1500 ms, shake threshold) may change
   after the user tries it on the phone.

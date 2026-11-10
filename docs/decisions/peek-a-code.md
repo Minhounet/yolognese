@@ -117,3 +117,13 @@
 - Decided: build in a fresh session: this one is long and costly per step (the user raised token cost)
 - Fixed: the AC9 edit had dropped the "## Discrepancies" heading of acceptance.md; restored
 - Asked user: no (yolo)
+
+## Round 2 built, round 3 added (user)
+- Decided (user): x-ray glasses temporary and quick (1.2 s, one random peg); bad items that switch the order of the row; a special attack that removes a placed peg
+- Decided: bad items only inside 🎁 presents (one in two), 🌀 mix-up and 🌶️ chili (−2 life, orchestrator's idea); the fork is one attack in three, blocked like a meatball, steals a peg instead of life
+- Decided: the row being composed moved into the domain round (EditDraft), so the fork and the mix-up are tested rules, not screen tricks
+- Decided: built inline in one pass (domain tests per AC, then the screen), no shonin-dev / kenji-reviewer and no one-commit-per-step TDD: the user asked to keep token cost down. Logged as a deviation from the per-AC process; the tests were checked by mutating four rules (charm, cooldown, attack postponement, present), each caught
+- Evidence: 64 unit tests, tsc clean, 23 browser checks on the web build (Pixel 7)
+- Not set up: `expo lint` (no ESLint config in the repo; the first run installs one and reports React-compiler errors in older files too)
+- Asked user: no (yolo)
+- Not verified: the feel on the phone (shield drag, item size, attack pace) (HUMAN)

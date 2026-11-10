@@ -97,40 +97,62 @@ Order: AC10, AC11, AC12, AC14, AC13 (AC11-AC14 spend or restore life; AC13's ite
 - Interpretation: the player starts with 10 life points, shown as a bar; a guess that does not win costs 1, being caught peeking costs 2; at 0 the game is lost (replaces attempts: AC2's "10 attempts" and AC4's "costs one attempt" now read through life)
 - Questions: none
 - Covered by: D-life (round 2)
-- Evidence:
-- Status: designed
+- Evidence: test/application/Round2.test.ts (shouldStartWithFullLife, shouldNotCostLife_whenGuessWins); PeekSecret.test.ts shouldCostTwoLife_whenCaught, SubmitGuess.test.ts misses read through life; browser checks e2e/round2.spec.js "AC10: ...a miss costs one", e2e/ac4.spec.js (caught costs two, caught again and again loses)
+- Status: verified
 
 ## AC11: Cheat cooldown bar
 - Source: "Before cheating again there must be a cooling bar."
 - Interpretation: after a peek (revealed or caught), peeking is unavailable for 5 s, shown as a bar refilling; a peek during the cooldown is rejected and costs nothing
 - Questions: none
 - Covered by: D-cooldown (round 2)
-- Evidence:
-- Status: designed
+- Evidence: test/application/Round2.test.ts AC11 block (4 tests); browser check e2e/round2.spec.js "AC11: after a peek, peeking is unavailable for 5 s and costs nothing"
+- Status: verified
 
 ## AC12: Time limit
 - Source: "We must have a time limit for the game."
 - Interpretation: a game lasts 3 minutes, shown as a countdown; at 0 the game is lost and the secret shown
 - Questions: none
 - Covered by: D-timer (round 2)
-- Evidence:
-- Status: designed
+- Evidence: test/application/Round2.test.ts AC12 block (3 tests); browser check e2e/round2.spec.js "AC12: the game lasts 3 minutes..."
+- Status: verified
 
 ## AC13: Random items
 - Source: "an random item can be display on the screen. If "present" it will be a random thing ... food to regain life. Smoke bomb to blind the enemy ... A "x ray glass" to see a peg randomly."
-- Interpretation: every 8 to 15 s an item appears at a random spot for 4 s; tapping it collects it: 🍝 food +3 life (up to 10); 💨 smoke bomb: the guardian is blind for 4 s (peeks are safe and do not start the cooldown); 👓 x-ray glasses: one random still-hidden peg is revealed for the rest of the game; ⏳ hourglass +30 s on the clock (orchestrator's idea); 🛡️ shield charm: the next attack is blocked whatever the shield's position (orchestrator's idea); 🎁 present: one of the others at random
+- Interpretation: every 8 to 15 s an item appears at a random spot for 4 s; tapping it collects it: 🍝 food +3 life (up to 10); 💨 smoke bomb: the guardian is blind for 4 s (peeks are safe and do not start the cooldown); 👓 x-ray glasses: one random peg is shown for 1.2 s only, then hidden again (user, round 3: "Glasses x ray must be temp. It must not be permanent and quick."); ⏳ hourglass +30 s on the clock (orchestrator's idea); 🛡️ shield charm: the next attack is blocked whatever the shield's position (orchestrator's idea); 🎁 present: a gamble, one time in two a good item (one of the five others), otherwise a bad one (AC15)
 - Questions: none
 - Covered by: D-items (round 2)
-- Evidence:
-- Status: designed
+- Evidence: test/application/Round2.test.ts AC13 block (11 tests); browser checks e2e/round2.spec.js AC13 (food, 4 s expiry, x-ray for a moment only, smoke)
+- Status: verified
 
 ## AC14: The guardian attacks, the shield protects
 - Source: "Treat the opponent like an ennemy, he can attack us and we must use a shield to protect (you can drag the shield)."
-- Interpretation: every 10 to 20 s the guardian winds up (a 1 s warning showing the lane it aims at, one of 3 lanes along the bottom) and throws a meatball; if the shield, which the player drags left and right along the bottom, is not in that lane when it lands, the player loses 2 life; the guardian does not attack while blind or distracted
+- Interpretation: every 10 to 20 s the guardian winds up (a 1 s warning showing the lane it aims at, one of 3 lanes along the bottom; angry brows) and throws a meatball (two times in three) or a fork (AC16); if the shield, which the player drags left and right along the bottom, is not in that lane when it lands, the player loses 2 life; the guardian does not start an attack while blind or distracted (it waits 1 s and tries again); a smoke bomb also cancels a throw already winding up; a 🧿 charm blocks the next one wherever the shield is; the shield can also be moved by tapping a lane
 - Questions: none
 - Covered by: D-attack (round 2)
-- Evidence:
-- Status: designed
+- Evidence: test/application/Round2.test.ts AC14 block (6 tests); browser checks e2e/round2.spec.js AC14 (warn and block, drag, hit)
+- Status: verified
 
+## Round 3 (user): negative items, the fork
+
+Source, verbatim: "Glasses x ray must be temp. It must not be permanent and quick. Can we add negative items to switch order ? A special attaq from the ennemi to remove a peg we have placed."
+The row being composed moved from the screen into the round (EditDraft), so the rules can act on it.
+
+## AC15: Bad presents
+- Source: "Can we add negative items to switch order ?"
+- Interpretation: a 🎁 present is good one time in two; otherwise it is 🌀 mix-up (two of the pegs placed in the row being composed switch places; fewer than two placed: nothing) or 🌶️ chili (−2 life, the orchestrator's idea). Bad things come only from presents: a visible bad item would never be tapped
+- Questions: none
+- Covered by: D-items (round 3), src/domain/round.ts (unwrap, switchTwo)
+- Evidence: test/application/Round2.test.ts shouldGiveGoodThing_whenPresentHoldsOne, shouldBurn_whenPresentHoldsChili, shouldSwitchTwoPlacedPegs_whenPresentHoldsMixup, shouldLeaveRowAlone_whenFewerThanTwoPegsPlaced; browser check e2e/round2.spec.js "AC15: a bad present switches two of the placed pegs"
+- Status: verified
+
+## AC16: The fork steals a placed peg
+- Source: "A special attaq from the ennemi to remove a peg we have placed."
+- Interpretation: one attack in three is a 🍴 fork instead of a meatball, warned and aimed at a lane the same way; if the shield is not in its lane (and no charm), it removes one random peg from the row being composed and costs no life; an empty row: it finds nothing
+- Questions: none
+- Covered by: D-attack (round 3), src/domain/round.ts (resolveAttack)
+- Evidence: test/application/Round2.test.ts AC16 block (stolen, empty row, blocked); browser check e2e/round2.spec.js "AC16: the fork steals a placed peg when the shield is not in its lane"
+- Status: verified
+
+## Discrepancies
 
 None.

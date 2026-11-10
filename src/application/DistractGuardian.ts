@@ -1,9 +1,7 @@
-import { distractUntil } from '../domain/guardian';
+import { DISTRACTION_MS, distract } from '../domain/round';
 import { Point } from '../domain/point';
 import { Clock, GameRepository } from './ports';
 import { GuardianView } from './views';
-
-const DISTRACTION_MS = 1500;
 
 export interface DistractCommand {
   readonly target: Point;
@@ -28,8 +26,7 @@ export class DistractGuardianImpl implements DistractGuardian {
     if (session === undefined) {
       return { kind: 'rejected', reason: 'no-game' };
     }
-    const guardian = distractUntil(this.clock.now() + DISTRACTION_MS);
-    this.repository.save({ ...session, guardian });
+    this.repository.save(distract(session, this.clock.now()));
     return { kind: 'distracted', view: { gaze: command.target, remainingMs: DISTRACTION_MS } };
   }
 }
