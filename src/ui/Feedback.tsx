@@ -6,26 +6,28 @@ interface FeedbackProps {
   readonly testID?: string;
 }
 
-const SLOTS = 4;
 const RIGHT_PLACE = '✅';
 const WRONG_PLACE = '🔄';
 
-type Mark = typeof RIGHT_PLACE | typeof WRONG_PLACE | undefined;
-
-function Slot({ mark }: { readonly mark: Mark }) {
-  return mark === undefined ? <View style={styles.empty} /> : <Text style={styles.mark}>{mark}</Text>;
+/** A mark and how many pegs earned it; a zero is greyed out. */
+function Count({ mark, count, testID }: { readonly mark: string; readonly count: number; readonly testID?: string }) {
+  return (
+    <View testID={testID} style={[styles.count, count === 0 && styles.none]}>
+      <Text style={styles.mark}>{mark}</Text>
+      <Text style={styles.number}>{count}</Text>
+    </View>
+  );
 }
 
-/** ✅ right colour, right place; 🔄 right colour, wrong place; an empty ring for nothing. */
+/**
+ * How many pegs are the right colour in the right place (✅) and the right colour in the wrong
+ * place (🔄): counts, never positions (AC31).
+ */
 export function Feedback({ exact, misplaced, testID }: FeedbackProps) {
-  const marks: readonly Mark[] = Array.from({ length: SLOTS }, (_, slot) =>
-    slot < exact ? RIGHT_PLACE : slot < exact + misplaced ? WRONG_PLACE : undefined,
-  );
   return (
     <View testID={testID} accessibilityLabel={`${exact} exact, ${misplaced} misplaced`} style={styles.line}>
-      {marks.map((mark, slot) => (
-        <Slot key={slot} mark={mark} />
-      ))}
+      <Count testID={testID && `${testID}-exact`} mark={RIGHT_PLACE} count={exact} />
+      <Count testID={testID && `${testID}-misplaced`} mark={WRONG_PLACE} count={misplaced} />
     </View>
   );
 }
@@ -42,8 +44,10 @@ export function FeedbackLegend() {
 
 const styles = StyleSheet.create({
   line: { flexDirection: 'row', alignItems: 'center', marginLeft: 8 },
-  mark: { width: 20, fontSize: 14, textAlign: 'center' },
-  empty: { width: 12, height: 12, borderRadius: 6, margin: 4, borderWidth: 1, borderColor: '#0003' },
+  count: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 6 },
+  none: { opacity: 0.3 },
+  mark: { fontSize: 14 },
+  number: { color: '#3b2314', fontSize: 18, fontWeight: 'bold', marginLeft: 3, minWidth: 12 },
   legend: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
   legendText: { color: '#3b2314', fontSize: 13, marginHorizontal: 6 },
 });

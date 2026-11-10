@@ -7,8 +7,9 @@ async function tapAt(page, locator) {
 }
 
 test('AC24: the punch arm is a zig-zag spring, and the glove grows as it comes at the player', async ({ page }) => {
-  await page.clock.install();
+  await page.clock.install({ time: new Date('2026-01-01T00:00:00Z') });
   await page.goto('/');
+  await page.clock.pauseAt(new Date('2026-01-01T00:00:01Z')); // time moves only when the check says (the arm's samples are tight)
   await tapAt(page, page.getByTestId('secret-0')); // caught: the cooldown starts
   await page.clock.runFor(1600); // the laugh is over
   await tapAt(page, page.getByTestId('secret-1')); // during the cooldown: a punch
@@ -42,7 +43,10 @@ test('AC25: when the player is caught, the guardian laughs and points at them, t
 
   await expect(page.getByTestId('guardian-laugh')).toHaveText('HA HA HA!');
   await expect(page.getByTestId('guardian-points')).toBeVisible();
-  await page.clock.runFor(1400);
+  await page.clock.runFor(300); // the finger has popped out
+  const finger = await page.getByTestId('guardian-points').boundingBox();
+  expect(finger.height).toBeGreaterThan(60); // drawn big enough to see clearly (user)
+  await page.clock.runFor(1100);
   await expect(page.getByTestId('guardian-laugh')).toBeVisible(); // still laughing just before 1.5 s
   await page.clock.runFor(200);
   await expect(page.getByTestId('guardian-laugh')).toHaveCount(0);

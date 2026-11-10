@@ -4,10 +4,10 @@
 - Status: open
 - Mode: build
 - Yolo: on (see references/yolo.md of saiban-orchestrator)
-- Done: scaffold, plan and ACs; AC1-AC4, AC6-AC16, AC18-AC24, AC26-AC30 verified, AC5 waived (user); AC17 waits for the user's phone check, AC25 for the user's answer on the gesture; round 10 published to the feat-peek-a-code channel
-- Next: round 9 (user): AC28 bomb, AC29 darkness (rules, TDD), then AC26 item animations, AC27 life bar (screen); AC17 and AC25 still wait for the user
+- Done: AC1-AC4, AC6-AC16, AC18-AC31 verified, AC5 waived (user); everything merged into main (PR #1 rounds 2-10, PR #2 rounds 11-12), published on the Expo channel main
+- Next: the user's phone check of AC17 (with the guardian watching, tap a hidden peg: "Caught peeking! −2 life", the peg stays hidden) — the one open count; the user's look on the phone of the screen ACs; ask whether to merge each change into main without asking; pass-and-play multiplayer if the user wants it (proposed first step); open minors in acceptance.md and the round entries. To resume: a new session, say "resume peek-a-code"
 - Files: docs/ticket/PEEK-1/, src/
-- User preference: end every report with the Expo Go link: exp://u.expo.dev/90eceada-289a-4a45-b958-180a23ddedb8?channel-name=feat-peek-a-code&runtime-version=exposdk:58.0.0
+- User preference: end every report with the Expo Go link: exp://u.expo.dev/90eceada-289a-4a45-b958-180a23ddedb8?channel-name=main&runtime-version=exposdk:58.0.0
 
 ## Start - scope and mode
 - Decided: build mode, yolo; ACs from the user's request (no ticket), ticket folder PEEK-1
@@ -346,3 +346,20 @@
 - Asked user: no (yolo)
 - Decided (round 10 review): kenji-reviewer PASS, 2 minor open (the cap untested on a tall screen, a fixed row height)
 - Verdict (round 10): GUILTY, 2 counts: AC17 (phone check), AC25 (the gesture); AC30 verified
+
+## Merge to main (user)
+- Decided (user): "Yes then merge": pull request #1 merged into main (merge commit db35fa8); main's parallel AC10-AC12 superseded by this branch's AC10-AC30 (merged with this branch's tree kept); main's README channel switch kept: the Expo channel is now main
+- Asked user: yes
+
+## Round 11 - the result as numbers
+- Checked (user's question): the results are not reversed: 20 guesses in 4 games and the user's 7 compared with a count by hand, all right; the line of marks read as positions was the confusion
+- Decided (user's idea): ✅ n and 🔄 n, zero greyed out (AC31); screen only
+- Asked user: yes (the idea is theirs)
+
+## Pause - new session (user)
+- Decided (user asked whether to start a new session; recommended: the context is long and costly): Resume block updated; resume with "resume peek-a-code"
+
+## Round 12 - the finger, then main (user)
+- Decided (user): AC25's pointing finger confirmed, "it must be draw to see it clearly": 72 px, pops out at the player beside the laughing face; checked over 60 px tall
+- Decided (user): "write so I can resume, and merge to main": Resume block rewritten, PR #2 merges rounds 11-12 into main, published on the channel main
+- Asked user: yes
