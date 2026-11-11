@@ -3,6 +3,9 @@
 **Play it (Expo Go on the phone):** `exp://u.expo.dev/90eceada-289a-4a45-b958-180a23ddedb8?channel-name=main&runtime-version=exposdk:58.0.0`
 (the `main` channel: every merge into `main` is published there; reopen Expo Go to get it)
 
+**Resume work in a new session:** say "resume peek-a-code"; where things stand and what is next is in the
+Resume block at the top of `docs/decisions/peek-a-code.md`.
+
 A code-breaking game with a twist: a meatball guardian watches the hidden
 code. Point somewhere (or shake your phone) and its eyes follow, then peek at
 a hidden peg while it looks away. You have a life bar of 10: a missed guess costs 1, getting caught costs 2.
