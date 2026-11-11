@@ -5,8 +5,10 @@ import { IncomingAttack, Race, RaceEvent, hear, newRace, sabotage, takeOutbox } 
 import { Steal, sabotageAttacker } from './steal';
 import { Guardian, WATCHING, blindUntil, distractUntil, isBlind, isWatching } from './guardian';
 
-/** Draws an integer in [0, maxExclusive): the only source of chance in the rules. */
-export type Draw = (maxExclusive: number) => number;
+import { AttackKind, Draw, LANES } from './attack';
+
+export type { AttackKind, Draw } from './attack';
+export { LANES } from './attack';
 
 export const GAME_MS = 180_000;
 export const COOLDOWN_MS = 5_000;
@@ -21,7 +23,6 @@ export const CHILI_COST = 2;
 export const ATTACK_WINDUP_MS = 1_000;
 export const ATTACK_COST = 2;
 export const ATTACK_POSTPONE_MS = 1_000;
-export const LANES = 3;
 export const NOTICE_MS = 1_500;
 
 const ITEM_DELAY_MIN_MS = 8_000;
@@ -49,8 +50,6 @@ export interface Item {
   readonly until: number;
 }
 
-/** A meatball costs life; a fork steals a peg from the row being composed. */
-export type AttackKind = 'meatball' | 'fork';
 
 export interface Attack {
   readonly kind: AttackKind;

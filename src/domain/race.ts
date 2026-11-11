@@ -1,6 +1,6 @@
 import { Code } from './color';
 import { Game, bestExact, isCracked, isLost, isOver } from './game';
-import { AttackKind, Draw, LANES } from './round';
+import { AttackKind, Draw, LANES } from './attack';
 
 /** A player in a race, as everyone sees them. */
 export interface Rival {

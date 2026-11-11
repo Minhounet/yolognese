@@ -1,6 +1,6 @@
 import { Code } from './color';
 import { Turn } from './game';
-import type { AttackKind } from './round';
+import type { AttackKind } from './attack';
 
 /**
  * "Steal the sauce": every player hides a secret and cracks another player's.
