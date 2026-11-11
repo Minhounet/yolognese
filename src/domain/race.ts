@@ -14,15 +14,7 @@ export interface Rival {
 
 /** What players tell each other through the room. */
 export type RaceEvent =
-  | {
-      readonly type: 'start';
-      /** Absent: a race (older phones). */
-      readonly mode?: 'race' | 'steal';
-      /** The race's shared secret. */
-      readonly secret?: Code;
-      /** In "steal the sauce", each player's own secret. */
-      readonly players: readonly { readonly id: string; readonly name: string; readonly secret?: Code }[];
-    }
+  | { readonly type: 'start'; readonly secret: Code; readonly players: readonly { readonly id: string; readonly name: string }[] }
   | { readonly type: 'progress'; readonly from: string; readonly life: number; readonly bestExact: number }
   | { readonly type: 'attack'; readonly from: string; readonly to: string; readonly kind: AttackKind; readonly lane: number }
   | { readonly type: 'cracked'; readonly from: string }

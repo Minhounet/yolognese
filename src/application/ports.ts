@@ -1,6 +1,6 @@
-import { Code } from '../domain/color';
+import { Code, Color } from '../domain/color';
 import { Round } from '../domain/round';
-import { RoomEvent } from '../domain/steal';
+import { MatchState, RoomEvent } from '../domain/steal';
 
 export interface RandomSource {
   nextInt(maxExclusive: number): number;
@@ -25,8 +25,6 @@ export type MatchMode = 'race' | 'steal';
 export interface MemberInfo {
   readonly name: string;
   readonly joinedAt: number;
-  /** "Steal the sauce": the secret this player hides. */
-  readonly secret?: Code;
   /** The mode the host picked (only the host's counts). */
   readonly mode?: MatchMode;
 }
@@ -54,7 +52,30 @@ export interface Room {
 }
 
 export interface RoomGateway {
-  join(code: string, info: Omit<MemberInfo, 'joinedAt'>, listener: RoomListener): Room;
+  /** Joins as this player's identity (the same one the match server knows). */
+  join(code: string, info: Omit<MemberInfo, 'joinedAt'>, listener: RoomListener): Promise<Room>;
+}
+
+export type GuessAnswer =
+  | { readonly kind: 'scored'; readonly exact: number; readonly misplaced: number; readonly target: string; readonly state: MatchState }
+  | { readonly kind: 'match-over'; readonly state: MatchState };
+
+/**
+ * "Steal the sauce" is refereed by a server: it holds every sauce and the
+ * scores, scores the guesses and turns the circle. It also tells the room what
+ * changed; these answers are for the player who asked.
+ */
+export interface MatchServer {
+  setSauce(roomCode: string, sauce: Code): Promise<void>;
+  /** Called by the host, first in `players`. */
+  start(roomCode: string, players: readonly { readonly id: string; readonly name: string }[]): Promise<MatchState>;
+  guess(matchId: string, code: Code): Promise<GuessAnswer>;
+  /** One peg of the current target's sauce; undefined when asked too fast. */
+  peek(matchId: string, index: number): Promise<Color | undefined>;
+  /** Lets due switches happen; answers the state. */
+  sync(matchId: string): Promise<MatchState>;
+  knockout(matchId: string): Promise<MatchState>;
+  mySauce(matchId: string): Promise<Code>;
 }
 
 /** The part of a room a match needs: somewhere to send its events. */

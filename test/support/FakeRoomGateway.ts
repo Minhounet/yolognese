@@ -20,12 +20,18 @@ export class FakeRoomGateway implements RoomGateway {
   presenceHeld = false;
   private readonly inFlight: Promise<unknown>[] = [];
   private nextId = 0;
+  /** Identities to give the next joiners (as the sign-in would), then p1, p2, ... */
+  readonly ids: string[] = [];
+  /** Messages from outside the room (the match server) go to everyone. */
+  broadcast(code: string, event: RoomEvent): void {
+    (this.rooms.get(code) ?? []).forEach(({ listener }) => this.inFlight.push(Promise.resolve().then(() => listener.onEvent(event))));
+  }
   private clock = 0;
 
-  join(code: string, info: Omit<MemberInfo, 'joinedAt'>, listener: RoomListener): Room {
+  async join(code: string, info: Omit<MemberInfo, 'joinedAt'>, listener: RoomListener): Promise<Room> {
     const seats = this.rooms.get(code) ?? [];
     this.rooms.set(code, seats);
-    const member: Member = { ...info, joinedAt: ++this.clock, id: `p${++this.nextId}` };
+    const member: Member = { ...info, joinedAt: ++this.clock, id: this.ids.shift() ?? `p${++this.nextId}` };
     const seat: Seat = { member, published: member, listener };
     seats.push(seat);
     const members = () => seats.map((each) => (each === seat ? each.member : each.published));

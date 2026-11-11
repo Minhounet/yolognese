@@ -1,6 +1,7 @@
 import { Code, COLORS, Color } from './color';
 
 export const MAX_LIFE = 10;
+export const CODE_LENGTH = 4;
 
 export interface Turn {
   readonly guess: Code;
@@ -9,7 +10,8 @@ export interface Turn {
 }
 
 export interface Game {
-  readonly secret: Code;
+  /** Undefined when the server holds it ("steal the sauce"): guesses are scored there. */
+  readonly secret?: Code;
   readonly turns: readonly Turn[];
   readonly life: number;
   readonly outOfTime: boolean;
@@ -19,12 +21,18 @@ export interface Game {
   readonly lastStanding: boolean;
 }
 
-export function newGame(secret: Code): Game {
+export function newGame(secret?: Code): Game {
   return { secret, turns: [], life: MAX_LIFE, outOfTime: false, beaten: false, lastStanding: false };
 }
 
+function secretOf(game: Game): Code {
+  if (game.secret === undefined) throw new Error('this secret is held by the server');
+  return game.secret;
+}
+
 function countExact(game: Game, guess: Code): number {
-  return guess.filter((color, position) => color === game.secret[position]).length;
+  const secret = secretOf(game);
+  return guess.filter((color, position) => color === secret[position]).length;
 }
 
 function occurrences(code: Code, color: Color): number {
@@ -39,7 +47,7 @@ function countSharedColours(secret: Code, guess: Code): number {
 }
 
 function countMisplaced(game: Game, guess: Code): number {
-  return countSharedColours(game.secret, guess) - countExact(game, guess);
+  return countSharedColours(secretOf(game), guess) - countExact(game, guess);
 }
 
 export function hurt(game: Game, amount: number): Game {
@@ -55,7 +63,7 @@ export function runOutOfTime(game: Game): Game {
 }
 
 export function isCracked(game: Game): boolean {
-  return game.turns.some(({ exact }) => exact === game.secret.length);
+  return game.turns.some(({ exact }) => exact === CODE_LENGTH);
 }
 
 export function isWon(game: Game): boolean {
@@ -66,15 +74,15 @@ export function bestExact(game: Game): number {
   return Math.max(0, ...game.turns.map(({ exact }) => exact));
 }
 
-/** A guess that does not win costs 1 life. */
-export function play(game: Game, guess: Code): Game {
-  const turn: Turn = {
-    guess,
-    exact: countExact(game, guess),
-    misplaced: countMisplaced(game, guess),
-  };
+/** Adds a scored guess; one that does not win costs 1 life. */
+export function record(game: Game, turn: Turn): Game {
   const played = { ...game, turns: [...game.turns, turn] };
   return isWon(played) ? played : hurt(played, 1);
+}
+
+/** Scores a guess against the secret this phone holds, and records it. */
+export function play(game: Game, guess: Code): Game {
+  return record(game, { guess, exact: countExact(game, guess), misplaced: countMisplaced(game, guess) });
 }
 
 export function isLost(game: Game): boolean {

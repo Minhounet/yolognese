@@ -67,3 +67,27 @@ elimination, not life), and the switch comes on a timer and after every crack.
 - Found by the new tests: a gateway may report its status while `join()` is
   still running (the Supabase adapter does, "connecting"); RoomPlay read the
   room before it existed. Guarded.
+
+## Server version: the match server holds the truth (user: "Yes, apply all")
+
+Supersedes D-circle's host authority, D-points' sauce exchange and D-sauce above.
+
+- Supabase holds every sauce, the scores and the circle (tables `matches`,
+  `seats`, `sauces`, `guesses`, `lobby_sauces`, row-level security on, no
+  write policy, no read policy on sauces). The rules are Postgres functions
+  (`yolo_*`) called over RPC, not an Edge Function: they run next to the data,
+  with no cold start; inside the database a guess takes under 1 ms.
+  See `supabase/README.md`.
+- Phones sign in anonymously (one identity per app start) and the room uses
+  that identity, so the server knows who calls. The room's presence no longer
+  carries the sauce.
+- Port `MatchServer` (application), adapter `SupabaseMatchServer`; one shared
+  `SupabaseBackend` for the sign-in. The domain keeps a copy of the server's
+  state (`applyState`), asks it what only it knows (`ServerRequest`: guess,
+  peek, sync, knockout, my-sauce) through the round's request list, which
+  `FlushRace` sends and answers; a guess shows as pending until scored, one at a
+  time. Local rules stay local: guardian, cooldown, items, shield, life.
+- The peer version of "steal the sauce" is removed; the race stays peer.
+- Tests: `test/support/FakeMatchServer.ts` is the SQL rules in memory for the
+  application tests; `supabase/tests/steal_the_sauce.sql` checks the real
+  functions; `e2e/steal.spec.js` plays a real three-player match.

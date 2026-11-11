@@ -23,6 +23,12 @@
 - Evidence: Steal.test.ts shouldShowTheAttackerProgress_onMySecret, shouldThrowAtMyAttacker_whenSabotageCollected; e2e/steal.spec.js (defence line)
 - Status: verified
 
+## AC5: The server holds the truth
+- Source: "So supabase hold the truth in terms of data but also handle real time messaging ?" then "Yes, apply all"
+- Interpretation: no phone can read another player's sauce; the server scores every guess, keeps the points and turns the circle; a phone only knows its own sauce
+- Evidence: supabase/tests/steal_the_sauce.sql (sauces unreadable, host-only start, scoring, crack, peek pace, strangers refused, timed switch, anon refused: ALL CHECKS PASSED); test/application/Steal.test.ts shouldKnowOnlyItsOwnSauce and the 22 other tests against the in-memory rules; test/application/RoomPlay.test.ts shouldNotShowTheSauce_toTheRoom; e2e/steal.spec.js on the real project
+- Status: verified
+
 ## Discrepancies
 
 None.

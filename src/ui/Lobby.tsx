@@ -34,15 +34,27 @@ export function Lobby({ useCases, onBack }: { readonly useCases: UseCases; reado
 
   useEffect(() => () => play?.leave(), [play]);
 
-  const join = () => {
-    const joined = useCases.joinRoom.execute(
+  const [joining, setJoining] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  const join = async () => {
+    setJoining(true);
+    setFailed(false);
+    const joined = await useCases.joinRoom
+      .execute(
       { code, name },
       {
         onLobby: setLobby,
         onMatch: (view) => setGame({ view, match: ++matches.current }),
         onGame: (view) => toGame.current?.(view),
       },
-    );
+    )
+      .catch(() => undefined);
+    setJoining(false);
+    if (joined === undefined) {
+      setFailed(true);
+      return;
+    }
     setPlay(joined);
     setLobby(joined.view());
   };
@@ -90,9 +102,16 @@ export function Lobby({ useCases, onBack }: { readonly useCases: UseCases; reado
             maxLength={6}
             style={[styles.input, styles.code]}
           />
-          <Pressable testID="join" accessibilityRole="button" onPress={join} disabled={code.trim().length < 3} style={styles.button}>
-            <Text style={styles.buttonText}>Join the room</Text>
+          <Pressable
+            testID="join"
+            accessibilityRole="button"
+            onPress={() => void join()}
+            disabled={joining || code.trim().length < 3}
+            style={[styles.button, joining && styles.disabled]}
+          >
+            <Text style={styles.buttonText}>{joining ? 'Joining…' : 'Join the room'}</Text>
           </Pressable>
+          {failed && <Text style={styles.text}>Could not reach the game server. Check the connection and try again.</Text>}
         </>
       ) : (
         <>

@@ -45,7 +45,7 @@ async function race(playerCount = 2) {
       random,
       start: new StartRaceImpl(random, work, clock),
       receive: new ReceiveRaceImpl(work, clock, random),
-      flush: new FlushRaceImpl(work, link),
+      flush: new FlushRaceImpl(work, link, clock),
       tick: new TickImpl(action),
       submitGuess: new SubmitGuessImpl(work, clock),
       collectItem: new CollectItemImpl(action),

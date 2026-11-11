@@ -2,7 +2,7 @@ import { Code, Color } from './color';
 import { Draft, EMPTY_DRAFT, clearSlot, filledSlots, placeColor, swapSlots } from './draft';
 import { Game, heal, hurt, isOver, newGame, play, runOutOfTime } from './game';
 import { IncomingAttack, Race, RaceEvent, hear, newRace, sabotage, takeOutbox } from './race';
-import { Steal, sabotageAttacker } from './steal';
+import { Steal, ask, sabotageAttacker } from './steal';
 import { Guardian, WATCHING, blindUntil, distractUntil, isBlind, isWatching } from './guardian';
 
 import { AttackKind, Draw, LANES } from './attack';
@@ -72,7 +72,9 @@ export interface Round {
   readonly draft: Draft;
   readonly endsAt: number;
   readonly peekReadyAt: number;
-  readonly xray?: { readonly index: number; readonly until: number };
+  readonly xray?: { readonly index: number; readonly until: number; readonly color?: Color };
+  /** A peg shown by a peek, when the server holds the secret ("steal the sauce"). */
+  readonly reveal?: { readonly index: number; readonly color: Color; readonly at: number };
   readonly items: readonly Item[];
   readonly nextItemId: number;
   readonly nextItemAt: number;
@@ -93,7 +95,7 @@ const itemDelay = (draw: Draw) => ITEM_DELAY_MIN_MS + draw(ITEM_DELAY_SPREAD_MS 
 const attackDelay = (draw: Draw) => ATTACK_DELAY_MIN_MS + draw(ATTACK_DELAY_SPREAD_MS + 1);
 const spot = (draw: Draw) => (10 + draw(81)) / 100;
 
-export function newRound(secret: Code, now: number, draw: Draw): Round {
+export function newRound(secret: Code | undefined, now: number, draw: Draw): Round {
   return {
     game: newGame(secret),
     guardian: WATCHING,
@@ -122,7 +124,14 @@ export function clear(round: Round, slot: number): Round {
   return { ...round, draft: clearSlot(round.draft, slot) };
 }
 
+/** "Steal the sauce": the guess goes to the server, one at a time. */
+function sendGuess(round: Round, steal: Steal, code: Code): Round {
+  if (steal.guessing !== undefined) return round;
+  return { ...round, steal: ask({ ...steal, guessing: code }, { type: 'guess', code }), draft: EMPTY_DRAFT };
+}
+
 export function guess(round: Round, code: Code): Round {
+  if (round.steal !== undefined) return sendGuess(round, round.steal, code);
   return { ...round, game: play(round.game, code), draft: EMPTY_DRAFT };
 }
 
@@ -130,14 +139,19 @@ export function guess(round: Round, code: Code): Round {
 
 export type PeekOutcome = 'cooling-down' | 'revealed' | 'caught';
 
-export function peek(round: Round, now: number): { readonly round: Round; readonly outcome: PeekOutcome } {
+export function peek(round: Round, index: number, now: number): { readonly round: Round; readonly outcome: PeekOutcome } {
   if (now < round.peekReadyAt) return { round, outcome: 'cooling-down' };
-  if (isBlind(round.guardian, now)) return { round, outcome: 'revealed' };
+  if (isBlind(round.guardian, now)) return { round: askPeg(round, index), outcome: 'revealed' };
   const cooled = { ...round, peekReadyAt: now + COOLDOWN_MS };
   if (isWatching(round.guardian, now)) {
     return { round: { ...cooled, game: hurt(round.game, CAUGHT_COST) }, outcome: 'caught' };
   }
-  return { round: cooled, outcome: 'revealed' };
+  return { round: askPeg(cooled, index), outcome: 'revealed' };
+}
+
+/** When the server holds the secret, a peek that got through still has to ask it for the colour. */
+function askPeg(round: Round, index: number): Round {
+  return round.steal === undefined ? round : { ...round, steal: ask(round.steal, { type: 'peek', index, via: 'peek' }) };
 }
 
 export function distract(round: Round, now: number): Round {
@@ -169,13 +183,17 @@ const EFFECTS: Readonly<Record<Effect, (round: Round, now: number, draw: Draw) =
     attack: undefined,
     nextAttackAt: Math.max(round.nextAttackAt, now + SMOKE_MS),
   }),
-  xray: (round, now, draw) => ({ ...round, xray: { index: draw(4), until: now + XRAY_MS } }),
+  xray: (round, now, draw) => {
+    const index = draw(4);
+    const shown = { ...round, xray: { index, until: now + XRAY_MS, color: round.game.secret?.[index] } };
+    return round.steal === undefined ? shown : { ...shown, steal: ask(round.steal, { type: 'peek', index, via: 'xray' }) };
+  },
   hourglass: (round) => ({ ...round, endsAt: round.endsAt + HOURGLASS_MS }),
   charm: (round) => ({ ...round, charm: true }),
   mixup: (round, _now, draw) => ({ ...round, draft: switchTwo(round.draft, draw) }),
   chili: (round) => ({ ...round, game: hurt(round.game, CHILI_COST) }),
   sabotage: (round, _now, draw) => {
-    if (round.steal !== undefined) return { ...round, steal: sabotageAttacker(round.steal, draw, LANES) };
+    if (round.steal !== undefined) return { ...round, steal: sabotageAttacker(round.steal, draw) };
     return round.race === undefined ? round : { ...round, race: sabotage(round.race, draw) };
   },
 };

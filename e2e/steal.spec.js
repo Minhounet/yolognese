@@ -1,5 +1,6 @@
 // Browser check for "steal the sauce" (PEEK-3): three players in three browser contexts,
-// through the real Supabase Realtime room (needs the network). Real time, no page clock.
+// through the real Supabase project (room, sign-in and the match server; needs the network).
+// Real time, no page clock.
 const { test, expect } = require('@playwright/test');
 
 const proxy = process.env.HTTPS_PROXY ? { server: process.env.HTTPS_PROXY, bypass: 'localhost,127.0.0.1' } : undefined;
@@ -18,8 +19,10 @@ async function joinRoom(browser, name) {
   return page;
 }
 
+/** The sauce the server says this player hides, as its game screen shows it. */
 async function sauceOf(page) {
-  return Promise.all([0, 1, 2, 3].map((slot) => page.getByTestId(`sauce-${slot}`).getAttribute('aria-label')));
+  await expect(page.getByTestId('my-sauce-3')).not.toHaveAttribute('aria-label', 'empty peg', { timeout: 10_000 });
+  return Promise.all([0, 1, 2, 3].map((slot) => page.getByTestId(`my-sauce-${slot}`).getAttribute('aria-label')));
 }
 
 test('Steal the sauce: each attacks the next seat; a crack scores, renews the sauce and turns the circle', async ({ browser }) => {
@@ -29,8 +32,8 @@ test('Steal the sauce: each attacks the next seat; a crack scores, renews the sa
   const cid = await joinRoom(browser, 'Cid');
   await expect(ann.getByTestId('room-status')).toContainText('3 in the room', { timeout: 15_000 });
   await expect(cid.getByTestId('mode-rules')).toContainText('hides a secret');
-  await bob.getByTestId('sauce-0').click(); // Bob changes his sauce just before the start: the match must use the new one
-  const bobSauce = await sauceOf(bob);
+  await bob.getByTestId('sauce-0').click(); // Bob changes his sauce in the room: the server keeps it, nobody else sees it
+  const chosen = await Promise.all([0, 1, 2, 3].map((slot) => bob.getByTestId(`sauce-${slot}`).getAttribute('aria-label')));
 
   await ann.getByTestId('start-race').click();
 
@@ -38,6 +41,8 @@ test('Steal the sauce: each attacks the next seat; a crack scores, renews the sa
   await expect(bob.getByTestId('target')).toHaveAttribute('aria-label', 'after Cid', { timeout: 10_000 });
   await expect(cid.getByTestId('target')).toHaveAttribute('aria-label', 'after Ann', { timeout: 10_000 });
   await expect(cid.getByTestId('defence')).toHaveAttribute('aria-label', 'Bob is after your sauce: 0 right');
+  const bobSauce = await sauceOf(bob);
+  expect(bobSauce).toEqual(chosen);
 
   for (const color of bobSauce) await ann.getByTestId(`palette-${color}`).click();
   await ann.getByTestId('submit').click();

@@ -45,13 +45,12 @@ export interface StealView {
   readonly attacker: string;
   /** The attacker's best count of right-place pegs on this player's secret. */
   readonly threat: number;
-  readonly mySecret: Code;
+  /** Undefined until the server has told this phone. */
+  readonly mySecret?: Code;
   /** Highest points first. */
   readonly scores: readonly ScoreView[];
   /** Until the circle turns; undefined with two players (no one else to turn to). */
   readonly switchInMs?: number;
-  /** This player cracked its target and waits for the switch. */
-  readonly waiting: boolean;
   readonly finished: boolean;
 }
 
@@ -82,6 +81,10 @@ export interface GameView {
   readonly charm: boolean;
   /** What just happened (an item's effect, an attack's outcome), while it is fresh. */
   readonly notice?: NoticeKind;
+  /** A peg a peek showed, when the server holds the secret; shown briefly. */
+  readonly reveal?: { readonly index: number; readonly color: Color };
+  /** A guess the server has not scored yet. */
+  readonly pendingGuess?: Code;
   readonly race?: RaceView;
   readonly steal?: StealView;
 }

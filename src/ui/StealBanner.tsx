@@ -37,8 +37,8 @@ export function StealBanner({ steal }: { readonly steal: StealView }) {
           🛡 {steal.attacker} is after yours: ✅{steal.threat}
         </Text>
         <View style={styles.mine}>
-          {steal.mySecret.map((color, slot) => (
-            <Peg key={slot} color={color} size={16} />
+          {(steal.mySecret ?? [undefined, undefined, undefined, undefined]).map((color, slot) => (
+            <Peg key={slot} testID={`my-sauce-${slot}`} color={color} size={16} />
           ))}
         </View>
       </View>

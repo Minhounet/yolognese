@@ -4,16 +4,17 @@ import { Steal, attackerOf, isTop, ranking, targetOf } from '../domain/steal';
 import { StealView } from './views';
 import { GameStatus, GameView } from './views';
 
+const REVEAL_MS = 400;
+
 function toStealView(steal: Steal, now: number): StealView {
   const attacker = attackerOf(steal);
   return {
     target: targetOf(steal).name,
     attacker: attacker.name,
     threat: steal.pressure[attacker.id] ?? 0,
-    mySecret: steal.secrets[steal.me],
+    mySecret: steal.mySauce,
     scores: ranking(steal).map(({ id, name, points }) => ({ name, points, me: id === steal.me })),
     switchInMs: steal.seats.length > 2 ? Math.max(0, steal.nextSwitchAt - now) : undefined,
-    waiting: steal.waiting,
     finished: steal.finished,
   };
 }
@@ -50,7 +51,9 @@ export function toGameView(round: Round, now: number): GameView {
     timeLeftMs: remaining(round.endsAt, now),
     cooldownMs: remaining(round.peekReadyAt, now),
     blindMs: remaining(round.guardian.blindUntil, now),
-    xray: playing && xray !== undefined && now < xray.until ? { index: xray.index, color: game.secret[xray.index] } : undefined,
+    xray: playing && xray?.color !== undefined && now < xray.until ? { index: xray.index, color: xray.color } : undefined,
+    reveal: playing && round.reveal !== undefined && now - round.reveal.at < REVEAL_MS ? { index: round.reveal.index, color: round.reveal.color } : undefined,
+    pendingGuess: steal?.guessing,
     items: playing ? round.items.filter((item) => now < item.until).map(({ id, kind, x, y }) => ({ id, kind, x, y })) : [],
     attack:
       playing && attack !== undefined

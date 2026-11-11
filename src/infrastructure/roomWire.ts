@@ -1,6 +1,6 @@
 import { COLORS, Code } from '../domain/color';
 import { AttackKind } from '../domain/attack';
-import { RoomEvent } from '../domain/steal';
+import { MatchState, RoomEvent, StateCause } from '../domain/steal';
 
 /**
  * The messages phones exchange, in a format of their own: the domain's events
@@ -17,11 +17,7 @@ export function encode(event: RoomEvent): WireMessage {
   const wire = (t: string, fields: Fields): WireMessage => ({ v: WIRE_VERSION, t, ...fields });
   switch (event.type) {
     case 'start':
-      return wire('match.start', {
-        mode: event.mode ?? 'race',
-        sauce: event.secret,
-        seats: event.players.map(({ id, name, secret }) => ({ id, name, sauce: secret })),
-      });
+      return wire('match.start', { mode: 'race', sauce: event.secret, seats: event.players.map(({ id, name }) => ({ id, name })) });
     case 'progress':
       return wire('race.progress', { by: event.from, life: event.life, best: event.bestExact });
     case 'cracked':
@@ -30,14 +26,9 @@ export function encode(event: RoomEvent): WireMessage {
       return wire('race.out', { by: event.from });
     case 'attack':
       return wire('attack.thrown', { by: event.from, at: event.to, weapon: event.kind, lane: event.lane });
-    case 'switch':
-      return wire('steal.switch', { by: event.from, rotation: event.rotation });
-    case 'stole':
-      return wire('steal.stolen', { by: event.from, victim: event.target });
-    case 'new-secret':
-      return wire('steal.sauce', { by: event.from, sauce: event.secret });
-    case 'knocked-out':
-      return wire('steal.knockout', { by: event.from });
+    // Sent by the match server (supabase/migrations); encoded here for tests and symmetry.
+    case 'state':
+      return wire('srv.state', { state: event.state, cause: event.cause });
     case 'pressure':
       return wire('steal.pressure', { by: event.from, on: event.target, best: event.bestExact });
   }
@@ -52,12 +43,33 @@ const isWeapon = (value: unknown): value is AttackKind => value === 'meatball' |
 
 function decodeSeats(value: unknown) {
   if (!Array.isArray(value) || value.length === 0 || value.length > 6) return undefined;
-  const seats = value.map((seat) =>
-    isRecord(seat) && isText(seat.id) && isText(seat.name) && (seat.sauce === undefined || isCode(seat.sauce))
-      ? { id: seat.id, name: seat.name, secret: seat.sauce as Code | undefined }
+  const seats = value.map((seat) => (isRecord(seat) && isText(seat.id) && isText(seat.name) ? { id: seat.id, name: seat.name } : undefined));
+  return seats.every((seat) => seat !== undefined) ? seats : undefined;
+}
+
+const isTime = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value) && value > 0;
+
+/** The match server's state of a match, checked field by field. */
+export function decodeState(value: unknown): MatchState | undefined {
+  if (!isRecord(value) || !isText(value.matchId) || !isCount(value.rotation, 1_000_000)) return undefined;
+  if (!isTime(value.nextSwitchAt) || !isTime(value.endsAt) || !isTime(value.serverNow) || typeof value.finished !== 'boolean') return undefined;
+  if (!Array.isArray(value.seats) || value.seats.length < 2 || value.seats.length > 6) return undefined;
+  const seats = value.seats.map((seat) =>
+    isRecord(seat) && isText(seat.id) && isText(seat.name) && isCount(seat.points, 10_000) && isCount(seat.version, 10_000)
+      ? { id: seat.id, name: seat.name, points: seat.points, version: seat.version }
       : undefined,
   );
-  return seats.every((seat) => seat !== undefined) ? seats : undefined;
+  if (!seats.every((seat) => seat !== undefined)) return undefined;
+  const { matchId, rotation, nextSwitchAt, endsAt, serverNow, finished } = value;
+  return { matchId, rotation, nextSwitchAt, endsAt, serverNow, finished, seats };
+}
+
+function decodeCause(value: unknown): StateCause | undefined {
+  if (!isRecord(value)) return undefined;
+  if (value.kind === 'start' || value.kind === 'switch') return { kind: value.kind };
+  if (value.kind === 'stolen' && isText(value.by) && isText(value.victim)) return { kind: 'stolen', by: value.by, victim: value.victim };
+  if (value.kind === 'knockout' && isText(value.by)) return { kind: 'knockout', by: value.by };
+  return undefined;
 }
 
 /** The event a message carries, or undefined when it is from another version, unknown or malformed. */
@@ -67,9 +79,7 @@ export function decode(message: unknown): RoomEvent | undefined {
   switch (m.t) {
     case 'match.start': {
       const players = decodeSeats(m.seats);
-      if (players === undefined || (m.mode !== 'race' && m.mode !== 'steal')) return undefined;
-      if (m.sauce !== undefined && !isCode(m.sauce)) return undefined;
-      return { type: 'start', mode: m.mode, secret: m.sauce as Code | undefined, players };
+      return players !== undefined && m.mode === 'race' && isCode(m.sauce) ? { type: 'start', secret: m.sauce, players } : undefined;
     }
     case 'race.progress':
       return isText(m.by) && isCount(m.life, 10) && isCount(m.best, 4)
@@ -83,14 +93,11 @@ export function decode(message: unknown): RoomEvent | undefined {
       return isText(m.by) && isText(m.at) && isWeapon(m.weapon) && isCount(m.lane, 2)
         ? { type: 'attack', from: m.by, to: m.at, kind: m.weapon, lane: m.lane }
         : undefined;
-    case 'steal.switch':
-      return isText(m.by) && isCount(m.rotation, 1_000_000) ? { type: 'switch', from: m.by, rotation: m.rotation } : undefined;
-    case 'steal.stolen':
-      return isText(m.by) && isText(m.victim) ? { type: 'stole', from: m.by, target: m.victim } : undefined;
-    case 'steal.sauce':
-      return isText(m.by) && isCode(m.sauce) ? { type: 'new-secret', from: m.by, secret: m.sauce } : undefined;
-    case 'steal.knockout':
-      return isText(m.by) ? { type: 'knocked-out', from: m.by } : undefined;
+    case 'srv.state': {
+      const state = decodeState(m.state);
+      const cause = decodeCause(m.cause);
+      return state !== undefined && cause !== undefined ? { type: 'state', state, cause } : undefined;
+    }
     case 'steal.pressure':
       return isText(m.by) && isText(m.on) && isCount(m.best, 4)
         ? { type: 'pressure', from: m.by, target: m.on, bestExact: m.best }

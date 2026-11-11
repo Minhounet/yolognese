@@ -1,14 +1,12 @@
-import { RealtimeChannel, SupabaseClient, createClient } from '@supabase/supabase-js';
+import { RealtimeChannel, SupabaseClient } from '@supabase/supabase-js';
 import { Member, MemberInfo, Room, RoomGateway, RoomListener } from '../application/ports';
 import { RoomEvent } from '../domain/steal';
 import { decode, encode } from './roomWire';
-import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from './supabaseConfig';
-
-const newId = () => Math.random().toString(36).slice(2, 10);
+import { SupabaseBackend } from './SupabaseBackend';
 
 /**
  * A room on Supabase Realtime: presence says who is in the room, broadcast
- * carries the messages (see roomWire). No table is used.
+ * carries the messages (see roomWire): from the phones, and from the match server.
  */
 class SupabaseRoom implements Room {
   readonly me: Member;
@@ -18,12 +16,13 @@ class SupabaseRoom implements Room {
 
   constructor(
     private readonly client: SupabaseClient,
+    playerId: string,
     code: string,
     info: Omit<MemberInfo, 'joinedAt'>,
     private readonly listener: RoomListener,
   ) {
     this.info = { ...info, joinedAt: Date.now() };
-    this.me = { id: newId(), ...this.info };
+    this.me = { id: playerId, ...this.info };
     this.channel = client.channel(`yolognese:race:${code}`, {
       config: { broadcast: { self: false }, presence: { key: this.me.id } },
     });
@@ -67,12 +66,10 @@ class SupabaseRoom implements Room {
 }
 
 export class SupabaseRoomGateway implements RoomGateway {
-  private client: SupabaseClient | undefined;
+  constructor(private readonly backend: SupabaseBackend) {}
 
-  join(code: string, info: Omit<MemberInfo, 'joinedAt'>, listener: RoomListener): Room {
-    this.client ??= createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-      auth: { persistSession: false, autoRefreshToken: false },
-    });
-    return new SupabaseRoom(this.client, code, info, listener);
+  async join(code: string, info: Omit<MemberInfo, 'joinedAt'>, listener: RoomListener): Promise<Room> {
+    const playerId = await this.backend.playerId();
+    return new SupabaseRoom(this.backend.connection(), playerId, code, info, listener);
   }
 }

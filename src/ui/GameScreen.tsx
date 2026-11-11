@@ -133,7 +133,8 @@ function Board({ useCases, initialView, race, onBack }: GameScreenProps & { read
     const response = await useCases.peekSecret.execute({ index });
     if (response.kind === 'revealed') {
       setView(response.view);
-      setPeeked({ index, color: response.color });
+      // With the server holding the secret the colour comes a moment later, in the view's reveal.
+      if (response.color !== undefined) setPeeked({ index, color: response.color });
     }
     if (response.kind === 'caught') {
       setView(response.view);
@@ -190,6 +191,7 @@ function Board({ useCases, initialView, race, onBack }: GameScreenProps & { read
   const shownAt = (slot: number): Color | undefined => {
     if (view.secret !== undefined) return view.secret[slot];
     if (peeked?.index === slot) return peeked.color;
+    if (view.reveal?.index === slot) return view.reveal.color;
     return view.xray?.index === slot ? view.xray.color : undefined;
   };
 
@@ -201,7 +203,7 @@ function Board({ useCases, initialView, race, onBack }: GameScreenProps & { read
       const [top] = view.steal.scores;
       return view.status === 'won' ? `Match over! 🏆 You win with ${top.points}` : `Match over: ${top.name} wins with ${top.points}`;
     }
-    if (view.steal?.waiting) return '🍝 Sauce stolen! Waiting for the switch…';
+    if (view.pendingGuess !== undefined) return '⏳ The judge is checking your guess…';
     if (view.lostBy === 'beaten') return `${view.race?.beatenBy ?? 'A rival'} cracked it first!`;
     if (view.lastStanding) return 'Everyone else is out. You win! 🏆';
     if (view.lostBy === 'time') return TIME_UP;

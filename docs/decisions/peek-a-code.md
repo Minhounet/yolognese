@@ -154,3 +154,10 @@
 - Decided: a throwaway Edge Function `yolognese-measure` (scores a guess, one db query, one broadcast, no table) deployed with a personal access token the user then revoked; results in docs/ticket/PEEK-3/measure/README.md
 - Result: warm ≈ 170 ms median for the guesser and for the rivals (p90 ≈ 210 ms); cold start ≈ 1.7 s; the function ran away from the database region (85 ms per query)
 - Open: delete `yolognese-measure` in the dashboard (the token is revoked) (HUMAN)
+
+## Server version of steal the sauce (user: "Yes, apply all")
+- Decided: rules as Postgres functions over RPC instead of the approved Edge Function (same access rules, no cold start, next to the data; told to the user); anonymous sign-in turned on; tables with row-level security, sauces unreadable
+- Decided: the peer version of steal the sauce removed; the race stays peer; presence no longer carries the sauce (it did: anyone in the room could read it)
+- Found by tests: RoomPlay could read the room before join() returned; three survivors (sync asked once while slow, late older state, host starting twice) closed with tests
+- Evidence: 130 unit tests (11 rules broken on purpose, all caught after 3 tests added); database checks pass and fail when they should; 25 browser checks incl. a real 3-player match; a guess takes 0.66 ms inside the database, about 300 ms from this container (its network: an empty request costs 380-600 ms here)
+- Not verified: the phone (Expo Go): sign-in and latency on mobile data (HUMAN)
