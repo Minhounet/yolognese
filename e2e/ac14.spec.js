@@ -14,7 +14,7 @@ async function waitForWarning(page, stepMs = 100) {
   }
   await expect(warning).toBeVisible();
   const label = await warning.getAttribute('aria-label');
-  return Number(label.replace('meatball falling on lane ', ''));
+  return Number(label.replace(/^(meatball|fork) falling on lane /, ''));
 }
 
 test('AC14: the guardian winds up on a lane, and the shield in that lane blocks the meatball', async ({ page }) => {

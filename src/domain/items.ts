@@ -12,9 +12,13 @@ export const DARKNESS_MS = 4000;
 
 export const HOURGLASS_BONUS_MS = 30000;
 
+/** AC32: the x-ray glasses show a peg for a moment only. */
+export const XRAY_SHOWN_MS = 1200;
+
 const FIELD_GIFT_KINDS = ['food', 'smoke', 'xray', 'hourglass', 'charm'] as const;
 
-export const GIFT_KINDS = [...FIELD_GIFT_KINDS, 'darkness', 'bomb'] as const;
+/** A present's gift: one of the field's, or a bad one (darkness, a bomb, AC33's mix-up). */
+export const GIFT_KINDS = [...FIELD_GIFT_KINDS, 'darkness', 'mixup', 'bomb'] as const;
 
 export type GiftKind = (typeof GIFT_KINDS)[number];
 

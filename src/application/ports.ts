@@ -1,3 +1,4 @@
+import { Draft } from '../domain/draft';
 import { Game } from '../domain/game';
 import { Guardian } from '../domain/guardian';
 import { Item } from '../domain/items';
@@ -27,6 +28,11 @@ export interface Session {
   readonly charmed?: boolean;
   readonly darkUntil?: number;
   readonly pegUp?: RevealedPegView;
+  /** AC33/AC34: the row being composed, kept here so a present or the fork can change it. */
+  readonly draft?: Draft;
+  readonly attackIsFork?: boolean;
+  /** AC32: the peg the x-ray glasses show, until when. */
+  readonly xray?: { readonly index: number; readonly until: number };
 }
 
 export interface GameRepository {

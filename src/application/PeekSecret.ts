@@ -59,7 +59,7 @@ export class PeekSecretImpl implements PeekSecret {
     if (!isDistracted(session.guardian, now)) {
       const game = penalise(session.game);
       this.repository.save({ ...session, game, peekReadyAt: now + PEEK_COOLDOWN_MS });
-      return { kind: 'caught', view: toGameView(game), cooldownMs: PEEK_COOLDOWN_MS };
+      return { kind: 'caught', view: toGameView(game, { session, now }), cooldownMs: PEEK_COOLDOWN_MS };
     }
     const cooldownMs = isBlind(session.guardian, now) ? NO_COOLDOWN_MS : PEEK_COOLDOWN_MS;
     const color = session.game.secret[command.index];

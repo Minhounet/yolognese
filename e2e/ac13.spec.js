@@ -9,8 +9,11 @@ test.use({ itemDraw: null }); // these checks fix Math.random to choose the item
 
 const KINDS = ['food', 'smoke', 'xray', 'hourglass', 'charm', 'present', 'bomb'];
 
+// A draw that makes a present (5 of 7 kinds) and then darkness (5 of 8 gifts, AC33 added the mix-up).
+const PRESENT_THEN_DARKNESS = 0.73;
+
 async function startWithItem(page, kind) {
-  const draw = (KINDS.indexOf(kind) + 0.5) / KINDS.length;
+  const draw = kind === 'present' ? PRESENT_THEN_DARKNESS : (KINDS.indexOf(kind) + 0.5) / KINDS.length;
   await page.addInitScript((value) => {
     Math.random = () => value;
   }, draw);
@@ -63,7 +66,7 @@ test('AC13: a smoke bomb blinds the guardian: a peek is safe', async ({ page }) 
   await expect(page.getByTestId('status')).not.toContainText('Caught');
 });
 
-test('AC13: x-ray glasses reveal a hidden peg for the rest of the game', async ({ page }) => {
+test('AC13, AC32: x-ray glasses show a hidden peg for a moment only', async ({ page }) => {
   await startWithItem(page, 'xray');
   const hiddenBefore = await page.getByLabel('hidden peg').count();
   await tapAt(page, await waitForItem(page));
@@ -71,8 +74,8 @@ test('AC13: x-ray glasses reveal a hidden peg for the rest of the game', async (
   await expect(page.getByLabel('hidden peg')).toHaveCount(hiddenBefore - 1);
   const revealed = page.locator('[data-testid^="secret-"]:not([aria-label="hidden peg"])');
   await expect(revealed).toBeVisible(); // seen, not only labelled: a flip once left it squeezed to nothing
-  await page.clock.runFor(3000);
-  await expect(page.getByLabel('hidden peg')).toHaveCount(hiddenBefore - 1);
+  await page.clock.runFor(1500);
+  await expect(page.getByLabel('hidden peg')).toHaveCount(hiddenBefore);
 });
 
 test('AC13: an hourglass adds 30 seconds', async ({ page }) => {

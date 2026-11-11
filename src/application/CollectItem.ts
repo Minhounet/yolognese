@@ -1,6 +1,9 @@
-import { Game, explode, hiddenPegs, isOver, restoreLife, revealPeg } from '../domain/game';
+import { EMPTY_DRAFT, switchTwo } from '../domain/draft';
+import { explode, isOver, restoreLife } from '../domain/game';
 import { blindUntil } from '../domain/guardian';
-import { DARKNESS_MS, GIFT_KINDS, GiftKind, HOURGLASS_BONUS_MS, ItemKind, SMOKE_BLIND_MS, isItemShown } from '../domain/items';
+import { DARKNESS_MS, GIFT_KINDS, GiftKind, HOURGLASS_BONUS_MS, ItemKind, SMOKE_BLIND_MS, XRAY_SHOWN_MS, isItemShown } from '../domain/items';
+
+const SECRET_LENGTH = 4;
 import { toGameView } from './GameMapper';
 import { Clock, GameRepository, RandomSource, Session } from './ports';
 import { GameView } from './views';
@@ -49,7 +52,7 @@ export class CollectItemImpl implements CollectItem {
       kind: 'collected',
       item: item.kind,
       gift: item.kind === 'present' ? received : undefined,
-      view: toGameView(affected.game),
+      view: toGameView(affected.game, { session: affected, now }),
     };
   }
 
@@ -60,7 +63,7 @@ export class CollectItemImpl implements CollectItem {
       case 'smoke':
         return { ...session, guardian: blindUntil(now + SMOKE_BLIND_MS) };
       case 'xray':
-        return { ...session, game: this.revealHiddenPeg(session.game) };
+        return { ...session, xray: { index: this.random.nextInt(SECRET_LENGTH), until: now + XRAY_SHOWN_MS } };
       case 'hourglass':
         return { ...session, endsAt: session.endsAt + HOURGLASS_BONUS_MS };
       case 'charm':
@@ -69,6 +72,8 @@ export class CollectItemImpl implements CollectItem {
         return { ...session, darkUntil: now + DARKNESS_MS };
       case 'bomb':
         return { ...session, game: explode(session.game) };
+      case 'mixup':
+        return { ...session, draft: switchTwo(session.draft ?? EMPTY_DRAFT, (count) => this.random.nextInt(count)) };
     }
   }
 
@@ -76,11 +81,4 @@ export class CollectItemImpl implements CollectItem {
     return GIFT_KINDS[this.random.nextInt(GIFT_KINDS.length)];
   }
 
-  private revealHiddenPeg(game: Game): Game {
-    const hidden = hiddenPegs(game);
-    if (hidden.length === 0) {
-      return game;
-    }
-    return revealPeg(game, hidden[this.random.nextInt(hidden.length)]);
-  }
 }

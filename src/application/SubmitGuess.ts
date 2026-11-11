@@ -1,4 +1,5 @@
 import { Code } from '../domain/color';
+import { EMPTY_DRAFT } from '../domain/draft';
 import { isOver, play } from '../domain/game';
 import { toGameView } from './GameMapper';
 import { GameRepository } from './ports';
@@ -28,7 +29,8 @@ export class SubmitGuessImpl implements SubmitGuess {
       return { kind: 'rejected', reason: 'game-over' };
     }
     const game = play(session.game, command.guess);
-    this.repository.save({ ...session, game });
-    return { kind: 'played', view: toGameView(game) };
+    const played = { ...session, game, draft: EMPTY_DRAFT };
+    this.repository.save(played);
+    return { kind: 'played', view: toGameView(game, { session: played }) };
   }
 }
