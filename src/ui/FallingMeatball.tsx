@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 import { Animated, Easing, StyleSheet, Text } from 'react-native';
 import { Point } from '../domain/point';
 
@@ -22,7 +22,8 @@ export function FallingMeatball({
 }) {
   const progress = useRef(new Animated.Value(0)).current;
 
-  useEffect(() => {
+  // started as the meatball is drawn (layout effect): never a frame where it hangs still
+  useLayoutEffect(() => {
     progress.setValue(0);
     const fall = Animated.timing(progress, { toValue: 1, duration: durationMs, easing: Easing.in(Easing.quad), useNativeDriver: true });
     fall.start();

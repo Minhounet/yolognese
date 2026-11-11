@@ -383,3 +383,9 @@
 - Found: a peeked peg flipped twice when turned back (the screen read the solo game's peg-up state for the server's): fixed before merge; the match's rules applied only on save gave a view one step stale (now also on load), which then made every phone ask the server to switch (a sync the state already answers is now dropped)
 - Evidence: 176 unit tests (17 rules broken on purpose: all caught, 2 after a test was added); database checks; 55 browser checks incl. three phones and one phone with bots on the real project, the network checks passed 4 times in a row
 - Asked user: yes (mode, scoring, switch, server, bots, race removed)
+
+## Solo check after the port (user: "work on main, i am afraid we lose some work we did in solo mode")
+- Checked against main before the port (dd88bb2): no file deleted; every unit test and browser check of rounds 1-12 still present, except the three on the permanent x-ray, replaced by AC32 (the user's change); every line removed from the screen has its rewrite (row into the session, async calls, the fork)
+- Found: the AC15 browser check (the meatball's fall) failed about 1 run in 3 after the async refactor (bisected: 0/6 before it, 3/6 with it). Cause: under the checks' frozen clock a long jump fires every tick at once, and async ticks then piled up and were handled late, so the screen ran behind the game's clock
+- Decided: the screen runs one tick at a time (skips a tick while the previous is running), and starts the meatball's fall as it is drawn (layout effect); 1 failure in 26 runs after, 0 in the last 14 (main before the port: 0 in 11); not changed: the check itself. Tried and dropped (no gain or worse): timing the fall from the tick's own time; stepping the check's clock
+- Process: on main's base, every change goes in through a pull request merged into main (the user's rule), the branch reset onto main after each merge
