@@ -31,7 +31,7 @@
     "test": "jest",
     "typecheck": "tsc --noEmit",
     "export:web": "expo export --platform web",
-    "e2e": "npm run export:web && playwright test --trace off"
+    "e2e": "EXPO_PUBLIC_SCRIPTED_CHANCE=1 npm run export:web && playwright test --trace off"
   },
   "private": true,
   "jest": {

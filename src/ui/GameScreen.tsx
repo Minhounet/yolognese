@@ -2,8 +2,7 @@ import { ComponentRef, useCallback, useEffect, useRef, useState } from 'react';
 import { GestureResponderEvent, LayoutChangeEvent, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { ActionResponse } from '../application/RoundAction';
 import { GameView } from '../application/views';
-import { RaceUseCases, UseCases } from '../compositionRoot';
-import { RoomEvent } from '../domain/steal';
+import { UseCases } from '../compositionRoot';
 import { COLORS, Color } from '../domain/color';
 import { isComplete } from '../domain/draft';
 import { Point } from '../domain/point';
@@ -54,10 +53,10 @@ const NOTICE_TEXT: Readonly<Record<NoticeKind, string>> = {
   scored: '🍝 You stole the sauce! +1',
 };
 
-/** A race in progress: its use cases, and the room's events (other than start) handed to the game. */
+/** A match with friends: send this player's events, and hear the room's changes to the game. */
 export interface RaceProps {
-  readonly useCases: RaceUseCases;
-  readonly subscribe: (onEvent: (event: RoomEvent) => void) => () => void;
+  readonly flush: () => Promise<void>;
+  readonly subscribe: (onView: (view: GameView) => void) => () => void;
 }
 
 interface GameScreenProps {
@@ -69,8 +68,21 @@ interface GameScreenProps {
   readonly onBack?: () => void;
 }
 
-export function GameScreen({ useCases, initialView, race, onBack }: GameScreenProps) {
-  const [view, setView] = useState<GameView>(() => initialView ?? useCases.startGame.execute());
+/** Starts a solo game when no view is given, then shows the board. */
+export function GameScreen(props: GameScreenProps) {
+  const { useCases, initialView } = props;
+  const [first, setFirst] = useState<GameView | undefined>(initialView);
+
+  useEffect(() => {
+    if (initialView === undefined) void useCases.startGame.execute().then(setFirst);
+  }, [initialView, useCases]);
+
+  if (first === undefined) return <View style={styles.screen} />;
+  return <Board {...props} initialView={first} />;
+}
+
+function Board({ useCases, initialView, race, onBack }: GameScreenProps & { readonly initialView: GameView }) {
+  const [view, setView] = useState<GameView>(initialView);
   const playing = view.status === 'playing';
   const [gaze, setGaze] = useState<Point | undefined>(undefined);
   const guardianCentre = useRef<Point>({ x: 0, y: 0 });
@@ -82,28 +94,22 @@ export function GameScreen({ useCases, initialView, race, onBack }: GameScreenPr
   const nextPuff = useRef(0);
   const [scene, setScene] = useState({ width: 0, height: 0 });
 
-  const flush = useCallback(() => race?.useCases.flushRace.execute(), [race]);
+  const flush = useCallback(() => void race?.flush(), [race]);
 
   const show = useCallback(
-    (response: ActionResponse) => {
+    async (pending: Promise<ActionResponse>) => {
+      const response = await pending;
       if (response.kind === 'done') setView(response.view);
       flush();
     },
     [flush],
   );
 
-  useEffect(
-    () =>
-      race?.subscribe((event) => {
-        const changed = race.useCases.receiveRace.execute(event);
-        if (changed !== undefined) setView(changed);
-      }),
-    [race],
-  );
+  useEffect(() => race?.subscribe(setView), [race]);
 
   useEffect(() => {
     if (!playing) return undefined;
-    const timer = setInterval(() => show(useCases.tick.execute()), TICK_MS);
+    const timer = setInterval(() => void show(useCases.tick.execute()), TICK_MS);
     return () => clearInterval(timer);
   }, [playing, show, useCases]);
 
@@ -123,8 +129,8 @@ export function GameScreen({ useCases, initialView, race, onBack }: GameScreenPr
     return () => clearTimeout(timer);
   }, [caught]);
 
-  const peek = (index: number) => {
-    const response = useCases.peekSecret.execute({ index });
+  const peek = async (index: number) => {
+    const response = await useCases.peekSecret.execute({ index });
     if (response.kind === 'revealed') {
       setView(response.view);
       setPeeked({ index, color: response.color });
@@ -147,8 +153,8 @@ export function GameScreen({ useCases, initialView, race, onBack }: GameScreenPr
       guardianCentre.current = { x: x + width / 2, y: y + height / 2 };
     });
 
-  const distractTowards = (target: Point) => {
-    const response = useCases.distractGuardian.execute({ target });
+  const distractTowards = async (target: Point) => {
+    const response = await useCases.distractGuardian.execute({ target });
     if (response.kind !== 'distracted') return;
     remainingMs.current = response.view.remainingMs;
     setGaze({ ...response.view.gaze });
@@ -158,21 +164,21 @@ export function GameScreen({ useCases, initialView, race, onBack }: GameScreenPr
     const { pageX, pageY } = event.nativeEvent;
     const id = nextPuff.current++;
     setPuffs((current) => [...current, { id, at: { x: pageX, y: pageY } }]);
-    distractTowards({ x: pageX - guardianCentre.current.x, y: pageY - guardianCentre.current.y });
+    void distractTowards({ x: pageX - guardianCentre.current.x, y: pageY - guardianCentre.current.y });
   };
 
   const removePuff = useCallback((id: number) => setPuffs((current) => current.filter((puff) => puff.id !== id)), []);
 
-  const submit = () => {
+  const submit = async () => {
     const { draft } = view;
     if (!isComplete(draft)) return;
-    const response = useCases.submitGuess.execute({ guess: draft });
+    const response = await useCases.submitGuess.execute({ guess: draft });
     if (response.kind === 'played') setView(response.view);
     flush();
   };
 
-  const newGame = () => {
-    setView(useCases.startGame.execute());
+  const newGame = async () => {
+    setView(await useCases.startGame.execute());
     setGaze(undefined);
   };
 
@@ -221,7 +227,7 @@ export function GameScreen({ useCases, initialView, race, onBack }: GameScreenPr
       </View>
       <View style={styles.row} testID="secret">
         {HIDDEN_ROW.map((_, slot) => (
-          <SecretPeg key={slot} testID={`secret-${slot}`} color={shownAt(slot)} onPress={playing ? () => peek(slot) : undefined} />
+          <SecretPeg key={slot} testID={`secret-${slot}`} color={shownAt(slot)} onPress={playing ? () => void peek(slot) : undefined} />
         ))}
       </View>
       <Text testID="status" style={[styles.status, alarming && styles.alarm]}>
@@ -242,13 +248,13 @@ export function GameScreen({ useCases, initialView, race, onBack }: GameScreenPr
         <View style={styles.controls}>
           <View style={styles.row}>
             {view.draft.map((color, slot) => (
-              <Peg key={slot} testID={`slot-${slot}`} color={color} onPress={() => show(useCases.editDraft.execute({ kind: 'clear', slot }))} />
+              <Peg key={slot} testID={`slot-${slot}`} color={color} onPress={() => void show(useCases.editDraft.execute({ kind: 'clear', slot }))} />
             ))}
             <Pressable
               testID="submit"
               accessibilityRole="button"
               disabled={!isComplete(view.draft)}
-              onPress={submit}
+              onPress={() => void submit()}
               style={[styles.button, !isComplete(view.draft) && styles.disabled]}
             >
               <Text style={styles.buttonText}>Guess</Text>
@@ -261,7 +267,7 @@ export function GameScreen({ useCases, initialView, race, onBack }: GameScreenPr
                 testID={`palette-${color}`}
                 color={color}
                 size={44}
-                onPress={() => show(useCases.editDraft.execute({ kind: 'place', color }))}
+                onPress={() => void show(useCases.editDraft.execute({ kind: 'place', color }))}
               />
             ))}
           </View>
@@ -269,20 +275,20 @@ export function GameScreen({ useCases, initialView, race, onBack }: GameScreenPr
             shieldLane={view.shieldLane}
             attack={view.attack}
             charm={view.charm}
-            onMove={(lane) => show(useCases.moveShield.execute({ lane }))}
+            onMove={(lane) => void show(useCases.moveShield.execute({ lane }))}
           />
         </View>
       ) : (
         <Pressable
           testID="new-game"
           accessibilityRole="button"
-          onPress={race && onBack ? onBack : newGame}
+          onPress={race && onBack ? onBack : () => void newGame()}
           style={[styles.button, styles.newGame]}
         >
           <Text style={styles.buttonText}>{race ? 'Back to the room' : 'New game'}</Text>
         </Pressable>
       )}
-      <Items items={view.items} width={scene.width} height={scene.height} onCollect={(id) => show(useCases.collectItem.execute({ id }))} />
+      <Items items={view.items} width={scene.width} height={scene.height} onCollect={(id) => void show(useCases.collectItem.execute({ id }))} />
       {puffs.map((puff) => (
         <DustPuff key={puff.id} at={puff.at} onDone={() => removePuff(puff.id)} />
       ))}

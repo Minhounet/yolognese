@@ -3,14 +3,17 @@ import { DistractGuardian, DistractGuardianImpl } from './application/DistractGu
 import { EditDraft, EditDraftImpl } from './application/EditDraft';
 import { MoveShield, MoveShieldImpl } from './application/MoveShield';
 import { PeekSecret, PeekSecretImpl } from './application/PeekSecret';
-import { FlushRace, FlushRaceImpl, ReceiveRace, ReceiveRaceImpl, StartRace, StartRaceImpl, StartSteal, StartStealImpl } from './application/Race';
-import { RaceLink } from './application/ports';
+import { RandomSource } from './application/ports';
+import { JoinRoom, JoinRoomImpl } from './application/RoomPlay';
 import { RoundAction } from './application/RoundAction';
+import { SessionWork } from './application/SessionWork';
 import { StartGame, StartGameImpl } from './application/StartGame';
 import { SubmitGuess, SubmitGuessImpl } from './application/SubmitGuess';
 import { Tick, TickImpl } from './application/Tick';
 import { InMemoryGameRepository } from './infrastructure/InMemoryGameRepository';
 import { MathRandomSource } from './infrastructure/MathRandomSource';
+import { ScriptedPageRandomSource } from './infrastructure/ScriptedPageRandomSource';
+import { SupabaseRoomGateway } from './infrastructure/SupabaseRoomGateway';
 import { SystemClock } from './infrastructure/SystemClock';
 
 export interface UseCases {
@@ -22,36 +25,25 @@ export interface UseCases {
   readonly collectItem: CollectItem;
   readonly moveShield: MoveShield;
   readonly tick: Tick;
-  /** The race use cases, talking to the given room. */
-  readonly race: (link: RaceLink) => RaceUseCases;
+  readonly joinRoom: JoinRoom;
 }
 
-export interface RaceUseCases {
-  readonly startRace: StartRace;
-  readonly startSteal: StartSteal;
-  readonly receiveRace: ReceiveRace;
-  readonly flushRace: FlushRace;
-}
-
+/** The only place that knows the adapters: swap one here, nothing else changes. */
 export function createUseCases(): UseCases {
-  const repository = new InMemoryGameRepository();
+  const work = new SessionWork(new InMemoryGameRepository());
   const clock = new SystemClock();
-  const random = new MathRandomSource();
-  const action = new RoundAction(repository, clock, random);
+  const random: RandomSource =
+    process.env.EXPO_PUBLIC_SCRIPTED_CHANCE === '1' ? new ScriptedPageRandomSource() : new MathRandomSource();
+  const action = new RoundAction(work, clock, random);
   return {
-    startGame: new StartGameImpl(random, repository, clock),
-    submitGuess: new SubmitGuessImpl(repository, clock),
-    distractGuardian: new DistractGuardianImpl(repository, clock),
-    peekSecret: new PeekSecretImpl(repository, clock),
+    startGame: new StartGameImpl(random, work, clock),
+    submitGuess: new SubmitGuessImpl(work, clock),
+    distractGuardian: new DistractGuardianImpl(work, clock),
+    peekSecret: new PeekSecretImpl(work, clock),
     editDraft: new EditDraftImpl(action),
     collectItem: new CollectItemImpl(action),
     moveShield: new MoveShieldImpl(action),
     tick: new TickImpl(action),
-    race: (link) => ({
-      startRace: new StartRaceImpl(random, repository, clock),
-      startSteal: new StartStealImpl(random, repository, clock),
-      receiveRace: new ReceiveRaceImpl(repository, clock, random),
-      flushRace: new FlushRaceImpl(repository, link),
-    }),
+    joinRoom: new JoinRoomImpl({ gateway: new SupabaseRoomGateway(), work, clock, random }),
   };
 }

@@ -143,3 +143,9 @@
 - Evidence: 92 unit tests (five rules broken on purpose, each caught after one test was added), tsc clean, 25 browser checks including a real three-player match
 - Not verified: on phones, over mobile networks (HUMAN)
 - Asked user: yes (scoring, switch); the rest no (yolo)
+
+## Clean-architecture refactor (user asked whether it was respected)
+- Found: sync repository port (a table could not implement it), the lobby screen creating the Supabase room and holding match rules, domain events used as the wire format, a type cast in ReceiveRace, a domain import cycle, a test hook in the production random adapter
+- Decided: all fixed as listed in docs/ticket/PEEK-3/conception.md; no change for the player
+- Evidence: 122 unit tests (new: SessionWork, roomWire, RoomPlay with an in-memory fake room that holds presence back like a slow network); 8 rules broken on purpose, 6 caught, 1 redundant guard removed, 1 gap closed with a test; tsc clean; 25 browser checks, and the normal build checked too
+- Asked user: no (the user asked for the refactor)

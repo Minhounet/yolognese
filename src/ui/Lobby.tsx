@@ -1,22 +1,14 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { MatchMode } from '../application/ports';
+import { LobbyView, RoomPlay } from '../application/RoomPlay';
 import { GameView } from '../application/views';
 import { UseCases } from '../compositionRoot';
-import { COLORS, Code } from '../domain/color';
-import { RoomEvent } from '../domain/steal';
-import { Member, Mode, SupabaseRaceRoom } from '../infrastructure/SupabaseRaceRoom';
 import { GameScreen, RaceProps } from './GameScreen';
 import { SaucePicker } from './SaucePicker';
 import { THEME } from './theme';
 
-const MIN_PLAYERS = 2;
-const MAX_PLAYERS = 6;
-const CODE_LETTERS = 'ABCDEFGHJKMNPQRSTUVWXYZ';
-
-const randomCode = () => Array.from({ length: 4 }, () => CODE_LETTERS[Math.floor(Math.random() * CODE_LETTERS.length)]).join('');
-const randomSecret = (): Code => [0, 1, 2, 3].map(() => COLORS[Math.floor(Math.random() * COLORS.length)]) as unknown as Code;
-
-const MODES: Readonly<Record<Mode, { readonly title: string; readonly rules: string }>> = {
+const MODES: Readonly<Record<MatchMode, { readonly title: string; readonly rules: string }>> = {
   steal: {
     title: '🕵️ Steal the sauce',
     rules: 'Everyone hides a secret and cracks someone else’s. The target switches every 45 s and after each crack. +1 per sauce stolen; most points in 5 minutes wins.',
@@ -27,112 +19,52 @@ const MODES: Readonly<Record<Mode, { readonly title: string; readonly rules: str
   },
 };
 
-type Status = 'form' | 'connecting' | 'joined' | 'failed';
-type StartEvent = Extract<RoomEvent, { type: 'start' }>;
-
 /**
- * The room: pick a name and a room code (share it with friends), see who is in
- * it. The first one in is the host: picks the mode and starts for everyone.
+ * The room screen: name and room code, then who is in the room, the mode, this
+ * player's sauce and the host's start. Everything it does goes through RoomPlay.
  */
 export function Lobby({ useCases, onBack }: { readonly useCases: UseCases; readonly onBack: () => void }) {
   const [name, setName] = useState('');
-  const [code, setCode] = useState(randomCode);
-  const [secret, setSecret] = useState<Code>(randomSecret);
-  const secretRef = useRef(secret);
-  secretRef.current = secret;
-  const [status, setStatus] = useState<Status>('form');
-  const [members, setMembers] = useState<readonly Member[]>([]);
-  const [room, setRoom] = useState<SupabaseRaceRoom | undefined>();
+  const [code, setCode] = useState(() => useCases.joinRoom.suggestCode());
+  const [play, setPlay] = useState<RoomPlay | undefined>();
+  const [lobby, setLobby] = useState<LobbyView | undefined>();
   const [game, setGame] = useState<{ readonly view: GameView; readonly match: number } | undefined>();
   const matches = useRef(0);
-  const toGame = useRef<((event: RoomEvent) => void) | undefined>(undefined);
-  const raceUseCases = useMemo(() => (room ? useCases.race(room) : undefined), [room, useCases]);
+  const toGame = useRef<((view: GameView) => void) | undefined>(undefined);
 
-  useEffect(() => () => room?.leave(), [room]);
-
-  const play = useCallback((view: GameView) => setGame({ view, match: ++matches.current }), []);
-
-  const begin = useCallback(
-    (event: StartEvent, joined: SupabaseRaceRoom) => {
-      if (!event.players.some(({ id }) => id === joined.me.id)) return; // started without us
-      const cases = useCases.race(joined);
-      if (event.mode === 'steal') {
-        // This phone owns its sauce: the host may have started with an older one (presence lags).
-        const mine = secretRef.current;
-        const players = event.players.map((player) => ({
-          ...player,
-          secret: player.id === joined.me.id ? mine : (player.secret ?? randomSecret()),
-        }));
-        play(cases.startSteal.execute({ me: joined.me.id, players }));
-        const told = event.players.find(({ id }) => id === joined.me.id)?.secret;
-        if (told === undefined || told.join() !== mine.join()) joined.send({ type: 'new-secret', from: joined.me.id, secret: mine });
-      } else if (event.secret !== undefined) {
-        play(cases.startRace.execute({ me: joined.me.id, players: event.players, secret: event.secret }).view);
-      }
-    },
-    [useCases, play],
-  );
+  useEffect(() => () => play?.leave(), [play]);
 
   const join = () => {
-    const joined = new SupabaseRaceRoom(
-      code.trim().toUpperCase(),
-      { name: name.trim() || 'Player', secret, mode: 'steal' },
+    const joined = useCases.joinRoom.execute(
+      { code, name },
       {
-        onMembers: setMembers,
-        onStatus: setStatus,
-        onEvent: (event) => (event.type === 'start' ? begin(event, joined) : toGame.current?.(event)),
+        onLobby: setLobby,
+        onMatch: (view) => setGame({ view, match: ++matches.current }),
+        onGame: (view) => toGame.current?.(view),
       },
     );
-    setRoom(joined);
+    setPlay(joined);
+    setLobby(joined.view());
   };
 
   const leave = () => {
-    room?.leave();
-    setRoom(undefined);
-    setMembers([]);
-    setStatus('form');
-  };
-
-  const changeSecret = (changed: Code) => {
-    setSecret(changed);
-    room?.update({ secret: changed });
-  };
-
-  const host = members[0];
-  const isHost = room !== undefined && host?.id === room.me.id;
-  const mode: Mode = host?.mode ?? 'steal';
-
-  const pickMode = (picked: Mode) => {
-    room?.update({ mode: picked });
-  };
-
-  const start = () => {
-    if (room === undefined || raceUseCases === undefined) return;
-    const seated = members.slice(0, MAX_PLAYERS);
-    if (mode === 'steal') {
-      const players = seated.map((member) => ({ id: member.id, name: member.name, secret: member.secret ?? randomSecret() }));
-      room.send({ type: 'start', mode: 'steal', players });
-      play(raceUseCases.startSteal.execute({ me: room.me.id, players }));
-      return;
-    }
-    const players = seated.map(({ id, name: playerName }) => ({ id, name: playerName }));
-    const started = raceUseCases.startRace.execute({ me: room.me.id, players });
-    room.send({ type: 'start', mode: 'race', secret: started.secret, players });
-    play(started.view);
+    play?.leave();
+    setPlay(undefined);
+    setLobby(undefined);
   };
 
   const race: RaceProps | undefined = useMemo(
     () =>
-      raceUseCases && {
-        useCases: raceUseCases,
-        subscribe: (onEvent) => {
-          toGame.current = onEvent;
+      play && {
+        flush: () => play.flush(),
+        subscribe: (onView) => {
+          toGame.current = onView;
           return () => {
-            if (toGame.current === onEvent) toGame.current = undefined;
+            if (toGame.current === onView) toGame.current = undefined;
           };
         },
       },
-    [raceUseCases],
+    [play],
   );
 
   if (game !== undefined && race !== undefined) {
@@ -141,11 +73,11 @@ export function Lobby({ useCases, onBack }: { readonly useCases: UseCases; reado
 
   return (
     <View style={styles.screen}>
-      <Pressable testID="back" accessibilityRole="button" onPress={room ? leave : onBack} style={styles.back}>
-        <Text style={styles.backText}>{room ? '‹ Leave the room' : '‹ Menu'}</Text>
+      <Pressable testID="back" accessibilityRole="button" onPress={play ? leave : onBack} style={styles.back}>
+        <Text style={styles.backText}>{play ? '‹ Leave the room' : '‹ Menu'}</Text>
       </Pressable>
       <Text style={styles.title}>Play friends</Text>
-      {room === undefined ? (
+      {play === undefined || lobby === undefined ? (
         <>
           <Text style={styles.label}>Your name</Text>
           <TextInput testID="name" value={name} onChangeText={setName} placeholder="Ann" maxLength={12} style={styles.input} />
@@ -165,51 +97,55 @@ export function Lobby({ useCases, onBack }: { readonly useCases: UseCases; reado
       ) : (
         <>
           <Text testID="room" style={styles.roomCode}>
-            Room {code}
+            Room {lobby.code}
           </Text>
           <Text testID="room-status" style={styles.text}>
-            {status === 'connecting' ? 'Connecting…' : status === 'failed' ? 'Could not reach the room. Check the connection.' : `${members.length} in the room`}
+            {lobby.status === 'connecting'
+              ? 'Connecting…'
+              : lobby.status === 'failed'
+                ? 'Could not reach the room. Check the connection.'
+                : `${lobby.members.length} in the room`}
           </Text>
           <View style={styles.members}>
-            {members.map((member, index) => (
-              <Text key={member.id} testID={`member-${member.name}`} style={styles.member}>
-                {index === 0 ? '👑 ' : '🍝 '}
+            {lobby.members.map((member) => (
+              <Text key={member.name + String(member.me)} testID={`member-${member.name}`} style={styles.member}>
+                {member.host ? '👑 ' : '🍝 '}
                 {member.name}
-                {member.id === room.me.id ? ' (you)' : ''}
+                {member.me ? ' (you)' : ''}
               </Text>
             ))}
           </View>
           <View style={styles.modes}>
-            {(Object.keys(MODES) as Mode[]).map((option) => (
+            {(Object.keys(MODES) as MatchMode[]).map((option) => (
               <Pressable
                 key={option}
                 testID={`mode-${option}`}
                 accessibilityRole="button"
-                accessibilityState={{ selected: mode === option }}
-                disabled={!isHost}
-                onPress={() => pickMode(option)}
-                style={[styles.mode, mode === option && styles.modePicked]}
+                accessibilityState={{ selected: lobby.mode === option }}
+                disabled={!lobby.isHost}
+                onPress={() => play.pickMode(option)}
+                style={[styles.mode, lobby.mode === option && styles.modePicked]}
               >
-                <Text style={[styles.modeText, mode === option && styles.modeTextPicked]}>{MODES[option].title}</Text>
+                <Text style={[styles.modeText, lobby.mode === option && styles.modeTextPicked]}>{MODES[option].title}</Text>
               </Pressable>
             ))}
           </View>
           <Text testID="mode-rules" style={styles.rules}>
-            {MODES[mode].rules}
+            {MODES[lobby.mode].rules}
           </Text>
-          {mode === 'steal' && <SaucePicker secret={secret} onChange={changeSecret} />}
-          {isHost ? (
+          {lobby.mode === 'steal' && <SaucePicker secret={lobby.mySauce} onChange={(sauce) => play.changeSauce(sauce)} />}
+          {lobby.isHost ? (
             <Pressable
               testID="start-race"
               accessibilityRole="button"
-              onPress={start}
-              disabled={members.length < MIN_PLAYERS}
-              style={[styles.button, members.length < MIN_PLAYERS && styles.disabled]}
+              onPress={() => void play.start()}
+              disabled={!lobby.canStart}
+              style={[styles.button, !lobby.canStart && styles.disabled]}
             >
-              <Text style={styles.buttonText}>{members.length < MIN_PLAYERS ? 'Waiting for a rival…' : 'Start'}</Text>
+              <Text style={styles.buttonText}>{lobby.canStart ? 'Start' : 'Waiting for a rival…'}</Text>
             </Pressable>
           ) : (
-            status === 'joined' && <Text style={styles.text}>Waiting for {host?.name ?? 'the host'} to start…</Text>
+            lobby.status === 'joined' && <Text style={styles.text}>Waiting for {lobby.hostName ?? 'the host'} to start…</Text>
           )}
         </>
       )}

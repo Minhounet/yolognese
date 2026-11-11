@@ -7,6 +7,7 @@ import { RoundAction } from '../../src/application/RoundAction';
 import { StartGameImpl } from '../../src/application/StartGame';
 import { SubmitGuessImpl } from '../../src/application/SubmitGuess';
 import { TickImpl } from '../../src/application/Tick';
+import { SessionWork } from '../../src/application/SessionWork';
 import { InMemoryGameRepository } from '../../src/infrastructure/InMemoryGameRepository';
 import { FakeClock } from './FakeClock';
 import { QueuedRandomSource } from './QueuedRandomSource';
@@ -16,31 +17,31 @@ import { QueuedRandomSource } from './QueuedRandomSource';
  * item comes at 8000 ms (a food, the first kind) and the first attack at 10000 ms
  * (a meatball, lane 0). The shield starts in lane 1.
  */
-export function startedRound() {
+export async function startedRound() {
   const clock = new FakeClock();
   const random = new QueuedRandomSource();
-  const repository = new InMemoryGameRepository();
+  const work = new SessionWork(new InMemoryGameRepository());
   random.queue(0, 1, 2, 3);
-  new StartGameImpl(random, repository, clock).execute();
-  const action = new RoundAction(repository, clock, random);
+  await new StartGameImpl(random, work, clock).execute();
+  const action = new RoundAction(work, clock, random);
   const tick = new TickImpl(action);
   return {
     clock,
     random,
-    repository,
+    work,
     tick,
     /** Moves the clock, ticking every 100 ms as the screen does, and answers the last tick. */
-    runFor(milliseconds: number) {
-      let last = tick.execute();
+    async runFor(milliseconds: number) {
+      let last = await tick.execute();
       for (let passed = 0; passed < milliseconds; passed += 100) {
         clock.advance(Math.min(100, milliseconds - passed));
-        last = tick.execute();
+        last = await tick.execute();
       }
       return last;
     },
-    submitGuess: new SubmitGuessImpl(repository, clock),
-    distractGuardian: new DistractGuardianImpl(repository, clock),
-    peekSecret: new PeekSecretImpl(repository, clock),
+    submitGuess: new SubmitGuessImpl(work, clock),
+    distractGuardian: new DistractGuardianImpl(work, clock),
+    peekSecret: new PeekSecretImpl(work, clock),
     editDraft: new EditDraftImpl(action),
     collectItem: new CollectItemImpl(action),
     moveShield: new MoveShieldImpl(action),

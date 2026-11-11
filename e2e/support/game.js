@@ -1,4 +1,5 @@
-// Shared helpers for the browser checks. Time is Playwright's clock; chance is scripted.
+// Shared helpers for the browser checks. Time is Playwright's clock; chance is scripted
+// (npm run e2e builds the web version with EXPO_PUBLIC_SCRIPTED_CHANCE=1).
 
 /**
  * Scripts the game's chance before the app loads (MathRandomSource reads

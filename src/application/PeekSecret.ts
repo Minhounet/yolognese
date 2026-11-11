@@ -3,7 +3,8 @@ import { isOver } from '../domain/game';
 import { isRoundOver, peek } from '../domain/round';
 import { settle } from '../domain/stealRound';
 import { toGameView } from './GameMapper';
-import { Clock, GameRepository } from './ports';
+import { Clock } from './ports';
+import { SessionWork } from './SessionWork';
 import { GameView } from './views';
 
 export interface PeekCommand {
@@ -16,35 +17,26 @@ export type PeekResponse =
   | { readonly kind: 'rejected'; readonly reason: 'no-game' | 'game-over' | 'cooling-down' };
 
 export interface PeekSecret {
-  execute(command: PeekCommand): PeekResponse;
+  execute(command: PeekCommand): Promise<PeekResponse>;
 }
 
 export class PeekSecretImpl implements PeekSecret {
   constructor(
-    private readonly repository: GameRepository,
+    private readonly work: SessionWork,
     private readonly clock: Clock,
   ) {}
 
-  execute(command: PeekCommand): PeekResponse {
-    const session = this.repository.load();
-    if (session === undefined) {
-      return { kind: 'rejected', reason: 'no-game' };
-    }
-    if (isOver(session.game) || isRoundOver(session)) {
-      return { kind: 'rejected', reason: 'game-over' };
-    }
-    const now = this.clock.now();
-    const peeked = peek(session, now);
-    const { outcome } = peeked;
-    const round = settle(peeked.round, now);
-    if (outcome === 'cooling-down') {
-      return { kind: 'rejected', reason: 'cooling-down' };
-    }
-    this.repository.save(round);
-    const view = toGameView(round, now);
-    if (outcome === 'caught') {
-      return { kind: 'caught', view };
-    }
-    return { kind: 'revealed', index: command.index, color: round.game.secret[command.index], view };
+  execute(command: PeekCommand): Promise<PeekResponse> {
+    return this.work.run<PeekResponse>((session) => {
+      if (session === undefined) return { result: { kind: 'rejected', reason: 'no-game' } };
+      if (isOver(session.game) || isRoundOver(session)) return { result: { kind: 'rejected', reason: 'game-over' } };
+      const now = this.clock.now();
+      const peeked = peek(session, now);
+      if (peeked.outcome === 'cooling-down') return { result: { kind: 'rejected', reason: 'cooling-down' } };
+      const round = settle(peeked.round, now);
+      const view = toGameView(round, now);
+      if (peeked.outcome === 'caught') return { session: round, result: { kind: 'caught', view } };
+      return { session: round, result: { kind: 'revealed', index: command.index, color: round.game.secret[command.index], view } };
+    });
   }
 }

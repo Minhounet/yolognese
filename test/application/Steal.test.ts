@@ -9,6 +9,7 @@ import { GameView } from '../../src/application/views';
 import { Code } from '../../src/domain/color';
 import { ITEM_KINDS } from '../../src/domain/round';
 import { RoomEvent } from '../../src/domain/steal';
+import { SessionWork } from '../../src/application/SessionWork';
 import { InMemoryGameRepository } from '../../src/infrastructure/InMemoryGameRepository';
 import { FakeClock } from '../support/FakeClock';
 import { QueuedRandomSource } from '../support/QueuedRandomSource';
@@ -25,61 +26,73 @@ const scoresWith = (...pairs: [string, number][]) =>
   expect.arrayContaining(pairs.map(([name, points]) => expect.objectContaining({ name, points })));
 
 /** A match in a room that delivers each event to every other player; the host (Ann) is seated first. */
-function match(seatCount = 3) {
+async function match(seatCount = 3) {
   const clock = new FakeClock();
   const seats = SEATS.slice(0, seatCount);
   const sent: RoomEvent[] = [];
   const muted = new Set<string>();
+  const inFlight: Promise<unknown>[] = [];
+  /** Waits until every message sent so far (and every answer to them) has been heard. */
+  const delivered = async () => {
+    while (inFlight.length > 0) await inFlight.shift();
+  };
   const players = seats.map(({ id }) => {
-    const repository = new InMemoryGameRepository();
+    const work = new SessionWork(new InMemoryGameRepository());
     const random = new QueuedRandomSource();
-    const action = new RoundAction(repository, clock, random);
+    const action = new RoundAction(work, clock, random);
     const link: RaceLink = {
       send: (event) => {
         sent.push(event);
         if (muted.has(id)) return; // lost on the way
-        players.filter((other) => other.id !== id).forEach((other) => other.hear(event));
+        players.filter((other) => other.id !== id).forEach((other) => inFlight.push(other.hear(event)));
       },
     };
-    const receive = new ReceiveRaceImpl(repository, clock, random);
-    const flush = new FlushRaceImpl(repository, link);
+    const receive = new ReceiveRaceImpl(work, clock, random);
+    const flush = new FlushRaceImpl(work, link);
     const tick = new TickImpl(action);
-    const submitGuess = new SubmitGuessImpl(repository, clock);
+    const submitGuess = new SubmitGuessImpl(work, clock);
     return {
       id,
       random,
-      hear: (event: RoomEvent) => {
-        receive.execute(event);
-        flush.execute();
+      /** What a phone does with a message: apply it, then send what that produced. */
+      async hear(event: RoomEvent) {
+        await receive.execute(event);
+        await flush.execute();
       },
-      start: () => new StartStealImpl(random, repository, clock).execute({ me: id, players: seats }),
-      guess: (code: { guess: Code }) => {
-        const response = submitGuess.execute(code);
-        flush.execute();
+      start: () => new StartStealImpl(random, work, clock).execute({ me: id, players: seats }),
+      async guess(code: { guess: Code }) {
+        const response = await submitGuess.execute(code);
+        await flush.execute();
+        await delivered();
         return response;
       },
       collectItem: new CollectItemImpl(action),
       moveShield: new MoveShieldImpl(action),
-      flush,
+      async flush() {
+        await flush.execute();
+        await delivered();
+      },
       /** The player's view now, after a tick and a flush, as the screen does every 100 ms. */
-      view(): GameView {
-        const response = tick.execute();
-        flush.execute();
+      async view(): Promise<GameView> {
+        const response = await tick.execute();
+        await flush.execute();
+        await delivered();
         if (response.kind !== 'done') throw new Error(`no view: ${response.reason}`);
         return response.view;
       },
-      step() {
-        tick.execute();
-        flush.execute();
+      async step() {
+        await tick.execute();
+        await flush.execute();
+        await delivered();
       },
     };
   });
-  players.forEach((player) => player.start());
-  players.forEach((player) => player.moveShield.execute({ lane: 0 })); // the guardians' throws (lane 0) are blocked
-  const runFor = (milliseconds: number) => {
+  for (const player of players) await player.start();
+  for (const player of players) await player.moveShield.execute({ lane: 0 }); // the guardians' throws (lane 0) are blocked
+  const runFor = async (milliseconds: number) => {
     for (let passed = 0; passed < milliseconds; passed += 100) {
       clock.advance(100);
-      players.forEach((player) => player.step());
+      for (const player of players) await player.step();
     }
   };
   const [ann, bob, cid] = players;
@@ -87,172 +100,172 @@ function match(seatCount = 3) {
 }
 
 describe('Steal the sauce: the circle', () => {
-  it('shouldAttackTheNextSeat_whenMatchStarts', () => {
-    const { ann, bob, cid } = match();
+  it('shouldAttackTheNextSeat_whenMatchStarts', async () => {
+    const { ann, bob, cid } = await match();
 
-    expect([ann.view().steal, bob.view().steal, cid.view().steal]).toMatchObject([
+    expect([(await ann.view()).steal, (await bob.view()).steal, (await cid.view()).steal]).toMatchObject([
       { target: 'Bob', attacker: 'Cid', mySecret: all('red') },
       { target: 'Cid', attacker: 'Ann' },
       { target: 'Ann', attacker: 'Bob' },
     ]);
   });
 
-  it('shouldGuessTheTargetSecret', () => {
-    const { ann } = match();
+  it('shouldGuessTheTargetSecret', async () => {
+    const { ann } = await match();
 
-    expect(ann.guess({ guess: ['blue', 'blue', 'red', 'red'] })).toMatchObject({ view: { turns: [{ exact: 2, misplaced: 0 }] } });
+    expect(await ann.guess({ guess: ['blue', 'blue', 'red', 'red'] })).toMatchObject({ view: { turns: [{ exact: 2, misplaced: 0 }] } });
   });
 
-  it('shouldTurnTheCircleForEveryone_after45Seconds', () => {
-    const { ann, bob, cid, runFor } = match();
-    runFor(45_000);
+  it('shouldTurnTheCircleForEveryone_after45Seconds', async () => {
+    const { ann, bob, cid, runFor } = await match();
+    await runFor(45_000);
 
-    expect([ann.view().steal, bob.view().steal, cid.view().steal]).toMatchObject([
+    expect([(await ann.view()).steal, (await bob.view()).steal, (await cid.view()).steal]).toMatchObject([
       { target: 'Cid', attacker: 'Bob' },
       { target: 'Ann', attacker: 'Cid' },
       { target: 'Bob', attacker: 'Ann' },
     ]);
   });
 
-  it('shouldWaitForTheHost_toTurnTheCircle', () => {
-    const { bob, runFor, mute } = match();
+  it('shouldWaitForTheHost_toTurnTheCircle', async () => {
+    const { bob, runFor, mute } = await match();
     mute('a'); // the host's messages never arrive
-    runFor(45_000);
+    await runFor(45_000);
 
-    expect(bob.view()).toMatchObject({ steal: { target: 'Cid' } });
+    expect(await bob.view()).toMatchObject({ steal: { target: 'Cid' } });
   });
 
-  it('shouldWarnBeforeTheSwitch', () => {
-    const { bob, runFor } = match();
-    runFor(42_000);
+  it('shouldWarnBeforeTheSwitch', async () => {
+    const { bob, runFor } = await match();
+    await runFor(42_000);
 
-    expect(bob.view()).toMatchObject({ steal: { switchInMs: 3000 } });
+    expect(await bob.view()).toMatchObject({ steal: { switchInMs: 3000 } });
   });
 
-  it('shouldKeepGuesses_whenTheCircleComesBack', () => {
-    const { ann, runFor } = match();
-    ann.guess(MISS);
-    runFor(45_000);
-    expect(ann.view()).toMatchObject({ turns: [], steal: { target: 'Cid' } });
+  it('shouldKeepGuesses_whenTheCircleComesBack', async () => {
+    const { ann, runFor } = await match();
+    await ann.guess(MISS);
+    await runFor(45_000);
+    expect(await ann.view()).toMatchObject({ turns: [], steal: { target: 'Cid' } });
 
-    runFor(45_000);
+    await runFor(45_000);
 
-    expect(ann.view()).toMatchObject({ turns: [{ guess: all('purple') }], steal: { target: 'Bob' } });
+    expect(await ann.view()).toMatchObject({ turns: [{ guess: all('purple') }], steal: { target: 'Bob' } });
   });
 
-  it('shouldNotSwitch_withTwoPlayers', () => {
-    const { ann, runFor } = match(2);
-    ann.guess(MISS);
-    runFor(45_000);
+  it('shouldNotSwitch_withTwoPlayers', async () => {
+    const { ann, runFor } = await match(2);
+    await ann.guess(MISS);
+    await runFor(45_000);
 
-    expect(ann.view()).toMatchObject({ turns: [{ guess: all('purple') }], steal: { target: 'Bob', attacker: 'Bob', switchInMs: undefined } });
+    expect(await ann.view()).toMatchObject({ turns: [{ guess: all('purple') }], steal: { target: 'Bob', attacker: 'Bob', switchInMs: undefined } });
   });
 });
 
 describe('Steal the sauce: cracking', () => {
-  it('shouldScoreAndSwitchEveryone_whenTargetCracked', () => {
-    const { ann, bob, cid } = match();
+  it('shouldScoreAndSwitchEveryone_whenTargetCracked', async () => {
+    const { ann, bob, cid } = await match();
 
-    ann.guess({ guess: all('blue') });
+    await ann.guess({ guess: all('blue') });
 
-    expect([ann.view().steal, bob.view().steal, cid.view().steal]).toMatchObject([
+    expect([(await ann.view()).steal, (await bob.view()).steal, (await cid.view()).steal]).toMatchObject([
       { target: 'Cid', scores: [{ name: 'Ann', points: 1, me: true }, { points: 0 }, { points: 0 }], waiting: false },
       { target: 'Ann', scores: [{ name: 'Ann', points: 1, me: false }, { points: 0 }, { points: 0 }] },
       { target: 'Bob' },
     ]);
   });
 
-  it('shouldDrawANewSecret_whenRobbed', () => {
-    const { ann, bob } = match();
+  it('shouldDrawANewSecret_whenRobbed', async () => {
+    const { ann, bob } = await match();
     bob.random.queue(5, 5, 5, 5); // orange
 
-    ann.guess({ guess: all('blue') });
+    await ann.guess({ guess: all('blue') });
 
-    expect(bob.view()).toMatchObject({ notice: 'robbed', steal: { mySecret: all('orange') } });
+    expect(await bob.view()).toMatchObject({ notice: 'robbed', steal: { mySecret: all('orange') } });
   });
 
-  it('shouldFaceTheNewSecret_whenTheCircleComesBackToTheRobbed', () => {
-    const { ann, bob, runFor } = match();
+  it('shouldFaceTheNewSecret_whenTheCircleComesBackToTheRobbed', async () => {
+    const { ann, bob, runFor } = await match();
     bob.random.queue(5, 5, 5, 5);
-    ann.guess({ guess: all('blue') });
-    runFor(45_000);
-    expect(ann.view()).toMatchObject({ turns: [], steal: { target: 'Bob' } });
+    await ann.guess({ guess: all('blue') });
+    await runFor(45_000);
+    expect(await ann.view()).toMatchObject({ turns: [], steal: { target: 'Bob' } });
 
-    expect(ann.guess({ guess: all('orange') })).toMatchObject({ view: { steal: { scores: scoresWith(['Ann', 2]) } } });
+    expect(await ann.guess({ guess: all('orange') })).toMatchObject({ view: { steal: { scores: scoresWith(['Ann', 2]) } } });
   });
 
-  it('shouldSwitchOnCrack_whenANonHostCracks', () => {
-    const { ann, bob, cid } = match();
+  it('shouldSwitchOnCrack_whenANonHostCracks', async () => {
+    const { ann, bob, cid } = await match();
 
-    bob.guess({ guess: all('green') }); // Bob cracks Cid; Ann (the host) turns the circle
+    await bob.guess({ guess: all('green') }); // Bob cracks Cid; Ann (the host) turns the circle
 
-    expect([ann.view().steal, bob.view().steal, cid.view().steal]).toMatchObject([
+    expect([(await ann.view()).steal, (await bob.view()).steal, (await cid.view()).steal]).toMatchObject([
       { target: 'Cid' },
       { target: 'Ann', waiting: false, scores: scoresWith(['Bob', 1]) },
       { target: 'Bob' },
     ]);
   });
 
-  it('shouldKeepFacingTheSameRival_withANewSecret_withTwoPlayers', () => {
-    const { ann, bob } = match(2);
+  it('shouldKeepFacingTheSameRival_withANewSecret_withTwoPlayers', async () => {
+    const { ann, bob } = await match(2);
     bob.random.queue(5, 5, 5, 5);
-    ann.guess({ guess: all('blue') });
+    await ann.guess({ guess: all('blue') });
 
-    expect(ann.guess({ guess: all('orange') })).toMatchObject({ view: { steal: { target: 'Bob', scores: scoresWith(['Ann', 2], ['Bob', 0]) } } });
+    expect(await ann.guess({ guess: all('orange') })).toMatchObject({ view: { steal: { target: 'Bob', scores: scoresWith(['Ann', 2], ['Bob', 0]) } } });
   });
 });
 
 describe('Steal the sauce: defending', () => {
-  it('shouldShowTheAttackerProgress_onMySecret', () => {
-    const { bob, cid } = match();
+  it('shouldShowTheAttackerProgress_onMySecret', async () => {
+    const { bob, cid } = await match();
 
-    bob.guess({ guess: ['green', 'green', 'red', 'red'] });
+    await bob.guess({ guess: ['green', 'green', 'red', 'red'] });
 
-    expect(cid.view()).toMatchObject({ steal: { attacker: 'Bob', threat: 2 } });
+    expect(await cid.view()).toMatchObject({ steal: { attacker: 'Bob', threat: 2 } });
   });
 
-  it('shouldThrowAtMyAttacker_whenSabotageCollected', () => {
-    const { ann, cid, runFor } = match();
-    runFor(7900);
+  it('shouldThrowAtMyAttacker_whenSabotageCollected', async () => {
+    const { ann, cid, runFor } = await match();
+    await runFor(7900);
     ann.random.queue(ITEM_KINDS.indexOf('sabotage'));
-    runFor(100);
-    const id = ann.view().items[0].id;
+    await runFor(100);
+    const id = (await ann.view()).items[0].id;
     ann.random.queue(1, 2); // a fork, lane 2
 
-    ann.collectItem.execute({ id });
-    ann.flush.execute();
+    await ann.collectItem.execute({ id });
+    await ann.flush();
 
-    expect(cid.view()).toMatchObject({ attack: { kind: 'fork', lane: 2, fromName: 'Ann' } });
+    expect(await cid.view()).toMatchObject({ attack: { kind: 'fork', lane: 2, fromName: 'Ann' } });
   });
 });
 
 describe('Steal the sauce: points and the end', () => {
-  it('shouldLoseAPointAndGetLifeBack_whenKnockedOut', () => {
-    const { ann, bob } = match();
-    ann.guess({ guess: all('blue') }); // 1 point, now after Cid
-    Array.from({ length: 10 }).forEach(() => ann.guess(MISS));
+  it('shouldLoseAPointAndGetLifeBack_whenKnockedOut', async () => {
+    const { ann, bob } = await match();
+    await ann.guess({ guess: all('blue') }); // 1 point, now after Cid
+    for (let time = 0; time < 10; time += 1) await ann.guess(MISS);
 
-    expect(ann.view()).toMatchObject({ life: 10, notice: 'knocked-out', steal: { scores: scoresWith(['Ann', 0]) } });
-    expect(bob.view()).toMatchObject({ steal: { scores: scoresWith(['Ann', 0]) } });
+    expect(await ann.view()).toMatchObject({ life: 10, notice: 'knocked-out', steal: { scores: scoresWith(['Ann', 0]) } });
+    expect(await bob.view()).toMatchObject({ steal: { scores: scoresWith(['Ann', 0]) } });
   });
 
-  it('shouldEndAfterFiveMinutes_withTheTopScorerWinning', () => {
-    const { ann, bob, clock, runFor } = match();
-    ann.guess({ guess: all('blue') });
-    runFor(299_900);
-    expect(ann.view()).toMatchObject({ status: 'playing' });
+  it('shouldEndAfterFiveMinutes_withTheTopScorerWinning', async () => {
+    const { ann, bob, clock, runFor } = await match();
+    await ann.guess({ guess: all('blue') });
+    await runFor(299_900);
+    expect(await ann.view()).toMatchObject({ status: 'playing' });
     clock.advance(100);
 
-    expect([ann.view(), bob.view()]).toMatchObject([
+    expect([await ann.view(), await bob.view()]).toMatchObject([
       { status: 'won', steal: { finished: true, scores: scoresWith(['Ann', 1]) } },
       { status: 'lost', steal: { finished: true } },
     ]);
   });
 
-  it('shouldRejectGuesses_whenTheMatchIsOver', () => {
-    const { ann, runFor } = match();
-    runFor(300_000);
+  it('shouldRejectGuesses_whenTheMatchIsOver', async () => {
+    const { ann, runFor } = await match();
+    await runFor(300_000);
 
-    expect(ann.guess(MISS)).toMatchObject({ kind: 'rejected', reason: 'game-over' });
+    expect(await ann.guess(MISS)).toMatchObject({ kind: 'rejected', reason: 'game-over' });
   });
 });

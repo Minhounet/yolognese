@@ -1,6 +1,7 @@
 import { DISTRACTION_MS, distract } from '../domain/round';
 import { Point } from '../domain/point';
-import { Clock, GameRepository } from './ports';
+import { Clock } from './ports';
+import { SessionWork } from './SessionWork';
 import { GuardianView } from './views';
 
 export interface DistractCommand {
@@ -12,21 +13,22 @@ export type DistractResponse =
   | { readonly kind: 'rejected'; readonly reason: 'no-game' };
 
 export interface DistractGuardian {
-  execute(command: DistractCommand): DistractResponse;
+  execute(command: DistractCommand): Promise<DistractResponse>;
 }
 
 export class DistractGuardianImpl implements DistractGuardian {
   constructor(
-    private readonly repository: GameRepository,
+    private readonly work: SessionWork,
     private readonly clock: Clock,
   ) {}
 
-  execute(command: DistractCommand): DistractResponse {
-    const session = this.repository.load();
-    if (session === undefined) {
-      return { kind: 'rejected', reason: 'no-game' };
-    }
-    this.repository.save(distract(session, this.clock.now()));
-    return { kind: 'distracted', view: { gaze: command.target, remainingMs: DISTRACTION_MS } };
+  execute(command: DistractCommand): Promise<DistractResponse> {
+    return this.work.run<DistractResponse>((session) => {
+      if (session === undefined) return { result: { kind: 'rejected', reason: 'no-game' } };
+      return {
+        session: distract(session, this.clock.now()),
+        result: { kind: 'distracted', view: { gaze: command.target, remainingMs: DISTRACTION_MS } },
+      };
+    });
   }
 }

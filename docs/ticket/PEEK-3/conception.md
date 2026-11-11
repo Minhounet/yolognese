@@ -43,3 +43,27 @@ elimination, not life), and the switch comes on a timer and after every crack.
 
 - Asking the target's phone to score each guess: needs a round trip per guess;
   the secrets travel to every phone instead (fine between friends).
+
+## Clean-architecture refactor (user: "storing data on a table should not change code part from writing adapters")
+
+- Async ports: `GameRepository.load/save` return promises, so a remote table
+  can implement it; every use case is async. `SessionWork` (application)
+  runs the use cases' work on the session one at a time (load, rules, save):
+  with an async repository a tick and a tap could otherwise read the same
+  session and the second save would drop the first change.
+- A `Room` port (`RoomGateway.join` → members, update, send, leave) replaces
+  the screen's direct use of Supabase. `SupabaseRoomGateway` is its adapter,
+  created only in `compositionRoot.ts`.
+- The lobby's rules moved from the screen into `RoomPlay` / `JoinRoom`
+  (application): host, mode, sauce, start, the late-sauce correction, routing
+  the room's messages to the match. The screens only show views and forward taps.
+- Wire format: `roomWire.ts` (infrastructure) maps domain events to versioned
+  messages with their own names and checks what arrives; a malformed or
+  other-version message is dropped.
+- The browser checks' chance hook is its own adapter
+  (`ScriptedPageRandomSource`), chosen by the composition root only when the
+  web build is made with `EXPO_PUBLIC_SCRIPTED_CHANCE=1` (`npm run e2e`).
+- The domain import cycle (round ↔ race/steal) is gone (`attack.ts`).
+- Found by the new tests: a gateway may report its status while `join()` is
+  still running (the Supabase adapter does, "connecting"); RoomPlay read the
+  room before it existed. Guarded.
