@@ -13,7 +13,8 @@
 - To resume: a new session, say "resume peek-a-code"; first `git fetch origin main` and start from origin/main; checks: `npm test` (187), `npm run e2e` (56; steal.spec.js needs network access to the Supabase project: allow uppezappkwsizsdyoalo.supabase.co in the environment), `supabase/tests/steal_the_sauce.sql` (run against the project through the Management API with a personal access token, rolled back)
 - Access: the Supabase project uppezappkwsizsdyoalo (Paris); its URL and publishable key are in src/infrastructure/supabaseConfig.ts; changing the database needs a personal access token (sbp_), asked through the secure form, revoked after use
 - Files: docs/ticket/PEEK-1/, docs/ticket/PEEK-2/, supabase/, src/
-- User preference: merge each change into main without asking (a pull request, then merge, then publish the channel main) — said by the user
+- User preference: work on main directly (start from origin/main after `git fetch origin main`, never from the session's checked-out branch, which may be stale); squash the session's commits into one before pushing to main, then publish the channel main — said by the user (replaces the earlier pull-request flow)
+- Warning: a session resumed on the stale branch feat/peek-a-code (ccr-60545602-b4h6p4) and redid AC10 there, already on main; those commits were discarded, nothing on main was lost. Its Expo channel feat-peek-a-code shows an old game: never give its link
 - User preference: end every report with the Expo Go link: exp://u.expo.dev/90eceada-289a-4a45-b958-180a23ddedb8?channel-name=main&runtime-version=exposdk:58.0.0
 
 ## Start - scope and mode
