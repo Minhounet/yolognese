@@ -4,9 +4,14 @@
 - Status: open
 - Mode: build
 - Yolo: on (see references/yolo.md of saiban-orchestrator)
-- Done: AC1-AC4, AC6-AC16, AC18-AC31 verified, AC5 waived (user); everything merged into main (PR #1 rounds 2-10, PR #2 rounds 11-12), published on the Expo channel main
-- Next: the user's phone check of AC17 (with the guardian watching, tap a hidden peg: "Caught peeking! −2 life", the peg stays hidden) — the one open count; the user's look on the phone of the screen ACs; multiplayer: think it through first with the user (think mode, objection-conception) before any build; open minors in acceptance.md and the round entries. To resume: a new session, say "resume peek-a-code"
-- Files: docs/ticket/PEEK-1/, src/
+- Base: main, always (user: "Main is always the base"). Work on a branch reset onto origin/main, then a pull request merged into main, then publish the Expo channel main. Never build on an older branch: a session once did, and its link showed a game without rounds 4-12
+- Done, solo (PEEK-1): AC1-AC4, AC6-AC16, AC18-AC34 verified, AC5 waived (user); AC32-AC34 (round 13): x-ray brief, the mix-up present, the fork that steals a placed peg
+- Done, multiplayer (PEEK-2, docs/ticket/PEEK-2/): "Steal the sauce" from the start menu: each player hides a sauce and cracks another's, the circle turns every 45 s and after each crack, +1 per steal, 5 minutes; Supabase referees (supabase/: tables with row-level security, Postgres functions yolo_*, anonymous sign-in, Realtime room channel), no phone sees another's sauce; test bots from the room ("Add a bot"); race mode removed (user). Session storage is async behind SessionWork (the user's clean-architecture point: a table must not change the use cases)
+- Merged: PR #4 (AC32-AC34), #5 (steal the sauce), #6 (Expo link in README/AGENTS.md), #7 (the screen runs one tick at a time; AC15's check had turned flaky with the async storage, now 1 failure in 26 runs)
+- Next: the user's phone check of the current game (menu Solo / Steal the sauce; results as ✅n 🔄n; the cooldown bar refilling; a match with bots) and of AC17; the user saw an old build once: the old channel feat-peek-a-code now carries main's game too; open minors in acceptance.md and the round entries; known limits of PEEK-2 in its conception.md (public room channel, guardian on the phone)
+- To resume: a new session, say "resume peek-a-code"; checks: `npm test` (176), `npm run e2e` (55; steal.spec.js needs the network to the Supabase project), `supabase/tests/steal_the_sauce.sql` (run against the project, rolled back)
+- Access: the Supabase project uppezappkwsizsdyoalo (Paris); its URL and publishable key are in src/infrastructure/supabaseConfig.ts; changing the database needs a personal access token (sbp_), asked through the secure form, revoked after use
+- Files: docs/ticket/PEEK-1/, docs/ticket/PEEK-2/, supabase/, src/
 - User preference: merge each change into main without asking (a pull request, then merge, then publish the channel main) — said by the user
 - User preference: end every report with the Expo Go link: exp://u.expo.dev/90eceada-289a-4a45-b958-180a23ddedb8?channel-name=main&runtime-version=exposdk:58.0.0
 
