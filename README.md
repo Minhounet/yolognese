@@ -5,7 +5,13 @@ code. Point somewhere (or shake your phone) and its eyes follow, then peek at
 a hidden peg while it looks away. You have a life bar of 10: a missed guess costs 1, getting caught costs 2.
 After a peek you wait 5 s (the cooldown bar), and a game lasts 3 minutes. The guardian throws meatballs:
 drag the shield to the lane it aims at. Tap the items that pop up: 🍝 food, 💨 smoke bomb, 👓 x-ray,
-⏳ hourglass, 🍀 shield charm, 🎁 present.
+⏳ hourglass, 🍀 shield charm, 🎁 present (a gamble: it can hold darkness, a bomb, or a 🌀 mix-up of
+your pegs). One throw in three is a 🍴 fork that steals a peg you placed.
+
+**Steal the sauce** (menu): several phones, each hiding a sauce and cracking another player's, in
+a circle that turns every 45 s and after each crack; +1 per sauce stolen, most points in 5 minutes
+wins. A server referees it (Supabase, `supabase/README.md`): no phone can see another's sauce.
+Alone? In the room, the host can tap "🤖 Add a bot". Design in `docs/ticket/PEEK-2/`.
 
 Built in yolo mode with the aixlper skills; design and acceptance criteria
 in `docs/ticket/PEEK-1/`, decisions in `docs/decisions/peek-a-code.md`.

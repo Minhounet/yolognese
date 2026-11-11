@@ -328,6 +328,7 @@ function Board({ useCases, initialView, match, onBack }: GameScreenProps & { rea
 
   const flipBack = (index: number) => {
     void useCases.hidePeg.execute({ index });
+    setView((current) => ({ ...current, pegUp: undefined })); // hidden now, not at the next tick
     pegUpRef.current = undefined;
     pegSeen.current = false;
     setPeeked(undefined);
@@ -436,7 +437,8 @@ function Board({ useCases, initialView, match, onBack }: GameScreenProps & { rea
       <View ref={secretRow} style={styles.row} testID="secret" onTouchStart={touchedControl}>
         {(view.secret ?? EMPTY_DRAFT).map((color, slot) => {
           const xrayed = view.revealed.find((peg) => peg.index === slot)?.color;
-          const serverPeg = view.pegUp?.index === slot ? view.pegUp.color : undefined; // "steal the sauce": the server's answer
+          // "steal the sauce": a peeked peg's colour is the server's answer, shown when it comes
+          const serverPeg = view.steal !== undefined && view.pegUp?.index === slot ? view.pegUp.color : undefined;
           const up = view.secret === undefined && (peeked?.index === slot || serverPeg !== undefined);
           const shown = up ? (peeked?.index === slot ? peeked.color : serverPeg) : (color ?? xrayed);
           const onPress = up ? () => flipBack(slot) : () => void peek(slot);

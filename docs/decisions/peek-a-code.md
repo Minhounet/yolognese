@@ -375,3 +375,11 @@
 - Decided: the row being composed moves into the session (EditDraft) so the mix-up and the fork can change it; x-ray shows one peg for 1.2 s; the mix-up is a present's gift (main already had darkness and the bomb as bad gifts, so the earlier "chili" is not ported); one throw in three is a fork, drawn in the same draw as the lane so the scripted checks keep their sequences; the browser checks fix every throw as a meatball unless they ask for forks
 - Process: one commit per AC group, not one per red/green: a port of rules already designed and tested elsewhere; mutations: 7 rules broken on purpose, each caught
 - Asked user: yes (the rules are theirs)
+
+## PEEK-2 - steal the sauce on main (user: "Main is always the base. Fix it. Remove race mode")
+- Context: multiplayer was first built in session ccr-2e41604e on a branch started before rounds 4-12; its link showed the user a game without rounds 4-12. Rebuilt here on main; race mode and sabotage not ported; the server (supabase/) is the one already deployed
+- Decided: session storage asynchronous behind SessionWork (the clean-architecture point the user raised: a table must not change the use cases); the match's own rules (end, knock-out, due switch) applied by SessionWork on load and save; the phone asks the server only what it alone knows
+- Decided: the app opens on a menu (Solo / Steal the sauce); the browser checks open the solo game through the fixture (`menu`)
+- Found: a peeked peg flipped twice when turned back (the screen read the solo game's peg-up state for the server's): fixed before merge; the match's rules applied only on save gave a view one step stale (now also on load), which then made every phone ask the server to switch (a sync the state already answers is now dropped)
+- Evidence: 176 unit tests (17 rules broken on purpose: all caught, 2 after a test was added); database checks; 55 browser checks incl. three phones and one phone with bots on the real project, the network checks passed 4 times in a row
+- Asked user: yes (mode, scoring, switch, server, bots, race removed)
