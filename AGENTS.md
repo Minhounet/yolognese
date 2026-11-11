@@ -8,6 +8,13 @@ Expo ships breaking changes every SDK release. APIs you remember are likely rena
 2. Fetch the matching versioned docs: `https://docs.expo.dev/versions/v<major>.0.0/`
 3. For anything else, fetch https://docs.expo.dev/llms.txt — an index of all Expo docs with corrections to common LLM misconceptions. Follow its links to the specific page you need; never answer from memory.
 
+## Resuming work (a new session)
+
+Start from `main` (`git fetch origin main`, work on a branch reset onto `origin/main`), then read the
+**Resume** block at the top of `docs/decisions/peek-a-code.md`: what is done, what is next, how to run the
+checks and the user's preferences (merge every change into `main` through a pull request, publish the
+`main` channel, end every report with the Expo link below). The user resumes with "resume peek-a-code".
+
 ## Report the Expo link
 
 Every report to the user about a change ends with the link to play it in Expo Go
