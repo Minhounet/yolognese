@@ -3,7 +3,8 @@ import { isOver } from '../domain/game';
 import { distract } from '../domain/guardian';
 import { Point } from '../domain/point';
 import { withPunchThrown } from './punches';
-import { Clock, GameRepository, RandomSource } from './ports';
+import { Clock, RandomSource } from './ports';
+import { SessionWork } from './SessionWork';
 import { toGameView } from './GameMapper';
 import { GameView, GuardianView } from './views';
 
@@ -21,35 +22,29 @@ export type DistractResponse =
   | { readonly kind: 'rejected'; readonly reason: 'no-game' | 'game-over' };
 
 export interface DistractGuardian {
-  execute(command: DistractCommand): DistractResponse;
+  execute(command: DistractCommand): Promise<DistractResponse>;
 }
 
 export class DistractGuardianImpl implements DistractGuardian {
   constructor(
-    private readonly repository: GameRepository,
+    private readonly work: SessionWork,
     private readonly clock: Clock,
     private readonly luck: RandomSource,
   ) {}
 
-  execute(command: DistractCommand): DistractResponse {
-    const session = this.repository.load();
-    if (session === undefined) {
-      return { kind: 'rejected', reason: 'no-game' };
-    }
-    if (isOver(session.game)) {
-      return { kind: 'rejected', reason: 'game-over' };
-    }
-    const now = this.clock.now();
-    if (this.luck.nextInt(LUCK_OUTCOMES) === SEES_THROUGH) {
-      if (session.attackLandsAt !== undefined) {
-        return { kind: 'punched', view: toGameView(session.game, { session, now: this.clock.now() }) };
+  execute(command: DistractCommand): Promise<DistractResponse> {
+    return this.work.run<DistractResponse>((session) => {
+      if (session === undefined) return { result: { kind: 'rejected', reason: 'no-game' } };
+      if (isOver(session.game)) return { result: { kind: 'rejected', reason: 'game-over' } };
+      const now = this.clock.now();
+      if (this.luck.nextInt(LUCK_OUTCOMES) === SEES_THROUGH) {
+        const view = toGameView(session.game, { session, now });
+        if (session.attackLandsAt !== undefined) return { result: { kind: 'punched', view } };
+        const punch = punchWindUp(this.luck.nextInt(LANE_COUNT));
+        return { session: withPunchThrown(session, now, punch), result: { kind: 'punched', punch, view } };
       }
-      const punch = punchWindUp(this.luck.nextInt(LANE_COUNT));
-      this.repository.save(withPunchThrown(session, now, punch));
-      return { kind: 'punched', punch, view: toGameView(session.game, { session, now: this.clock.now() }) };
-    }
-    const guardian = distract(session.guardian, now, now + DISTRACTION_MS);
-    this.repository.save({ ...session, guardian });
-    return { kind: 'distracted', view: { gaze: command.target, remainingMs: DISTRACTION_MS } };
+      const guardian = distract(session.guardian, now, now + DISTRACTION_MS);
+      return { session: { ...session, guardian }, result: { kind: 'distracted', view: { gaze: command.target, remainingMs: DISTRACTION_MS } } };
+    });
   }
 }

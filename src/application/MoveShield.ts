@@ -1,4 +1,4 @@
-import { GameRepository } from './ports';
+import { SessionWork } from './SessionWork';
 
 export interface MoveShieldCommand {
   readonly lane: number;
@@ -9,18 +9,16 @@ export type MoveShieldResponse =
   | { readonly kind: 'rejected'; readonly reason: 'no-game' };
 
 export interface MoveShield {
-  execute(command: MoveShieldCommand): MoveShieldResponse;
+  execute(command: MoveShieldCommand): Promise<MoveShieldResponse>;
 }
 
 export class MoveShieldImpl implements MoveShield {
-  constructor(private readonly repository: GameRepository) {}
+  constructor(private readonly work: SessionWork) {}
 
-  execute(command: MoveShieldCommand): MoveShieldResponse {
-    const session = this.repository.load();
-    if (session === undefined) {
-      return { kind: 'rejected', reason: 'no-game' };
-    }
-    this.repository.save({ ...session, shieldLane: command.lane });
-    return { kind: 'moved', lane: command.lane };
+  execute(command: MoveShieldCommand): Promise<MoveShieldResponse> {
+    return this.work.run<MoveShieldResponse>((session) => {
+      if (session === undefined) return { result: { kind: 'rejected', reason: 'no-game' } };
+      return { session: { ...session, shieldLane: command.lane }, result: { kind: 'moved', lane: command.lane } };
+    });
   }
 }

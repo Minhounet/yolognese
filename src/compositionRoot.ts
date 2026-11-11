@@ -7,6 +7,7 @@ import { PeekSecret, PeekSecretImpl } from './application/PeekSecret';
 import { StartGame, StartGameImpl } from './application/StartGame';
 import { SubmitGuess, SubmitGuessImpl } from './application/SubmitGuess';
 import { Tick, TickImpl } from './application/Tick';
+import { SessionWork } from './application/SessionWork';
 import { InMemoryGameRepository } from './infrastructure/InMemoryGameRepository';
 import { RandomSource } from './application/ports';
 import { FixedRandomSource } from './infrastructure/FixedRandomSource';
@@ -48,7 +49,7 @@ function configuredDraw(name: 'yologneseLuck' | 'yologneseItemDraw'): RandomSour
 }
 
 export function createUseCases(): UseCases {
-  const repository = new InMemoryGameRepository();
+  const repository = new SessionWork(new InMemoryGameRepository());
   const clock = new SystemClock();
   const random = new MathRandomSource();
   return {

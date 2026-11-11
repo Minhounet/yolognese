@@ -35,7 +35,8 @@ export interface Session {
   readonly xray?: { readonly index: number; readonly until: number };
 }
 
+/** Where the session is kept. Asynchronous, whatever the adapter: memory, device storage or a remote table. */
 export interface GameRepository {
-  load(): Session | undefined;
-  save(session: Session): void;
+  load(): Promise<Session | undefined>;
+  save(session: Session): Promise<void>;
 }

@@ -92,12 +92,31 @@ const STATUS_TEXT: Readonly<Record<GameView['status'], string>> = {
   lost: 'Out of life. The guardian wins.',
 };
 
-export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
-  const [view, setView] = useState<GameView>(() => useCases.startGame.execute());
+interface GameScreenProps {
+  readonly useCases: UseCases;
+  /** The view to begin with (a match already started); otherwise a solo game starts. */
+  readonly initialView?: GameView;
+}
+
+/** Starts a solo game when no view is given, then shows the board. */
+export function GameScreen(props: GameScreenProps) {
+  const { useCases, initialView } = props;
+  const [first, setFirst] = useState<GameView | undefined>(initialView);
+
+  useEffect(() => {
+    if (initialView === undefined) void useCases.startGame.execute().then(setFirst);
+  }, [initialView, useCases]);
+
+  if (first === undefined) return <View style={styles.screen} />;
+  return <Board {...props} initialView={first} />;
+}
+
+function Board({ useCases, initialView }: GameScreenProps & { readonly initialView: GameView }) {
+  const [view, setView] = useState<GameView>(initialView);
   const playing = view.status === 'playing';
   const draft: Draft = view.draft;
-  const editDraft = (command: Parameters<UseCases['editDraft']['execute']>[0]) => {
-    const response = useCases.editDraft.execute(command);
+  const editDraft = async (command: Parameters<UseCases['editDraft']['execute']>[0]) => {
+    const response = await useCases.editDraft.execute(command);
     if (response.kind === 'edited') setView(response.view);
   };
   const [gaze, setGaze] = useState<Point | undefined>(undefined);
@@ -151,8 +170,8 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
       setBeam({ from, to: { x: x + ((pegIndex + 0.5) * width) / SECRET_LENGTH, y: y + height / 2 } }),
     );
 
-  const collect = (shown: Item) => {
-    const response = useCases.collectItem.execute({ id: shown.id });
+  const collect = async (shown: Item) => {
+    const response = await useCases.collectItem.execute({ id: shown.id });
     setItem(undefined);
     if (response.kind !== 'collected') return;
     const received = response.gift ?? (response.item === 'present' ? undefined : response.item);
@@ -183,14 +202,14 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
     showWarning({ lane: punch.lane, landsAt: Date.now() + punch.landsInMs, fallMs: punch.landsInMs, punch: true });
 
   const moveShield = useCallback(
-    (lane: number) => {
-      const response = useCases.moveShield.execute({ lane });
+    async (lane: number) => {
+      const response = await useCases.moveShield.execute({ lane });
       if (response.kind === 'moved') setShieldLane(response.lane);
     },
     [useCases],
   );
 
-  useEffect(() => moveShield(MIDDLE_LANE), [moveShield]);
+  useEffect(() => void moveShield(MIDDLE_LANE), [moveShield]);
 
   useEffect(() => {
     if (attackResult === undefined) return undefined;
@@ -200,8 +219,8 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
 
   useEffect(() => {
     if (!playing) return undefined;
-    const timer = setInterval(() => {
-      const response = useCases.tick.execute();
+    const timer = setInterval(async () => {
+      const response = await useCases.tick.execute();
       if (response.kind !== 'ticked') return;
       setTimeLeftMs(response.timeLeftMs);
       if (response.landed !== undefined) {
@@ -261,7 +280,7 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
     slotRefs.current.forEach((slot, index) =>
       slot?.measureInWindow((x, y, width, height) => {
         const inside = at.x >= x && at.x <= x + width && at.y >= y && at.y <= y + height;
-        if (inside) editDraft({ kind: 'place', color, slot: index });
+        if (inside) void editDraft({ kind: 'place', color, slot: index });
       }),
     );
   };
@@ -270,13 +289,13 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
   const pegUpRef = useRef<number | undefined>(undefined);
 
   const flipBack = (index: number) => {
-    useCases.hidePeg.execute({ index });
+    void useCases.hidePeg.execute({ index });
     pegUpRef.current = undefined;
     setPeeked(undefined);
   };
 
-  const peek = (index: number) => {
-    const response = useCases.peekSecret.execute({ index });
+  const peek = async (index: number) => {
+    const response = await useCases.peekSecret.execute({ index });
     if (response.kind === 'revealed' || response.kind === 'caught') {
       setCooldown({ startedAt: Date.now(), cooldownMs: response.cooldownMs });
     }
@@ -304,8 +323,8 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
       guardianCentre.current = { x: x + width / 2, y: y + height / 2 };
     });
 
-  const distractTowards = (target: Point) => {
-    const response = useCases.distractGuardian.execute({ target });
+  const distractTowards = async (target: Point) => {
+    const response = await useCases.distractGuardian.execute({ target });
     if (response.kind === 'punched') {
       setView(response.view);
       if (response.punch !== undefined) throwPunch(response.punch);
@@ -328,19 +347,19 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
     const { pageX, pageY } = event.nativeEvent;
     const id = nextPuff.current++;
     setPuffs((current) => [...current, { id, at: { x: pageX, y: pageY } }]);
-    distractTowards({ x: pageX - guardianCentre.current.x, y: pageY - guardianCentre.current.y });
+    void distractTowards({ x: pageX - guardianCentre.current.x, y: pageY - guardianCentre.current.y });
   };
 
   const removePuff = useCallback((id: number) => setPuffs((current) => current.filter((puff) => puff.id !== id)), []);
 
-  const submit = () => {
+  const submit = async () => {
     if (!isComplete(draft)) return;
-    const response = useCases.submitGuess.execute({ guess: draft });
+    const response = await useCases.submitGuess.execute({ guess: draft });
     if (response.kind === 'played') setView(response.view);
   };
 
-  const newGame = () => {
-    const fresh = useCases.startGame.execute();
+  const newGame = async () => {
+    const fresh = await useCases.startGame.execute();
     setView(fresh);
     setCooldown({ startedAt: 0, cooldownMs: 0 });
     setTimeLeftMs(undefined);
@@ -351,7 +370,7 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
     setPeeked(undefined);
     setBlind(false);
     setCharmed(false);
-    moveShield(MIDDLE_LANE);
+    void moveShield(MIDDLE_LANE);
   };
 
   return (
@@ -365,7 +384,7 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
           const xrayed = view.revealed.find((peg) => peg.index === slot)?.color;
           const up = view.secret === undefined && peeked?.index === slot;
           const shown = up ? peeked.color : (color ?? xrayed);
-          const onPress = up ? () => flipBack(slot) : () => peek(slot);
+          const onPress = up ? () => flipBack(slot) : () => void peek(slot);
           return <SecretPeg key={slot} testID={`secret-${slot}`} color={shown} onPress={playing ? onPress : undefined} />;
         })}
       </View>
@@ -408,7 +427,7 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
           <View style={styles.row}>
             {draft.map((color, slot) => (
               <View key={slot} ref={(element) => { slotRefs.current[slot] = element; }}>
-                <Peg testID={`slot-${slot}`} color={color} onPress={() => editDraft({ kind: 'clear', slot })} />
+                <Peg testID={`slot-${slot}`} color={color} onPress={() => void editDraft({ kind: 'clear', slot })} />
               </View>
             ))}
           </View>
@@ -417,7 +436,7 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
               <DraggableColor
                 key={color}
                 color={color}
-                onTap={() => editDraft({ kind: 'place', color })}
+                onTap={() => void editDraft({ kind: 'place', color })}
                 onDrag={(dragged, at) => setDragging({ color: dragged, at })}
                 onDrop={dropColor}
               />
@@ -427,23 +446,23 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
             testID="submit"
             accessibilityRole="button"
             disabled={!isComplete(draft)}
-            onPress={submit}
+            onPress={() => void submit()}
             style={[styles.button, !isComplete(draft) && styles.disabled]}
           >
             <Text style={styles.buttonText}>Guess</Text>
           </Pressable>
         </View>
       ) : (
-        <Pressable testID="new-game" accessibilityRole="button" onPress={newGame} style={styles.button}>
+        <Pressable testID="new-game" accessibilityRole="button" onPress={() => void newGame()} style={styles.button}>
           <Text style={styles.buttonText}>New game</Text>
         </Pressable>
       )}
       {playing && item !== undefined && (
-        <ItemSprite item={item} onCollect={() => collect(item)} onTouchStart={touchedControl} />
+        <ItemSprite item={item} onCollect={() => void collect(item)} onTouchStart={touchedControl} />
       )}
       <View style={styles.playerZone} testID="player-zone" onTouchStart={touchedControl}>
         {playing && (
-          <ShieldLanes shieldLane={shieldLane} warningLane={warning?.lane} onMove={moveShield} onMeasured={setGround} />
+          <ShieldLanes shieldLane={shieldLane} warningLane={warning?.lane} onMove={(lane) => void moveShield(lane)} onMeasured={setGround} />
         )}
         <LifeBar life={view.life} maxLife={view.maxLife} />
       </View>

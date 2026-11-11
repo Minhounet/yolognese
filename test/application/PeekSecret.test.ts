@@ -3,6 +3,7 @@ import { HidePegImpl } from '../../src/application/HidePeg';
 import { PeekSecretImpl } from '../../src/application/PeekSecret';
 import { StartGameImpl } from '../../src/application/StartGame';
 import { SubmitGuessImpl } from '../../src/application/SubmitGuess';
+import { SessionWork } from '../../src/application/SessionWork';
 import { InMemoryGameRepository } from '../../src/infrastructure/InMemoryGameRepository';
 import { FakeClock } from '../support/FakeClock';
 import { ScriptedRandomSource } from '../support/ScriptedRandomSource';
@@ -10,10 +11,10 @@ import { ScriptedRandomSource } from '../support/ScriptedRandomSource';
 // secret: red yellow green blue; the guardian's luck draw: 1 is fooled (0 sees through it);
 // punchLanes: the lane a punch is thrown at
 const FOOLED = 1;
-function startedGame(luck: readonly number[] = [FOOLED], punchLanes: readonly number[] = [2]) {
+async function startedGame(luck: readonly number[] = [FOOLED], punchLanes: readonly number[] = [2]) {
   const clock = new FakeClock();
-  const repository = new InMemoryGameRepository();
-  new StartGameImpl(new ScriptedRandomSource([0, 1, 2, 3]), repository, clock).execute();
+  const repository = new SessionWork(new InMemoryGameRepository());
+  await new StartGameImpl(new ScriptedRandomSource([0, 1, 2, 3]), repository, clock).execute();
   return {
     clock,
     distractGuardian: new DistractGuardianImpl(repository, clock, new ScriptedRandomSource(luck)),
@@ -26,175 +27,175 @@ function startedGame(luck: readonly number[] = [FOOLED], punchLanes: readonly nu
 const AWAY = { target: { x: 150, y: -60 } };
 
 describe('PeekSecret', () => {
-  it('shouldRevealColour_whenPeekingWhileDistracted', () => {
-    const { distractGuardian, peekSecret } = startedGame();
-    distractGuardian.execute(AWAY);
+  it('shouldRevealColour_whenPeekingWhileDistracted', async () => {
+    const { distractGuardian, peekSecret } = await startedGame();
+    await distractGuardian.execute(AWAY);
 
-    const response = peekSecret.execute({ index: 2 });
+    const response = await peekSecret.execute({ index: 2 });
 
     expect(response).toMatchObject({ kind: 'revealed', index: 2, color: 'green' });
   });
 
-  it('shouldBeCaught_whenPeekingWhileWatched', () => {
-    const { peekSecret } = startedGame();
+  it('shouldBeCaught_whenPeekingWhileWatched', async () => {
+    const { peekSecret } = await startedGame();
 
-    const response = peekSecret.execute({ index: 2 });
+    const response = await peekSecret.execute({ index: 2 });
 
     expect(response).toMatchObject({ kind: 'caught' });
   });
 
-  it('shouldBeCaught_whenPeekingAfterDistractionEnds', () => {
-    const { clock, distractGuardian, peekSecret } = startedGame();
-    distractGuardian.execute(AWAY);
+  it('shouldBeCaught_whenPeekingAfterDistractionEnds', async () => {
+    const { clock, distractGuardian, peekSecret } = await startedGame();
+    await distractGuardian.execute(AWAY);
     clock.advance(1500);
 
-    const response = peekSecret.execute({ index: 2 });
+    const response = await peekSecret.execute({ index: 2 });
 
     expect(response).toMatchObject({ kind: 'caught' });
   });
 
-  it('shouldRevealColour_justBeforeDistractionEnds', () => {
-    const { clock, distractGuardian, peekSecret } = startedGame();
-    distractGuardian.execute(AWAY);
+  it('shouldRevealColour_justBeforeDistractionEnds', async () => {
+    const { clock, distractGuardian, peekSecret } = await startedGame();
+    await distractGuardian.execute(AWAY);
     clock.advance(1499);
 
-    const response = peekSecret.execute({ index: 0 });
+    const response = await peekSecret.execute({ index: 0 });
 
     expect(response).toMatchObject({ kind: 'revealed', index: 0, color: 'red' });
   });
 
-  it('shouldLoseTwoLife_whenCaught', () => {
-    const { peekSecret } = startedGame();
+  it('shouldLoseTwoLife_whenCaught', async () => {
+    const { peekSecret } = await startedGame();
 
-    const response = peekSecret.execute({ index: 2 });
+    const response = await peekSecret.execute({ index: 2 });
 
     expect(response).toMatchObject({ kind: 'caught', view: { life: 8 } });
   });
 
-  it('shouldBeLost_whenCaughtWithTwoLifeLeft', () => {
-    const { peekSecret, submitGuess } = startedGame();
+  it('shouldBeLost_whenCaughtWithTwoLifeLeft', async () => {
+    const { peekSecret, submitGuess } = await startedGame();
     const miss = { guess: ['purple', 'purple', 'orange', 'orange'] } as const;
-    Array.from({ length: 8 }).forEach(() => submitGuess.execute(miss));
+    for (let time = 0; time < 8; time += 1) await submitGuess.execute(miss);
 
-    const response = peekSecret.execute({ index: 2 });
+    const response = await peekSecret.execute({ index: 2 });
 
     expect(response).toMatchObject({ kind: 'caught', view: { status: 'lost', life: 0 } });
   });
 
-  it('shouldStopLifeAtZero_whenCaughtWithOneLifeLeft', () => {
-    const { peekSecret, submitGuess } = startedGame();
+  it('shouldStopLifeAtZero_whenCaughtWithOneLifeLeft', async () => {
+    const { peekSecret, submitGuess } = await startedGame();
     const miss = { guess: ['purple', 'purple', 'orange', 'orange'] } as const;
-    Array.from({ length: 9 }).forEach(() => submitGuess.execute(miss));
+    for (let time = 0; time < 9; time += 1) await submitGuess.execute(miss);
 
-    const response = peekSecret.execute({ index: 2 });
+    const response = await peekSecret.execute({ index: 2 });
 
     expect(response).toMatchObject({ kind: 'caught', view: { life: 0 } });
   });
 
-  it('shouldRejectPeek_whenGameIsOver', () => {
-    const { distractGuardian, peekSecret, submitGuess } = startedGame();
-    submitGuess.execute({ guess: ['red', 'yellow', 'green', 'blue'] });
-    distractGuardian.execute(AWAY);
+  it('shouldRejectPeek_whenGameIsOver', async () => {
+    const { distractGuardian, peekSecret, submitGuess } = await startedGame();
+    await submitGuess.execute({ guess: ['red', 'yellow', 'green', 'blue'] });
+    await distractGuardian.execute(AWAY);
 
-    const response = peekSecret.execute({ index: 2 });
+    const response = await peekSecret.execute({ index: 2 });
 
     expect(response).toEqual({ kind: 'rejected', reason: 'game-over' });
   });
 
-  it('shouldKeepLifeLost_whenGuessingAfterBeingCaught', () => {
-    const { peekSecret, submitGuess } = startedGame();
-    peekSecret.execute({ index: 2 });
+  it('shouldKeepLifeLost_whenGuessingAfterBeingCaught', async () => {
+    const { peekSecret, submitGuess } = await startedGame();
+    await peekSecret.execute({ index: 2 });
 
-    const response = submitGuess.execute({ guess: ['purple', 'purple', 'orange', 'orange'] });
+    const response = await submitGuess.execute({ guess: ['purple', 'purple', 'orange', 'orange'] });
 
     expect(response).toMatchObject({ kind: 'played', view: { life: 7 } });
   });
 
-  it('shouldRejectPeek_whenPeekedJustBefore', () => {
-    const { distractGuardian, peekSecret } = startedGame();
-    distractGuardian.execute(AWAY);
-    peekSecret.execute({ index: 0 });
+  it('shouldRejectPeek_whenPeekedJustBefore', async () => {
+    const { distractGuardian, peekSecret } = await startedGame();
+    await distractGuardian.execute(AWAY);
+    await peekSecret.execute({ index: 0 });
 
-    const response = peekSecret.execute({ index: 1 });
+    const response = await peekSecret.execute({ index: 1 });
 
     expect(response).toMatchObject({ kind: 'rejected', reason: 'cooling-down' });
   });
 
-  it('shouldRejectPeek_justBeforeCooldownEnds', () => {
-    const { clock, distractGuardian, peekSecret } = startedGame();
-    distractGuardian.execute(AWAY);
-    peekSecret.execute({ index: 0 });
+  it('shouldRejectPeek_justBeforeCooldownEnds', async () => {
+    const { clock, distractGuardian, peekSecret } = await startedGame();
+    await distractGuardian.execute(AWAY);
+    await peekSecret.execute({ index: 0 });
     clock.advance(4999);
-    distractGuardian.execute(AWAY);
+    await distractGuardian.execute(AWAY);
 
-    const response = peekSecret.execute({ index: 1 });
+    const response = await peekSecret.execute({ index: 1 });
 
     expect(response).toMatchObject({ kind: 'rejected', reason: 'cooling-down' });
   });
 
-  it('shouldAllowPeek_whenCooldownHasPassed', () => {
-    const { clock, distractGuardian, hidePeg, peekSecret } = startedGame();
-    distractGuardian.execute(AWAY);
-    peekSecret.execute({ index: 0 });
-    hidePeg.execute({ index: 0 });
+  it('shouldAllowPeek_whenCooldownHasPassed', async () => {
+    const { clock, distractGuardian, hidePeg, peekSecret } = await startedGame();
+    await distractGuardian.execute(AWAY);
+    await peekSecret.execute({ index: 0 });
+    await hidePeg.execute({ index: 0 });
     clock.advance(5000);
-    distractGuardian.execute(AWAY);
+    await distractGuardian.execute(AWAY);
 
-    const response = peekSecret.execute({ index: 1 });
+    const response = await peekSecret.execute({ index: 1 });
 
     expect(response).toMatchObject({ kind: 'revealed', index: 1, color: 'yellow' });
   });
 
-  it('shouldRejectPeek_whenCaughtJustBefore', () => {
-    const { peekSecret } = startedGame();
-    peekSecret.execute({ index: 0 });
+  it('shouldRejectPeek_whenCaughtJustBefore', async () => {
+    const { peekSecret } = await startedGame();
+    await peekSecret.execute({ index: 0 });
 
-    const response = peekSecret.execute({ index: 1 });
+    const response = await peekSecret.execute({ index: 1 });
 
     expect(response).toMatchObject({ kind: 'rejected', reason: 'cooling-down' });
   });
 
-  it('shouldCostNothing_whenPeekRejectedDuringCooldown', () => {
-    const { peekSecret, submitGuess } = startedGame();
-    peekSecret.execute({ index: 0 });
-    peekSecret.execute({ index: 1 });
+  it('shouldCostNothing_whenPeekRejectedDuringCooldown', async () => {
+    const { peekSecret, submitGuess } = await startedGame();
+    await peekSecret.execute({ index: 0 });
+    await peekSecret.execute({ index: 1 });
 
-    const response = submitGuess.execute({ guess: ['purple', 'purple', 'orange', 'orange'] });
+    const response = await submitGuess.execute({ guess: ['purple', 'purple', 'orange', 'orange'] });
 
     expect(response).toMatchObject({ kind: 'played', view: { life: 7 } });
   });
 
-  it('shouldStartCooldown_whenPeekRevealed', () => {
-    const { distractGuardian, peekSecret } = startedGame();
-    distractGuardian.execute(AWAY);
+  it('shouldStartCooldown_whenPeekRevealed', async () => {
+    const { distractGuardian, peekSecret } = await startedGame();
+    await distractGuardian.execute(AWAY);
 
-    const response = peekSecret.execute({ index: 3 });
+    const response = await peekSecret.execute({ index: 3 });
 
     expect(response).toMatchObject({ kind: 'revealed', cooldownMs: 5000 });
   });
 
-  it('shouldStartCooldown_whenCaught', () => {
-    const { peekSecret } = startedGame();
+  it('shouldStartCooldown_whenCaught', async () => {
+    const { peekSecret } = await startedGame();
 
-    const response = peekSecret.execute({ index: 3 });
+    const response = await peekSecret.execute({ index: 3 });
 
     expect(response).toMatchObject({ kind: 'caught', cooldownMs: 5000 });
   });
 
-  it('shouldBeCaught_whenPeekingAfterBeingPunched', () => {
-    const { distractGuardian, peekSecret } = startedGame([0]);
-    distractGuardian.execute(AWAY);
+  it('shouldBeCaught_whenPeekingAfterBeingPunched', async () => {
+    const { distractGuardian, peekSecret } = await startedGame([0]);
+    await distractGuardian.execute(AWAY);
 
-    const response = peekSecret.execute({ index: 2 });
+    const response = await peekSecret.execute({ index: 2 });
 
     expect(response).toMatchObject({ kind: 'caught' });
   });
 
-  it('shouldThrowPunch_whenPeekingDuringCooldown', () => {
-    const { peekSecret } = startedGame([FOOLED], [2]);
-    peekSecret.execute({ index: 0 });
+  it('shouldThrowPunch_whenPeekingDuringCooldown', async () => {
+    const { peekSecret } = await startedGame([FOOLED], [2]);
+    await peekSecret.execute({ index: 0 });
 
-    const response = peekSecret.execute({ index: 1 });
+    const response = await peekSecret.execute({ index: 1 });
 
     expect(response).toMatchObject({ kind: 'rejected', reason: 'cooling-down', punch: { lane: 2, landsInMs: 450 } });
   });
