@@ -8,8 +8,15 @@ You have a life bar and 3 minutes. Items pop up: 🍝 food, 💨 smoke bomb,
 it can switch your pegs or burn you). The guardian throws meatballs, and
 forks that steal a peg from your row: drag the 🛡️ shield into the warned lane.
 
-**Race friends:** everyone joins the same room code on their own phone, the
-first one in starts. Same secret for all; first to crack it wins, or the last
+**Play friends:** everyone joins the same room code on their own phone; the
+first one in picks the mode and starts.
+
+- **Steal the sauce** (default): everyone hides a secret and cracks another
+  player's, in a circle. The target switches every 45 s and after each crack.
+  +1 per sauce stolen (the robbed player gets a new one); most points in
+  5 minutes wins. Grab 😈 to hit whoever is after your sauce.
+  Design in `docs/ticket/PEEK-3/`.
+- **Race:** same secret for all; first to crack it wins, or the last
 one still in. Grab 😈 to throw a meatball or a fork at a rival. Rooms run on
 Supabase Realtime (no database tables). Design in `docs/ticket/PEEK-2/`.
 

@@ -14,7 +14,15 @@ export interface Rival {
 
 /** What players tell each other through the room. */
 export type RaceEvent =
-  | { readonly type: 'start'; readonly secret: Code; readonly players: readonly { readonly id: string; readonly name: string }[] }
+  | {
+      readonly type: 'start';
+      /** Absent: a race (older phones). */
+      readonly mode?: 'race' | 'steal';
+      /** The race's shared secret. */
+      readonly secret?: Code;
+      /** In "steal the sauce", each player's own secret. */
+      readonly players: readonly { readonly id: string; readonly name: string; readonly secret?: Code }[];
+    }
   | { readonly type: 'progress'; readonly from: string; readonly life: number; readonly bestExact: number }
   | { readonly type: 'attack'; readonly from: string; readonly to: string; readonly kind: AttackKind; readonly lane: number }
   | { readonly type: 'cracked'; readonly from: string }
@@ -30,7 +38,6 @@ export interface IncomingAttack {
 export interface Race {
   readonly me: string;
   readonly rivals: readonly Rival[];
-  readonly incoming: readonly IncomingAttack[];
   /** Events made by this player's actions, not yet sent. */
   readonly outbox: readonly RaceEvent[];
   /** What the room was last told about this player, to send only changes. */
@@ -45,7 +52,6 @@ export function newRace(me: string, players: readonly { readonly id: string; rea
     rivals: players
       .filter(({ id }) => id !== me)
       .map(({ id, name }) => ({ id, name, life, bestExact: 0, out: false, cracked: false })),
-    incoming: [],
     outbox: [],
     told: { life, bestExact: 0, over: false },
   };
@@ -69,15 +75,23 @@ const updateRival = (race: Race, id: string, change: (rival: Rival) => Rival): R
 });
 
 /** What this player must learn from a rival's event; `beaten` and `lastStanding` end its own game. */
-export function hear(race: Race, event: RaceEvent): { readonly race: Race; readonly beaten: boolean; readonly lastStanding: boolean } {
-  const quiet = (changed: Race) => ({ race: changed, beaten: false, lastStanding: false });
+export interface Heard {
+  readonly race: Race;
+  readonly beaten: boolean;
+  readonly lastStanding: boolean;
+  /** An attack a rival threw at this player. */
+  readonly incoming?: IncomingAttack;
+}
+
+export function hear(race: Race, event: RaceEvent): Heard {
+  const quiet = (changed: Race): Heard => ({ race: changed, beaten: false, lastStanding: false });
   if (event.type === 'start' || event.from === race.me) return quiet(race);
   switch (event.type) {
     case 'progress':
       return quiet(updateRival(race, event.from, (rival) => ({ ...rival, life: event.life, bestExact: event.bestExact })));
     case 'attack':
       if (event.to !== race.me) return quiet(race);
-      return quiet({ ...race, incoming: [...race.incoming, { kind: event.kind, lane: event.lane, from: event.from }] });
+      return { ...quiet(race), incoming: { kind: event.kind, lane: event.lane, from: event.from } };
     case 'cracked': {
       const changed = updateRival(race, event.from, (rival) => ({ ...rival, cracked: true, bestExact: 4 }));
       return { race: { ...changed, beatenBy: changed.beatenBy ?? event.from }, beaten: true, lastStanding: false };

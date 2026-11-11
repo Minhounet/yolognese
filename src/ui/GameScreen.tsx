@@ -3,7 +3,7 @@ import { GestureResponderEvent, LayoutChangeEvent, Pressable, ScrollView, StyleS
 import { ActionResponse } from '../application/RoundAction';
 import { GameView } from '../application/views';
 import { RaceUseCases, UseCases } from '../compositionRoot';
-import { RaceEvent } from '../domain/race';
+import { RoomEvent } from '../domain/steal';
 import { COLORS, Color } from '../domain/color';
 import { isComplete } from '../domain/draft';
 import { Point } from '../domain/point';
@@ -16,6 +16,7 @@ import { HeaderBars } from './HeaderBars';
 import { Items } from './Items';
 import { Peg } from './Peg';
 import { Rivals } from './Rivals';
+import { StealBanner } from './StealBanner';
 import { SecretPeg } from './SecretPeg';
 import { THEME } from './theme';
 
@@ -47,12 +48,16 @@ const NOTICE_TEXT: Readonly<Record<NoticeKind, string>> = {
   sabotage: '😈 Sabotage sent to a rival!',
   beaten: 'Too slow!',
   'last-standing': 'Everyone else is out!',
+  switch: '🔀 Switch! New target',
+  robbed: '😱 Your sauce was stolen! You got a new one',
+  'knocked-out': '💫 Knocked out! −1 point, life refilled',
+  scored: '🍝 You stole the sauce! +1',
 };
 
 /** A race in progress: its use cases, and the room's events (other than start) handed to the game. */
 export interface RaceProps {
   readonly useCases: RaceUseCases;
-  readonly subscribe: (onEvent: (event: RaceEvent) => void) => () => void;
+  readonly subscribe: (onEvent: (event: RoomEvent) => void) => () => void;
 }
 
 interface GameScreenProps {
@@ -186,12 +191,17 @@ export function GameScreen({ useCases, initialView, race, onBack }: GameScreenPr
     if (caught) return 'Caught peeking! −2 life';
     if (view.attack?.fromName !== undefined && playing) return `😈 ${view.attack.fromName} threw a ${view.attack.kind} at you!`;
     if (view.notice !== undefined && playing) return NOTICE_TEXT[view.notice];
+    if (view.steal?.finished) {
+      const [top] = view.steal.scores;
+      return view.status === 'won' ? `Match over! 🏆 You win with ${top.points}` : `Match over: ${top.name} wins with ${top.points}`;
+    }
+    if (view.steal?.waiting) return '🍝 Sauce stolen! Waiting for the switch…';
     if (view.lostBy === 'beaten') return `${view.race?.beatenBy ?? 'A rival'} cracked it first!`;
     if (view.lastStanding) return 'Everyone else is out. You win! 🏆';
     if (view.lostBy === 'time') return TIME_UP;
     return STATUS_TEXT[view.status];
   };
-  const alarming = caught || view.notice === 'hit' || view.notice === 'stolen' || view.notice === 'mixup' || view.notice === 'chili';
+  const alarming = caught || view.notice === 'robbed' || view.notice === 'knocked-out' || view.notice === 'hit' || view.notice === 'stolen' || view.notice === 'mixup' || view.notice === 'chili';
 
   return (
     <Pressable testID="scene" style={styles.screen} onPress={pointAt} onLayout={measureScene}>
@@ -204,6 +214,7 @@ export function GameScreen({ useCases, initialView, race, onBack }: GameScreenPr
         <Text style={styles.title}>Yolognese</Text>
       </View>
       {view.race !== undefined && <Rivals rivals={view.race.rivals} />}
+      {view.steal !== undefined && <StealBanner steal={view.steal} />}
       <HeaderBars life={view.life} maxLife={view.maxLife} timeLeftMs={view.timeLeftMs} cooldownMs={view.cooldownMs} />
       <View ref={guardianRef} onLayout={measureGuardian}>
         <Guardian gaze={gaze} blind={view.blindMs > 0} angry={view.attack !== undefined} />

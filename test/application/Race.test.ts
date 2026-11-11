@@ -6,7 +6,7 @@ import { SubmitGuessImpl } from '../../src/application/SubmitGuess';
 import { TickImpl } from '../../src/application/Tick';
 import { MoveShieldImpl } from '../../src/application/MoveShield';
 import { EditDraftImpl } from '../../src/application/EditDraft';
-import { RaceEvent } from '../../src/domain/race';
+import { RoomEvent } from '../../src/domain/steal';
 import { ITEM_KINDS } from '../../src/domain/round';
 import { InMemoryGameRepository } from '../../src/infrastructure/InMemoryGameRepository';
 import { FakeClock } from '../support/FakeClock';
@@ -23,7 +23,7 @@ const MISS = { guess: ['purple', 'purple', 'orange', 'orange'] } as const;
 /** A room that delivers each event to every other player, as Supabase broadcast does. */
 function race(playerCount = 2) {
   const clock = new FakeClock();
-  const sent: RaceEvent[] = [];
+  const sent: RoomEvent[] = [];
   const players = PLAYERS.slice(0, playerCount).map(({ id }) => {
     const repository = new InMemoryGameRepository();
     const random = new QueuedRandomSource();
@@ -38,7 +38,7 @@ function race(playerCount = 2) {
       id,
       random,
       start: new StartRaceImpl(random, repository, clock),
-      receive: new ReceiveRaceImpl(repository, clock),
+      receive: new ReceiveRaceImpl(repository, clock, random),
       flush: new FlushRaceImpl(repository, link),
       tick: new TickImpl(action),
       submitGuess: new SubmitGuessImpl(repository, clock),

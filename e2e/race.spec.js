@@ -28,6 +28,8 @@ test('Race: two players join a room, the host starts, the first to crack wins an
   await expect(ann.getByTestId('member-Bob')).toBeVisible({ timeout: 15_000 });
   await expect(bob.getByTestId('room-status')).toContainText('2 in the room');
 
+  await ann.getByTestId('mode-race').click();
+  await expect(bob.getByTestId('mode-rules')).toContainText('Same secret', { timeout: 10_000 });
   await ann.getByTestId('start-race').click();
 
   await expect(bob.getByTestId('rival-Ann')).toBeVisible({ timeout: 10_000 });

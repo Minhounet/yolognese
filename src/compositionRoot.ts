@@ -3,7 +3,7 @@ import { DistractGuardian, DistractGuardianImpl } from './application/DistractGu
 import { EditDraft, EditDraftImpl } from './application/EditDraft';
 import { MoveShield, MoveShieldImpl } from './application/MoveShield';
 import { PeekSecret, PeekSecretImpl } from './application/PeekSecret';
-import { FlushRace, FlushRaceImpl, ReceiveRace, ReceiveRaceImpl, StartRace, StartRaceImpl } from './application/Race';
+import { FlushRace, FlushRaceImpl, ReceiveRace, ReceiveRaceImpl, StartRace, StartRaceImpl, StartSteal, StartStealImpl } from './application/Race';
 import { RaceLink } from './application/ports';
 import { RoundAction } from './application/RoundAction';
 import { StartGame, StartGameImpl } from './application/StartGame';
@@ -28,6 +28,7 @@ export interface UseCases {
 
 export interface RaceUseCases {
   readonly startRace: StartRace;
+  readonly startSteal: StartSteal;
   readonly receiveRace: ReceiveRace;
   readonly flushRace: FlushRace;
 }
@@ -48,7 +49,8 @@ export function createUseCases(): UseCases {
     tick: new TickImpl(action),
     race: (link) => ({
       startRace: new StartRaceImpl(random, repository, clock),
-      receiveRace: new ReceiveRaceImpl(repository, clock),
+      startSteal: new StartStealImpl(random, repository, clock),
+      receiveRace: new ReceiveRaceImpl(repository, clock, random),
       flushRace: new FlushRaceImpl(repository, link),
     }),
   };

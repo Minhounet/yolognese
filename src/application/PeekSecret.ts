@@ -1,6 +1,7 @@
 import { Color } from '../domain/color';
 import { isOver } from '../domain/game';
-import { peek } from '../domain/round';
+import { isRoundOver, peek } from '../domain/round';
+import { settle } from '../domain/stealRound';
 import { toGameView } from './GameMapper';
 import { Clock, GameRepository } from './ports';
 import { GameView } from './views';
@@ -29,11 +30,13 @@ export class PeekSecretImpl implements PeekSecret {
     if (session === undefined) {
       return { kind: 'rejected', reason: 'no-game' };
     }
-    if (isOver(session.game)) {
+    if (isOver(session.game) || isRoundOver(session)) {
       return { kind: 'rejected', reason: 'game-over' };
     }
     const now = this.clock.now();
-    const { round, outcome } = peek(session, now);
+    const peeked = peek(session, now);
+    const { outcome } = peeked;
+    const round = settle(peeked.round, now);
     if (outcome === 'cooling-down') {
       return { kind: 'rejected', reason: 'cooling-down' };
     }

@@ -1,17 +1,28 @@
 import { RealtimeChannel, SupabaseClient, createClient } from '@supabase/supabase-js';
 import { RaceLink } from '../application/ports';
-import { RaceEvent } from '../domain/race';
+import { Code } from '../domain/color';
+import { RoomEvent } from '../domain/steal';
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from './supabaseConfig';
 
-export interface Member {
-  readonly id: string;
+export type Mode = 'race' | 'steal';
+
+/** What each player tells the room about itself (presence). */
+export interface MemberInfo {
   readonly name: string;
   readonly joinedAt: number;
+  /** "Steal the sauce": the secret this player hides. */
+  readonly secret?: Code;
+  /** The mode the host picked (only the host's counts). */
+  readonly mode?: Mode;
+}
+
+export interface Member extends MemberInfo {
+  readonly id: string;
 }
 
 export interface RoomHandlers {
   readonly onMembers: (members: readonly Member[]) => void;
-  readonly onEvent: (event: RaceEvent) => void;
+  readonly onEvent: (event: RoomEvent) => void;
   readonly onStatus: (status: 'connecting' | 'joined' | 'failed') => void;
 }
 
@@ -31,22 +42,26 @@ const newId = () => Math.random().toString(36).slice(2, 10);
  */
 export class SupabaseRaceRoom implements RaceLink {
   readonly me: Member;
+  private info: MemberInfo;
+  private joined = false;
   private readonly channel: RealtimeChannel;
   private handlers: RoomHandlers;
 
-  constructor(code: string, name: string, handlers: RoomHandlers) {
-    this.me = { id: newId(), name, joinedAt: Date.now() };
+  constructor(code: string, info: Omit<MemberInfo, 'joinedAt'>, handlers: RoomHandlers) {
+    this.info = { ...info, joinedAt: Date.now() };
+    this.me = { id: newId(), ...this.info };
     this.handlers = handlers;
     this.channel = supabase().channel(`yolognese:race:${code}`, {
       config: { broadcast: { self: false }, presence: { key: this.me.id } },
     });
     this.channel
       .on('presence', { event: 'sync' }, () => this.handlers.onMembers(this.members()))
-      .on('broadcast', { event: 'race' }, ({ payload }) => this.handlers.onEvent(payload as RaceEvent));
+      .on('broadcast', { event: 'race' }, ({ payload }) => this.handlers.onEvent(payload as RoomEvent));
     handlers.onStatus('connecting');
     this.channel.subscribe(async (status) => {
       if (status === 'SUBSCRIBED') {
-        await this.channel.track({ name: this.me.name, joinedAt: this.me.joinedAt });
+        this.joined = true;
+        await this.channel.track({ ...this.info });
         this.handlers.onStatus('joined');
       } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
         this.handlers.onStatus('failed');
@@ -59,14 +74,20 @@ export class SupabaseRaceRoom implements RaceLink {
     this.handlers = { ...this.handlers, ...handlers };
   }
 
+  /** Changes what the room sees about this player (its secret, the host's mode). */
+  update(change: Partial<Omit<MemberInfo, 'joinedAt'>>): void {
+    this.info = { ...this.info, ...change };
+    if (this.joined) void this.channel.track({ ...this.info });
+  }
+
   members(): readonly Member[] {
-    const state = this.channel.presenceState<{ name: string; joinedAt: number }>();
+    const state = this.channel.presenceState<MemberInfo>();
     return Object.entries(state)
-      .map(([id, metas]) => ({ id, name: metas[0]?.name ?? '?', joinedAt: metas[0]?.joinedAt ?? 0 }))
+      .map(([id, metas]) => ({ ...metas[0], name: metas[0]?.name ?? '?', joinedAt: metas[0]?.joinedAt ?? 0, id }))
       .sort((one, other) => one.joinedAt - other.joinedAt || one.id.localeCompare(other.id));
   }
 
-  send(event: RaceEvent): void {
+  send(event: RoomEvent): void {
     void this.channel.send({ type: 'broadcast', event: 'race', payload: event });
   }
 

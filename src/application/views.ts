@@ -33,6 +33,28 @@ export interface RivalView {
   readonly cracked: boolean;
 }
 
+export interface ScoreView {
+  readonly name: string;
+  readonly points: number;
+  readonly me: boolean;
+}
+
+/** "Steal the sauce": whose sauce this player is after, who is after its own, and the scores. */
+export interface StealView {
+  readonly target: string;
+  readonly attacker: string;
+  /** The attacker's best count of right-place pegs on this player's secret. */
+  readonly threat: number;
+  readonly mySecret: Code;
+  /** Highest points first. */
+  readonly scores: readonly ScoreView[];
+  /** Until the circle turns; undefined with two players (no one else to turn to). */
+  readonly switchInMs?: number;
+  /** This player cracked its target and waits for the switch. */
+  readonly waiting: boolean;
+  readonly finished: boolean;
+}
+
 export interface RaceView {
   readonly rivals: readonly RivalView[];
   readonly beatenBy?: string;
@@ -61,6 +83,7 @@ export interface GameView {
   /** What just happened (an item's effect, an attack's outcome), while it is fresh. */
   readonly notice?: NoticeKind;
   readonly race?: RaceView;
+  readonly steal?: StealView;
 }
 
 export interface GuardianView {

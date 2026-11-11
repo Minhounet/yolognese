@@ -25,7 +25,7 @@ export default function App() {
             <Text style={styles.buttonText}>Solo</Text>
           </Pressable>
           <Pressable testID="race" accessibilityRole="button" onPress={() => setMode('race')} style={styles.button}>
-            <Text style={styles.buttonText}>Race friends</Text>
+            <Text style={styles.buttonText}>Play friends</Text>
           </Pressable>
         </View>
       )}

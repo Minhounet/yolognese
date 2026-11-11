@@ -1,9 +1,14 @@
 import { COLORS, Code } from '../domain/color';
 import { RaceEvent } from '../domain/race';
 import { flush, newRaceRound, receive } from '../domain/round';
+import { RoomEvent, StealEvent } from '../domain/steal';
+import { flushSteal, newStealRound, receiveSteal, settle } from '../domain/stealRound';
 import { toGameView } from './GameMapper';
 import { Clock, GameRepository, RaceLink, RandomSource } from './ports';
 import { GameView } from './views';
+
+const RACE_TYPES = ['progress', 'attack', 'cracked', 'out'];
+const isRaceEvent = (event: RoomEvent): event is RaceEvent => RACE_TYPES.includes(event.type);
 
 export interface Player {
   readonly id: string;
@@ -43,21 +48,55 @@ export class StartRaceImpl implements StartRace {
   }
 }
 
-/** Applies an event heard from the room. */
+export interface StartStealCommand {
+  readonly me: string;
+  /** Every player, in seat order (the host first), with the secret they chose. */
+  readonly players: readonly (Player & { readonly secret: Code })[];
+}
+
+/** Starts this player's "steal the sauce" match. */
+export interface StartSteal {
+  execute(command: StartStealCommand): GameView;
+}
+
+export class StartStealImpl implements StartSteal {
+  constructor(
+    private readonly random: RandomSource,
+    private readonly repository: GameRepository,
+    private readonly clock: Clock,
+  ) {}
+
+  execute({ me, players }: StartStealCommand): GameView {
+    const now = this.clock.now();
+    const round = newStealRound(me, players, now, (max) => this.random.nextInt(max));
+    this.repository.save(round);
+    return toGameView(round, now);
+  }
+}
+
+/** Applies an event heard from the room (race or steal the sauce). */
 export interface ReceiveRace {
-  execute(event: RaceEvent): GameView | undefined;
+  execute(event: RoomEvent): GameView | undefined;
 }
 
 export class ReceiveRaceImpl implements ReceiveRace {
   constructor(
     private readonly repository: GameRepository,
     private readonly clock: Clock,
+    private readonly random: RandomSource,
   ) {}
 
-  execute(event: RaceEvent): GameView | undefined {
+  execute(event: RoomEvent): GameView | undefined {
     const session = this.repository.load();
-    if (session?.race === undefined) return undefined;
+    if (session === undefined || event.type === 'start') return undefined;
     const now = this.clock.now();
+    const draw = (max: number) => this.random.nextInt(max);
+    if (session.steal !== undefined) {
+      const changed = settle(receiveSteal(session, event as StealEvent, now, draw), now);
+      this.repository.save(changed);
+      return toGameView(changed, now);
+    }
+    if (session.race === undefined || !isRaceEvent(event)) return undefined;
     const changed = receive(session, event, now);
     this.repository.save(changed);
     return toGameView(changed, now);
@@ -77,8 +116,8 @@ export class FlushRaceImpl implements FlushRace {
 
   execute(): void {
     const session = this.repository.load();
-    if (session?.race === undefined) return;
-    const { round, events } = flush(session);
+    if (session === undefined) return;
+    const { round, events } = session.steal !== undefined ? flushSteal(session) : flush(session);
     if (events.length === 0) return;
     this.repository.save(round);
     events.forEach((event) => this.link.send(event));

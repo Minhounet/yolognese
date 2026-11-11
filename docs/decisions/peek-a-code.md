@@ -135,3 +135,11 @@
 - Evidence: 75 unit tests, tsc clean, 24 browser checks including a real two-player race
 - Not verified: Supabase in Expo Go on a phone (docs.expo.dev unreachable from here: no URL polyfill added; if the phone fails to join, that is the first suspect) (HUMAN)
 - Asked user: no (yolo), apart from the network host
+
+## PEEK-3 - steal the sauce (user: race is not fun; guess each other's secrets, with a switch)
+- Decided (user, at a gate): points on a crack (cracked player gets a new sauce); switch on a 45 s timer and after every crack
+- Decided: the host's phone is the only one that turns the circle; knock-out at life 0 costs a point; 5-minute match; 😈 hits your attacker; the room defaults to this mode, the race stays as an option
+- Found by the browser check: a sauce changed just before the start reached the host too late (presence lag); each phone now uses its own sauce and corrects the room
+- Evidence: 92 unit tests (five rules broken on purpose, each caught after one test was added), tsc clean, 25 browser checks including a real three-player match
+- Not verified: on phones, over mobile networks (HUMAN)
+- Asked user: yes (scoring, switch); the rest no (yolo)
