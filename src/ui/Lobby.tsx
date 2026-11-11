@@ -152,6 +152,11 @@ export function Lobby({ useCases, onBack }: { readonly useCases: UseCases; reado
           <Text testID="mode-rules" style={styles.rules}>
             {MODES[lobby.mode].rules}
           </Text>
+          {lobby.canAddBot && (
+            <Pressable testID="add-bot" accessibilityRole="button" onPress={() => void play.addBot()} style={styles.botButton}>
+              <Text style={styles.botText}>🤖 Add a bot (for testing)</Text>
+            </Pressable>
+          )}
           {lobby.mode === 'steal' && <SaucePicker secret={lobby.mySauce} onChange={(sauce) => play.changeSauce(sauce)} />}
           {lobby.isHost ? (
             <Pressable
@@ -192,5 +197,7 @@ const styles = StyleSheet.create({
   modeTextPicked: { color: '#fff' },
   button: { backgroundColor: THEME.sauce, borderRadius: 24, paddingHorizontal: 32, paddingVertical: 12, marginTop: 16 },
   disabled: { opacity: 0.5 },
+  botButton: { borderRadius: 18, borderWidth: 1, borderColor: THEME.ink, paddingHorizontal: 14, paddingVertical: 6, marginTop: 10 },
+  botText: { color: THEME.ink, fontSize: 14 },
   buttonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
 });

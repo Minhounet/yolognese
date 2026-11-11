@@ -161,3 +161,8 @@
 - Found by tests: RoomPlay could read the room before join() returned; three survivors (sync asked once while slow, late older state, host starting twice) closed with tests
 - Evidence: 130 unit tests (11 rules broken on purpose, all caught after 3 tests added); database checks pass and fail when they should; 25 browser checks incl. a real 3-player match; a guess takes 0.66 ms inside the database, about 300 ms from this container (its network: an empty request costs 380-600 ms here)
 - Not verified: the phone (Expo Go): sign-in and latency on mobile data (HUMAN)
+
+## Test bots (user has one phone)
+- Decided: bots added by the host from the room, each its own Supabase identity, playing through the same server and room ports; easy on purpose (7-11 s per guess, careful half the time); steal the sauce only
+- Found by the browser check: with two bots the thief of the host's sauce depends on which bot cracks first; the duel check uses one bot
+- Evidence: 146 unit tests (7 rules broken on purpose, all caught after 2 tests added), 27 browser checks

@@ -17,6 +17,7 @@ import { SupabaseBackend } from './infrastructure/SupabaseBackend';
 import { SupabaseMatchServer } from './infrastructure/SupabaseMatchServer';
 import { SupabaseRoomGateway } from './infrastructure/SupabaseRoomGateway';
 import { SystemClock } from './infrastructure/SystemClock';
+import { TimeoutScheduler } from './infrastructure/TimeoutScheduler';
 
 export interface UseCases {
   readonly startGame: StartGame;
@@ -36,7 +37,8 @@ export function createUseCases(): UseCases {
   const clock = new SystemClock();
   const random: RandomSource =
     process.env.EXPO_PUBLIC_SCRIPTED_CHANCE === '1' ? new ScriptedPageRandomSource() : new MathRandomSource();
-  const supabase = new SupabaseBackend();
+  const supabase = new SupabaseBackend('yolognese-player');
+  let bots = 0;
   const action = new RoundAction(work, clock, random);
   return {
     startGame: new StartGameImpl(random, work, clock),
@@ -47,6 +49,17 @@ export function createUseCases(): UseCases {
     collectItem: new CollectItemImpl(action),
     moveShield: new MoveShieldImpl(action),
     tick: new TickImpl(action),
-    joinRoom: new JoinRoomImpl({ gateway: new SupabaseRoomGateway(supabase), server: new SupabaseMatchServer(supabase), work, clock, random }),
+    joinRoom: new JoinRoomImpl({
+      gateway: new SupabaseRoomGateway(supabase),
+      server: new SupabaseMatchServer(supabase),
+      work,
+      clock,
+      random,
+      scheduler: new TimeoutScheduler(),
+      botConnection: () => {
+        const bot = new SupabaseBackend(`yolognese-bot-${++bots}`);
+        return { gateway: new SupabaseRoomGateway(bot), server: new SupabaseMatchServer(bot) };
+      },
+    }),
   };
 }

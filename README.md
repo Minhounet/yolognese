@@ -13,7 +13,8 @@ first one in picks the mode and starts.
 
 - **Steal the sauce** (default): everyone hides a secret and cracks another
   player's, in a circle. A server referees it (Supabase, `supabase/README.md`):
-  it keeps every sauce and the score, so no phone can see another's sauce. The target switches every 45 s and after each crack.
+  it keeps every sauce and the score, so no phone can see another's sauce.
+  Alone? The host can tap "🤖 Add a bot" in the room to fill it with test bots. The target switches every 45 s and after each crack.
   +1 per sauce stolen (the robbed player gets a new one); most points in
   5 minutes wins. Grab 😈 to hit whoever is after your sauce.
   Design in `docs/ticket/PEEK-3/`.

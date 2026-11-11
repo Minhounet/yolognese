@@ -91,3 +91,18 @@ Supersedes D-circle's host authority, D-points' sauce exchange and D-sauce above
 - Tests: `test/support/FakeMatchServer.ts` is the SQL rules in memory for the
   application tests; `supabase/tests/steal_the_sauce.sql` checks the real
   functions; `e2e/steal.spec.js` plays a real three-player match.
+
+## Test bots (user: "I dont have multiple phone here. Can we create bot ? Just for tests it must not be too hard.")
+
+- The host taps "🤖 Add a bot (for testing)" in the room ("steal the sauce", up
+  to 6 players). Each bot runs on the host's phone but is a player of its own:
+  its own anonymous identity (`SupabaseBackend` per bot), its own room
+  presence and sauce, its own calls to the match server. Bots leave with the
+  host.
+- `SauceBot` (application) guesses its current target every 7 to 11 s through
+  `Scheduler` (port; `TimeoutScheduler` adapter). `botBrain` (domain) keeps it
+  easy to beat: half the time a code that fits what it learned, otherwise any
+  code; no peeks, no items, never knocked out.
+- Checked: unit tests with the fake server and a fake scheduler; browser checks
+  `e2e/bots.spec.js` on the real project with one page (a 3-player circle; a
+  duel the bot wins in 7 s with chance scripted).

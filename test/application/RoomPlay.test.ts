@@ -7,6 +7,7 @@ import { InMemoryGameRepository } from '../../src/infrastructure/InMemoryGameRep
 import { FakeClock } from '../support/FakeClock';
 import { FakeMatchServer } from '../support/FakeMatchServer';
 import { FakeRoomGateway } from '../support/FakeRoomGateway';
+import { FakeScheduler } from '../support/FakeScheduler';
 import { QueuedRandomSource } from '../support/QueuedRandomSource';
 
 const all = (color: Code[number]): Code => [color, color, color, color];
@@ -17,7 +18,14 @@ function phones() {
   const gateway = new FakeRoomGateway();
   const clock = new FakeClock();
   const server = new FakeMatchServer(clock, (event) => gateway.broadcast(ROOM, event));
+  const scheduler = new FakeScheduler(clock);
   let joined = 0;
+  let bots = 0;
+  const botConnection = () => {
+    const id = `bot${++bots}`;
+    gateway.ids.push(id);
+    return { gateway, server: server.as(id) };
+  };
   const join = async (name: string, sauce: Code[number] = 'red') => {
     const id = `p${++joined}`;
     gateway.ids.push(id);
@@ -25,7 +33,7 @@ function phones() {
     random.queue(...all(sauce).map((color) => COLORS.indexOf(color)));
     const seen: { lobby?: LobbyView; match?: GameView; game?: GameView; matches: number } = { matches: 0 };
     const work = new SessionWork(new InMemoryGameRepository());
-    const joinRoom = new JoinRoomImpl({ gateway, server: server.as(id), work, clock, random });
+    const joinRoom = new JoinRoomImpl({ gateway, server: server.as(id), work, clock, random, scheduler, botConnection });
     const play: RoomPlay = await joinRoom.execute(
       { code: ' abcd ', name },
       {
@@ -105,6 +113,58 @@ describe('RoomPlay: the lobby', () => {
     ann.play.pickMode('race');
 
     expect(bob.play.view().mode).toBe('race');
+  });
+});
+
+describe('RoomPlay: test bots', () => {
+  it('shouldLetTheHostFillTheRoomWithBots', async () => {
+    const { join, delivered } = phones();
+    const ann = await join('Ann');
+
+    await ann.play.addBot();
+    await ann.play.addBot();
+    await delivered();
+
+    expect(ann.play.view()).toMatchObject({ canStart: true, members: [{ name: 'Ann' }, { name: '🤖 Bot 1' }, { name: '🤖 Bot 2' }] });
+  });
+
+  it('shouldPlayAMatch_withBotsAlone', async () => {
+    const { join, delivered } = phones();
+    const ann = await join('Ann');
+    await ann.play.addBot();
+    await delivered();
+
+    await ann.play.start();
+    await delivered();
+
+    expect(ann.seen.match?.steal).toMatchObject({ target: '🤖 Bot 1', attacker: '🤖 Bot 1' });
+  });
+
+  it('shouldNotAddBots_whenNotTheHost_orInARace_orTheRoomIsFull', async () => {
+    const { join, delivered } = phones();
+    const ann = await join('Ann');
+    const bob = await join('Bob');
+    expect(bob.play.view().canAddBot).toBe(false);
+    ann.play.pickMode('race');
+    expect(ann.play.view().canAddBot).toBe(false);
+    ann.play.pickMode('steal');
+    for (let bot = 0; bot < 6; bot += 1) await ann.play.addBot();
+    await delivered();
+
+    expect(ann.play.view()).toMatchObject({ canAddBot: false });
+    expect(ann.play.view().members).toHaveLength(6);
+  });
+
+  it('shouldTakeTheBotsAlong_whenTheHostLeaves', async () => {
+    const { join, gateway, delivered } = phones();
+    const ann = await join('Ann');
+    await ann.play.addBot();
+    await delivered();
+
+    ann.play.leave();
+    const watcher = await gateway.join(ROOM, { name: 'Zed' }, { onMembers: () => undefined, onStatus: () => undefined, onEvent: () => undefined });
+
+    expect(watcher.members().map(({ name }) => name)).toEqual(['Zed']);
   });
 });
 

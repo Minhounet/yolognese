@@ -1,6 +1,7 @@
 import { Code } from '../domain/color';
 import { MatchState, RoomEvent } from '../domain/steal';
-import { Clock, MatchMode, MatchServer, RandomSource, Room, RoomGateway, RoomStatus } from './ports';
+import { BotConnection, Clock, MatchMode, MatchServer, RandomSource, Room, RoomGateway, RoomStatus, Scheduler } from './ports';
+import { SauceBot } from './SauceBot';
 import { FlushRaceImpl, ReceiveRaceImpl, StartRaceImpl, StartStealImpl } from './Race';
 import { SessionWork } from './SessionWork';
 import { drawSecret } from './StartGame';
@@ -25,6 +26,8 @@ export interface LobbyView {
   readonly mode: MatchMode;
   readonly isHost: boolean;
   readonly canStart: boolean;
+  /** The host can fill the room with test bots ("steal the sauce" only). */
+  readonly canAddBot: boolean;
   readonly mySauce: Code;
 }
 
@@ -42,6 +45,9 @@ interface Dependencies {
   readonly work: SessionWork;
   readonly clock: Clock;
   readonly random: RandomSource;
+  readonly scheduler: Scheduler;
+  /** A new network identity for a test bot. */
+  readonly botConnection: () => BotConnection;
 }
 
 /**
@@ -57,6 +63,7 @@ export class RoomPlay {
   private status: RoomStatus = 'connecting';
   private sauce: Code;
   private matchId?: string;
+  private readonly bots: SauceBot[] = [];
   private readonly startRace: StartRaceImpl;
   private readonly startSteal: StartStealImpl;
   private readonly receive: ReceiveRaceImpl;
@@ -102,6 +109,7 @@ export class RoomPlay {
       mode: members[0]?.mode ?? DEFAULT_MODE,
       isHost,
       canStart: isHost && members.length >= MIN_PLAYERS,
+      canAddBot: isHost && (members[0]?.mode ?? DEFAULT_MODE) === 'steal' && members.length < MAX_PLAYERS,
       mySauce: this.sauce,
     };
   }
@@ -141,7 +149,16 @@ export class RoomPlay {
     return this.flusher.execute();
   }
 
+  /** The host adds a test bot to the room; it plays the next matches like any player. */
+  async addBot(): Promise<void> {
+    if (!this.view().canAddBot) return;
+    const bot = new SauceBot(this.deps.botConnection(), this.deps.random, this.deps.scheduler);
+    this.bots.push(bot);
+    await bot.join(this.code, `🤖 Bot ${this.bots.length}`);
+  }
+
   leave(): void {
+    this.bots.forEach((bot) => bot.leave());
     this.room.leave();
   }
 

@@ -80,3 +80,15 @@ export interface MatchServer {
 
 /** The part of a room a match needs: somewhere to send its events. */
 export type RaceLink = Pick<Room, 'send'>;
+
+/** Runs a task later. */
+export interface Scheduler {
+  /** Runs `task` after `ms`; answers a function that cancels it. */
+  after(ms: number, task: () => void): () => void;
+}
+
+/** A separate identity on the network, for a test bot: its own room membership and server calls. */
+export interface BotConnection {
+  readonly gateway: RoomGateway;
+  readonly server: MatchServer;
+}
