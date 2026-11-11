@@ -268,6 +268,30 @@ Order: AC10, AC11, AC12, AC14, AC13; then AC15 (user, after playing); then AC16,
 - Evidence: browser check e2e/ac31.spec.js "each guess shows two numbers" (✅2 🔄0 for orange orange red red against orange x4); the AC1 check reads the same counts; 50 passed (twice). Before this change, a hand check of 20 guesses in 4 games and of the user's screenshot (7 guesses) showed the counts right: the line was misread as positions. kenji-reviewer: minor only; the grey zero is the look, by the user, pending (a confirmation, as for the earlier screen ACs)
 - Status: verified
 
+## AC32: X-ray glasses are brief (user, round 13)
+- Source: "Glasses x ray must be temp. It must not be permanent and quick."
+- Interpretation: the 👓 x-ray glasses show one random peg for 1.2 s, then it is hidden again (amends AC13's "for the rest of the game")
+- Questions: none
+- Covered by: CollectItem (session.xray), GameMapper
+- Evidence: Tick.test.ts shouldShowXrayPegOnlyBriefly_whenXrayCollected, shouldShowOnlyTheNewPeg_whenXrayCollectedAgain (replace the two permanent-reveal tests); browser check e2e/ac13.spec.js "x-ray glasses show a hidden peg for a moment only"
+- Status: verified
+
+## AC33: A bad present switches the order of your pegs (user, round 13)
+- Source: "Can we add negative items to switch order ?"
+- Interpretation: a 🎁 present can hold 🌀 a mix-up: two of the pegs placed in the row being composed switch places (fewer than two placed: nothing); the row being composed is kept in the session for this (EditDraft)
+- Questions: none
+- Covered by: D-draft (round 13), EditDraft, CollectItem, domain/draft.ts
+- Evidence: Tick.test.ts shouldSwitchTwoPlacedPegs_whenAPresentHoldsAMixup, shouldLeaveTheRow_whenAMixupFindsFewerThanTwoPegs, and the row tests (place, drop on a slot, clear, emptied by a guess); browser check e2e/ac32-ac34.spec.js "a present can switch two of the placed pegs"
+- Status: verified
+
+## AC34: A special attack takes a peg you placed (user, round 13)
+- Source: "A special attaq from the ennemi to remove a peg we have placed."
+- Interpretation: one throw in three is a 🍴 fork instead of a meatball; it falls the same way and the shield or the charm blocks it the same way; unblocked, it removes one random peg from the row being composed and costs no life
+- Questions: none
+- Covered by: domain/attack.ts (windUp), Tick, FallingMeatball
+- Evidence: Tick.test.ts shouldThrowAFork_oneThrowInThree, shouldStealAPlacedPeg_andNoLife_whenTheForkLands, shouldKeepTheRow_whenTheShieldBlocksTheFork; browser check e2e/ac32-ac34.spec.js "a fork falls like the meatball and, unblocked, steals a placed peg but no life" (the other checks fix every throw as a meatball, fixture `throws`)
+- Status: verified
+
 ## Discrepancies
 
 None.

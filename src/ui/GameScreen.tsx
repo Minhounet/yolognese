@@ -50,6 +50,8 @@ const ATTACK_LINES = {
   boom: '💥 The bomb exploded! −2 life',
   'punch-coming': '👊 The guardian punches!',
   'meatball-coming': '⚠️ Incoming meatball!',
+  'fork-coming': '⚠️ Incoming fork! It wants your pegs',
+  stolen: '🍴 The fork stole one of your pegs!',
   none: ' ',
 } as const;
 const LANE_COUNT_SHOWN = 3;
@@ -60,11 +62,12 @@ const SMOKE_SHOWN_MS = 4000; // the smoke's length in the rules (4 s): the respo
 const GIFT_NOTES: Readonly<Record<Exclude<ItemKind | GiftKind, 'present'>, string>> = {
   food: 'Yum! +3 life',
   smoke: 'Smoke bomb! The guardian is blind',
-  xray: 'X-ray! A peg is revealed',
+  xray: 'X-ray! One peg, quick',
   hourglass: '+30 seconds',
   charm: 'Shield charm: the next meatball is blocked',
   bomb: 'Bomb thrown away!',
   darkness: "Darkness! You can't see",
+  mixup: 'Mix-up! Two of your pegs switched places',
 };
 const MS_PER_SECOND = 1000;
 const SECONDS_PER_MINUTE = 60;
@@ -79,21 +82,8 @@ function isComplete(draft: Draft): draft is Code {
   return draft.every((color) => color !== undefined);
 }
 
-function withColor(draft: Draft, color: Color): Draft {
-  const slot = draft.indexOf(undefined);
-  return slot === -1 ? draft : draft.map((current, index) => (index === slot ? color : current));
-}
-
 function laneTarget(ground: { readonly x: number; readonly y: number; readonly width: number }, lane: number): Point {
   return { x: ground.x + ((lane + 0.5) * ground.width) / LANE_COUNT_SHOWN, y: ground.y };
-}
-
-function withColorAt(draft: Draft, slot: number, color: Color): Draft {
-  return draft.map((current, index) => (index === slot ? color : current));
-}
-
-function withoutSlot(draft: Draft, slot: number): Draft {
-  return draft.map((current, index) => (index === slot ? undefined : current));
 }
 
 const STATUS_TEXT: Readonly<Record<GameView['status'], string>> = {
@@ -104,8 +94,12 @@ const STATUS_TEXT: Readonly<Record<GameView['status'], string>> = {
 
 export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
   const [view, setView] = useState<GameView>(() => useCases.startGame.execute());
-  const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
   const playing = view.status === 'playing';
+  const draft: Draft = view.draft;
+  const editDraft = (command: Parameters<UseCases['editDraft']['execute']>[0]) => {
+    const response = useCases.editDraft.execute(command);
+    if (response.kind === 'edited') setView(response.view);
+  };
   const [gaze, setGaze] = useState<Point | undefined>(undefined);
   const guardianCentre = useRef<Point>({ x: 0, y: 0 });
   const guardianRef = useRef<ComponentRef<typeof View>>(null);
@@ -115,8 +109,8 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
   const [cooldown, setCooldown] = useState({ startedAt: 0, cooldownMs: 0 });
   const [timeLeftMs, setTimeLeftMs] = useState<number | undefined>(undefined);
   const [shieldLane, setShieldLane] = useState(MIDDLE_LANE);
-  const [warning, setWarning] = useState<{ readonly lane: number; readonly landsAt: number; readonly fallMs: number; readonly punch?: boolean } | undefined>();
-  const [attackResult, setAttackResult] = useState<'hit' | 'blocked' | 'punch-hit' | 'parried' | 'boom' | undefined>();
+  const [warning, setWarning] = useState<{ readonly lane: number; readonly landsAt: number; readonly fallMs: number; readonly punch?: boolean; readonly fork?: boolean } | undefined>();
+  const [attackResult, setAttackResult] = useState<'hit' | 'blocked' | 'stolen' | 'punch-hit' | 'parried' | 'boom' | undefined>();
   const [ground, setGround] = useState<{ readonly x: number; readonly y: number; readonly width: number }>();
   const [item, setItem] = useState<Item | undefined>();
   const [itemNote, setItemNote] = useState<string | undefined>();
@@ -179,8 +173,8 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
       setAttackResult('boom');
     }
   };
-  const warningRef = useRef<{ readonly lane: number; readonly landsAt: number; readonly fallMs: number; readonly punch?: boolean } | undefined>(undefined);
-  const showWarning = (next: { readonly lane: number; readonly landsAt: number; readonly fallMs: number; readonly punch?: boolean } | undefined) => {
+  const warningRef = useRef<{ readonly lane: number; readonly landsAt: number; readonly fallMs: number; readonly punch?: boolean; readonly fork?: boolean } | undefined>(undefined);
+  const showWarning = (next: { readonly lane: number; readonly landsAt: number; readonly fallMs: number; readonly punch?: boolean; readonly fork?: boolean } | undefined) => {
     warningRef.current = next;
     setWarning(next);
   };
@@ -222,6 +216,7 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
           lane: response.attack.lane,
           landsAt: Date.now() + response.attack.landsInMs,
           fallMs: response.attack.landsInMs,
+          fork: response.attack.fork === true,
         });
       }
       if (response.exploded) {
@@ -266,7 +261,7 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
     slotRefs.current.forEach((slot, index) =>
       slot?.measureInWindow((x, y, width, height) => {
         const inside = at.x >= x && at.x <= x + width && at.y >= y && at.y <= y + height;
-        if (inside) setDraft((current) => withColorAt(current, index, color));
+        if (inside) editDraft({ kind: 'place', color, slot: index });
       }),
     );
   };
@@ -342,13 +337,11 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
     if (!isComplete(draft)) return;
     const response = useCases.submitGuess.execute({ guess: draft });
     if (response.kind === 'played') setView(response.view);
-    setDraft(EMPTY_DRAFT);
   };
 
   const newGame = () => {
     const fresh = useCases.startGame.execute();
     setView(fresh);
-    setDraft(EMPTY_DRAFT);
     setCooldown({ startedAt: 0, cooldownMs: 0 });
     setTimeLeftMs(undefined);
     showWarning(undefined);
@@ -387,7 +380,7 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
       {playing && (
         <>
           <Text testID="attack-result" style={styles.attackResult}>
-            {ATTACK_LINES[attackResult ?? (warning?.punch ? 'punch-coming' : warning ? 'meatball-coming' : 'none')]}
+            {ATTACK_LINES[attackResult ?? (warning?.punch ? 'punch-coming' : warning?.fork ? 'fork-coming' : warning ? 'meatball-coming' : 'none')]}
           </Text>
           <Text testID="item-note" style={styles.itemNote}>
             {itemNote ?? (charmed ? '🍀 Shield charm ready' : ' ')}
@@ -415,7 +408,7 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
           <View style={styles.row}>
             {draft.map((color, slot) => (
               <View key={slot} ref={(element) => { slotRefs.current[slot] = element; }}>
-                <Peg testID={`slot-${slot}`} color={color} onPress={() => setDraft(withoutSlot(draft, slot))} />
+                <Peg testID={`slot-${slot}`} color={color} onPress={() => editDraft({ kind: 'clear', slot })} />
               </View>
             ))}
           </View>
@@ -424,7 +417,7 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
               <DraggableColor
                 key={color}
                 color={color}
-                onTap={() => setDraft((current) => withColor(current, color))}
+                onTap={() => editDraft({ kind: 'place', color })}
                 onDrag={(dragged, at) => setDragging({ color: dragged, at })}
                 onDrop={dropColor}
               />
@@ -458,7 +451,7 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
         warning.punch ? (
           <PunchArm from={guardianCentre.current} to={laneTarget(ground, warning.lane)} durationMs={warning.fallMs} phase="out" lane={warning.lane} />
         ) : (
-          <FallingMeatball from={guardianCentre.current} to={laneTarget(ground, warning.lane)} durationMs={warning.fallMs} lane={warning.lane} />
+          <FallingMeatball from={guardianCentre.current} to={laneTarget(ground, warning.lane)} durationMs={warning.fallMs} lane={warning.lane} fork={warning.fork} />
         )
       )}
       {playing && returningPunch !== undefined && ground !== undefined && (

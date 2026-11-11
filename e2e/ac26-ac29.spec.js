@@ -8,8 +8,11 @@ const { runForBlockingAttacks } = require('./support');
 
 const KINDS = ['food', 'smoke', 'xray', 'hourglass', 'charm', 'present', 'bomb'];
 
+// A draw that makes a present (5 of 7 kinds) and then darkness (5 of 8 gifts, AC33 added the mix-up).
+const PRESENT_THEN_DARKNESS = 0.73;
+
 async function startWithItem(page, kind) {
-  const draw = (KINDS.indexOf(kind) + 0.5) / KINDS.length;
+  const draw = kind === 'present' ? PRESENT_THEN_DARKNESS : (KINDS.indexOf(kind) + 0.5) / KINDS.length;
   await page.addInitScript((value) => {
     Math.random = () => value;
   }, draw);

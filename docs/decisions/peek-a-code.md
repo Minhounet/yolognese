@@ -369,3 +369,9 @@
 - Decided (user): "Merge": every change goes to main without asking (PR, merge, publish main)
 - Decided (user): "Multiplayer we will have to think first": no build; a think-mode session first
 - Asked user: yes
+
+## Round 13 - x-ray brief, a mix-up present, the fork (user, in another session)
+- Context: these were first built in session ccr-2e41604e on a branch started before rounds 4-12, with its own round 2; the user: "Main is always the base. Fix it. Remove race mode". Rebuilt here on main's code; that branch's own round 2 is dropped (git tag old-multiplayer-tip, local)
+- Decided: the row being composed moves into the session (EditDraft) so the mix-up and the fork can change it; x-ray shows one peg for 1.2 s; the mix-up is a present's gift (main already had darkness and the bomb as bad gifts, so the earlier "chili" is not ported); one throw in three is a fork, drawn in the same draw as the lane so the scripted checks keep their sequences; the browser checks fix every throw as a meatball unless they ask for forks
+- Process: one commit per AC group, not one per red/green: a port of rules already designed and tested elsewhere; mutations: 7 rules broken on purpose, each caught
+- Asked user: yes (the rules are theirs)

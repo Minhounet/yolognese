@@ -5,17 +5,20 @@ import { Point } from '../domain/point';
 const MEATBALL_SIZE = 36;
 const HALF = 2;
 
-/** A meatball thrown by the guardian, falling from `from` to `to` (window points) in `durationMs`. */
+/** A meatball (or AC34's fork) thrown by the guardian, falling from `from` to `to` (window points) in `durationMs`. */
 export function FallingMeatball({
   from,
   to,
   durationMs,
   lane,
+  fork = false,
 }: {
   readonly from: Point;
   readonly to: Point;
   readonly durationMs: number;
   readonly lane: number;
+  /** AC34: a fork falls instead of a meatball. */
+  readonly fork?: boolean;
 }) {
   const progress = useRef(new Animated.Value(0)).current;
 
@@ -31,11 +34,11 @@ export function FallingMeatball({
   return (
     <Animated.View
       testID="meatball"
-      accessibilityLabel={`meatball falling on lane ${lane}`}
+      accessibilityLabel={`${fork ? 'fork' : 'meatball'} falling on lane ${lane}`}
       pointerEvents="none"
       style={[styles.meatball, { transform: [{ translateX }, { translateY }] }]}
     >
-      <Text style={styles.icon}>🧆</Text>
+      <Text style={styles.icon}>{fork ? '🍴' : '🧆'}</Text>
     </Animated.View>
   );
 }

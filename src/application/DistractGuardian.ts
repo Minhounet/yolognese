@@ -42,11 +42,11 @@ export class DistractGuardianImpl implements DistractGuardian {
     const now = this.clock.now();
     if (this.luck.nextInt(LUCK_OUTCOMES) === SEES_THROUGH) {
       if (session.attackLandsAt !== undefined) {
-        return { kind: 'punched', view: toGameView(session.game) };
+        return { kind: 'punched', view: toGameView(session.game, { session, now: this.clock.now() }) };
       }
       const punch = punchWindUp(this.luck.nextInt(LANE_COUNT));
       this.repository.save(withPunchThrown(session, now, punch));
-      return { kind: 'punched', punch, view: toGameView(session.game) };
+      return { kind: 'punched', punch, view: toGameView(session.game, { session, now: this.clock.now() }) };
     }
     const guardian = distract(session.guardian, now, now + DISTRACTION_MS);
     this.repository.save({ ...session, guardian });

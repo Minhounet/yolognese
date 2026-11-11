@@ -1,7 +1,7 @@
 import {
   ATTACK_DELAY_SPREAD_MS,
   Attack,
-  LANE_COUNT,
+  THROW_DRAW_SPAN,
   hasLanded,
   isAttackDue,
   isBlocked,
@@ -22,6 +22,7 @@ import {
   isItemShown,
   scheduleItemAt,
 } from '../domain/items';
+import { EMPTY_DRAFT, stealOne } from '../domain/draft';
 import { toGameView } from './GameMapper';
 import { PEEK_COOLDOWN_MS } from '../domain/peek';
 import { Clock, GameRepository, RandomSource, Session } from './ports';
@@ -36,7 +37,7 @@ export type TickResponse =
       readonly timeLeftMs: number;
       readonly attack?: Attack;
       readonly item?: Item;
-      readonly landed?: 'hit' | 'blocked';
+      readonly landed?: 'hit' | 'blocked' | 'stolen';
       readonly exploded?: true;
     }
   | { readonly kind: 'rejected'; readonly reason: 'no-game' };
@@ -70,7 +71,7 @@ export class TickImpl implements Tick {
     const pegUp = caughtPeeking ? undefined : session.pegUp;
     const attackState = this.windUpIfDue(session, now, landing.pendingLandsAt);
     const itemState = this.itemOnShow(session, now);
-    this.repository.save({
+    const stored: Session = {
       ...session,
       ...attackState.stored,
       ...itemState,
@@ -79,14 +80,17 @@ export class TickImpl implements Tick {
       peekReadyAt: caughtPeeking ? now + PEEK_COOLDOWN_MS : session.peekReadyAt,
       charmed: landing.charmed,
       attackIsPunch: landing.pendingIsPunch,
-    });
+      attackIsFork: attackState.isFork ?? landing.pendingIsFork,
+      draft: landing.forkHits ? stealOne(session.draft ?? EMPTY_DRAFT, (count) => this.random.nextInt(count)) : session.draft,
+    };
+    this.repository.save(stored);
     return {
       kind: 'ticked',
-      view: { ...toGameView(game), pegUp, playerBlind: isInDarkness(session.darkUntil, now) },
+      view: { ...toGameView(game, { session: stored, now }), pegUp, playerBlind: isInDarkness(session.darkUntil, now) },
       timeLeftMs,
       attack: attackState.attack,
       item: itemState.item,
-      landed: this.reported(landing),
+      landed: landing.forkHits ? 'stolen' : this.reported(landing),
       exploded: exploded ? true : undefined,
     };
   }
@@ -116,8 +120,8 @@ export class TickImpl implements Tick {
     );
   }
 
-  private afterLanding(game: Game, landing: { readonly hits: boolean; readonly isPunch: boolean }): Game {
-    if (!landing.hits) {
+  private afterLanding(game: Game, landing: { readonly hits: boolean; readonly isPunch: boolean; readonly forkHits: boolean }): Game {
+    if (!landing.hits || landing.forkHits) {
       return game;
     }
     return landing.isPunch ? punch(game) : penalise(game);
@@ -137,7 +141,9 @@ export class TickImpl implements Tick {
       blocked,
       hits: landed && !blocked,
       isPunch: session.attackIsPunch === true,
+      forkHits: landed && !blocked && session.attackIsFork === true,
       pendingIsPunch: landed ? undefined : session.attackIsPunch,
+      pendingIsFork: landed ? undefined : session.attackIsFork,
       pendingLandsAt: landed ? undefined : session.attackLandsAt,
       charmed: session.charmed === true && !landed,
     };
@@ -148,11 +154,12 @@ export class TickImpl implements Tick {
     const due =
       pendingLandsAt === undefined && isAttackDue(attackAt, now) && !isDistracted(session.guardian, now);
     if (!due) {
-      return { attack: undefined, stored: { attackAt, attackLandsAt: pendingLandsAt } };
+      return { attack: undefined, isFork: undefined, stored: { attackAt, attackLandsAt: pendingLandsAt } };
     }
-    const attack = windUp(this.random.nextInt(LANE_COUNT));
+    const attack = windUp(this.random.nextInt(THROW_DRAW_SPAN));
     return {
       attack,
+      isFork: attack.fork === true,
       stored: { attackAt: undefined, attackLandsAt: now + attack.landsInMs, attackLane: attack.lane },
     };
   }

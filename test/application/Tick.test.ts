@@ -1,5 +1,6 @@
 import { CollectItemImpl } from '../../src/application/CollectItem';
 import { DistractGuardianImpl } from '../../src/application/DistractGuardian';
+import { EditDraftImpl } from '../../src/application/EditDraft';
 import { HidePegImpl } from '../../src/application/HidePeg';
 import { MoveShieldImpl } from '../../src/application/MoveShield';
 import { PeekSecretImpl } from '../../src/application/PeekSecret';
@@ -13,7 +14,8 @@ import { ScriptedRandomSource } from '../support/ScriptedRandomSource';
 // secret: red yellow green blue; attackRandom: the attack delay drawn at scheduling, then the lane at wind-up (cycling);
 // itemRandom: the item delay drawn at scheduling, then its kind and spot x, y when it appears (cycling)
 // item kinds by index: 0 food, 1 smoke, 2 xray, 3 hourglass, 4 charm, 5 present, 6 bomb
-// a present's gift by index: 0 food, 1 smoke, 2 xray, 3 hourglass, 4 charm, 5 darkness, 6 bomb
+// a present's gift by index: 0 food, 1 smoke, 2 xray, 3 hourglass, 4 charm, 5 darkness, 6 mixup, 7 bomb
+// a throw: one draw, lane = draw mod 3, a fork when draw is 6 to 8 (AC34)
 // collectRandom: what an item draws when collected (the x-ray's peg among the hidden ones, the present's kind)
 function startedGame(
   attackRandom: readonly number[] = [0, 2],
@@ -36,6 +38,7 @@ function startedGame(
     hidePeg: new HidePegImpl(repository),
     distractGuardian: new DistractGuardianImpl(repository, clock, new ScriptedRandomSource([1])),
     collectItem: new CollectItemImpl(repository, clock, new ScriptedRandomSource(collectRandom)),
+    editDraft: new EditDraftImpl(repository, clock),
     peekSecret: new PeekSecretImpl(repository, clock, new ScriptedRandomSource([0])),
   };
 }
@@ -397,26 +400,17 @@ describe('Tick', () => {
     });
   });
 
-  it('shouldRevealStillHiddenPeg_whenXrayCollectedAgain', () => {
-    const { clock, collectItem, tick } = startedGame([30000, 0], [0, 2, 30, 70], [1, 1]);
+  it('shouldShowXrayPegOnlyBriefly_whenXrayCollected', () => {
+    const { clock, collectItem, tick } = startedGame([30000, 0], [0, 2, 30, 70], [1]);
     tick.execute();
     clock.advance(8000);
     collectShownItem(tick, collectItem);
+    clock.advance(1100);
+    expect(tick.execute()).toMatchObject({ kind: 'ticked', view: { revealed: [{ index: 1, color: 'yellow' }] } });
+
     clock.advance(100);
-    tick.execute();
-    clock.advance(8000);
 
-    const response = collectShownItem(tick, collectItem);
-
-    expect(response).toMatchObject({
-      kind: 'collected',
-      view: {
-        revealed: [
-          { index: 1, color: 'yellow' },
-          { index: 2, color: 'green' },
-        ],
-      },
-    });
+    expect(tick.execute()).toMatchObject({ kind: 'ticked', view: { revealed: [] } });
   });
 
   it('shouldAddThirtySeconds_whenHourglassCollected', () => {
@@ -551,21 +545,18 @@ describe('Tick', () => {
     expect(response).toEqual({ kind: 'rejected', reason: 'game-over' });
   });
 
-  it('shouldRevealNothingMore_whenEveryPegIsRevealed', () => {
-    const { clock, collectItem, tick } = startedGame([300000, 0], [0, 2, 30, 70], [0]);
+  it('shouldShowOnlyTheNewPeg_whenXrayCollectedAgain', () => {
+    const { clock, collectItem, tick } = startedGame([300000, 0], [0, 2, 30, 70], [1, 3]);
     tick.execute();
-    const collectNextXray = () => {
-      clock.advance(8000);
-      const response = collectShownItem(tick, collectItem);
-      clock.advance(100);
-      tick.execute();
-      return response;
-    };
-    Array.from({ length: 4 }).forEach(collectNextXray);
+    clock.advance(8000);
+    collectShownItem(tick, collectItem);
+    clock.advance(100);
+    tick.execute();
+    clock.advance(8000);
 
-    const response = collectNextXray();
+    const response = collectShownItem(tick, collectItem);
 
-    expect(response).toMatchObject({ kind: 'collected', view: { revealed: { length: 4 } } });
+    expect(response).toMatchObject({ kind: 'collected', view: { revealed: [{ index: 3, color: 'blue' }] } });
   });
 
   it('shouldCostOneLife_whenPunchIsNotParried', () => {
@@ -745,12 +736,95 @@ describe('Tick', () => {
   });
 
   it('shouldExplodeAtOnce_whenPresentGivesBomb', () => {
-    const { clock, collectItem, tick } = startedGame([300000, 0], [0, 5, 30, 70], [6]);
+    const { clock, collectItem, tick } = startedGame([300000, 0], [0, 5, 30, 70], [7]);
     tick.execute();
     clock.advance(8000);
 
     const response = collectShownItem(tick, collectItem);
 
     expect(response).toMatchObject({ kind: 'collected', item: 'present', gift: 'bomb', view: { life: 8 } });
+  });
+});
+
+describe('Round 3 (user): the row being composed, the mix-up, the fork', () => {
+  it('shouldPlaceColours_inTheFirstEmptySlotOrWhereDropped', () => {
+    const { editDraft } = startedGame();
+    editDraft.execute({ kind: 'place', color: 'red' });
+    editDraft.execute({ kind: 'place', color: 'blue', slot: 3 });
+
+    const response = editDraft.execute({ kind: 'place', color: 'green' });
+
+    expect(response).toMatchObject({ kind: 'edited', view: { draft: ['red', 'green', undefined, 'blue'] } });
+  });
+
+  it('shouldEmptyASlot_whenTappedAway', () => {
+    const { editDraft } = startedGame();
+    editDraft.execute({ kind: 'place', color: 'red' });
+
+    expect(editDraft.execute({ kind: 'clear', slot: 0 })).toMatchObject({ view: { draft: [undefined, undefined, undefined, undefined] } });
+  });
+
+  it('shouldEmptyTheRow_whenTheGuessIsPlayed', () => {
+    const { editDraft, submitGuess } = startedGame();
+    for (const _ of [1, 2, 3, 4]) editDraft.execute({ kind: 'place', color: 'purple' });
+
+    expect(submitGuess.execute({ guess: ['purple', 'purple', 'purple', 'purple'] })).toMatchObject({
+      view: { draft: [undefined, undefined, undefined, undefined] },
+    });
+  });
+
+  it('shouldSwitchTwoPlacedPegs_whenAPresentHoldsAMixup', () => {
+    const { clock, collectItem, editDraft, tick } = startedGame([30000, 0], [0, 5, 30, 70], [6, 0, 0]);
+    editDraft.execute({ kind: 'place', color: 'red' });
+    editDraft.execute({ kind: 'place', color: 'blue' });
+    editDraft.execute({ kind: 'place', color: 'green' });
+    tick.execute();
+    clock.advance(8000);
+
+    const response = collectShownItem(tick, collectItem);
+
+    expect(response).toMatchObject({ kind: 'collected', gift: 'mixup', view: { draft: ['blue', 'red', 'green', undefined] } });
+  });
+
+  it('shouldLeaveTheRow_whenAMixupFindsFewerThanTwoPegs', () => {
+    const { clock, collectItem, editDraft, tick } = startedGame([30000, 0], [0, 5, 30, 70], [6, 0, 0]);
+    editDraft.execute({ kind: 'place', color: 'red' });
+    tick.execute();
+    clock.advance(8000);
+
+    expect(collectShownItem(tick, collectItem)).toMatchObject({ view: { draft: ['red', undefined, undefined, undefined] } });
+  });
+
+  it('shouldThrowAFork_oneThrowInThree', () => {
+    const { clock, tick } = startedGame([0, 8]);
+    tick.execute();
+    clock.advance(10000); // the first throw comes after at least 10 s
+
+    expect(tick.execute()).toMatchObject({ kind: 'ticked', attack: { lane: 2, fork: true } });
+  });
+
+  it('shouldStealAPlacedPeg_andNoLife_whenTheForkLands', () => {
+    const { clock, editDraft, moveShield, tick } = startedGame([0, 8, 50000, 1]);
+    moveShield.execute({ lane: 0 });
+    editDraft.execute({ kind: 'place', color: 'red' });
+    editDraft.execute({ kind: 'place', color: 'blue' });
+    tick.execute();
+    clock.advance(10000); // the first throw comes after at least 10 s
+    tick.execute();
+    clock.advance(1500);
+
+    expect(tick.execute()).toMatchObject({ kind: 'ticked', landed: 'stolen', view: { life: 10, draft: ['red', undefined, undefined, undefined] } });
+  });
+
+  it('shouldKeepTheRow_whenTheShieldBlocksTheFork', () => {
+    const { clock, editDraft, moveShield, tick } = startedGame([0, 8, 50000, 1]);
+    moveShield.execute({ lane: 2 });
+    editDraft.execute({ kind: 'place', color: 'red' });
+    tick.execute();
+    clock.advance(10000); // the first throw comes after at least 10 s
+    tick.execute();
+    clock.advance(1500);
+
+    expect(tick.execute()).toMatchObject({ kind: 'ticked', landed: 'blocked', view: { draft: ['red', undefined, undefined, undefined] } });
   });
 });
