@@ -27,6 +27,7 @@ type Draft = readonly (Color | undefined)[];
 const EMPTY_DRAFT: Draft = [undefined, undefined, undefined, undefined];
 const CAUGHT_SHOWN_MS = 1500;
 const TICK_MS = 100;
+const NEW_GAME_GUARD_MS = 1500;
 const MIDDLE_LANE = 1;
 const CONTROL_TOUCH_MS = 600;
 const DRAGGED_HALF = 22;
@@ -164,6 +165,7 @@ function Board({ useCases, initialView, match, onBack }: GameScreenProps & { rea
   const [peeked, setPeeked] = useState<{ readonly index: number; readonly color: Color } | undefined>();
   const [caught, setCaught] = useState(false);
   const [cooldown, setCooldown] = useState({ startedAt: 0, cooldownMs: 0 });
+  const [newGameArmed, setNewGameArmed] = useState(false);
   const [timeLeftMs, setTimeLeftMs] = useState<number | undefined>(undefined);
   const [shieldLane, setShieldLane] = useState(MIDDLE_LANE);
   const [warning, setWarning] = useState<{ readonly lane: number; readonly landsAt: number; readonly fallMs: number; readonly punch?: boolean; readonly fork?: boolean } | undefined>();
@@ -421,6 +423,16 @@ function Board({ useCases, initialView, match, onBack }: GameScreenProps & { rea
     flush();
   };
 
+  // "New game" appears where "Guess" was: a tap meant for the last guess must not restart at once.
+  useEffect(() => {
+    if (playing) {
+      setNewGameArmed(false);
+      return undefined;
+    }
+    const timer = setTimeout(() => setNewGameArmed(true), NEW_GAME_GUARD_MS);
+    return () => clearTimeout(timer);
+  }, [playing]);
+
   const newGame = async () => {
     const fresh = await useCases.startGame.execute();
     setView(fresh);
@@ -538,8 +550,9 @@ function Board({ useCases, initialView, match, onBack }: GameScreenProps & { rea
         <Pressable
           testID="new-game"
           accessibilityRole="button"
+          disabled={!newGameArmed}
           onPress={match && onBack ? onBack : () => void newGame()}
-          style={styles.button}
+          style={[styles.button, !newGameArmed && styles.disabled]}
         >
           <Text style={styles.buttonText}>{match ? 'Back to the room' : 'New game'}</Text>
         </Pressable>

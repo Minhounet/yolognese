@@ -105,7 +105,7 @@ Order: AC10, AC11, AC12, AC14, AC13; then AC15 (user, after playing); then AC16,
 - Interpretation: after a peek (revealed or caught), peeking is unavailable for 5 s, shown as a bar refilling; a peek during the cooldown is rejected (amended by AC19: it no longer "costs nothing": the guardian throws a punch, which costs 1 life unless parried)
 - Questions: none
 - Covered by: D-cooldown (round 2)
-- Evidence: reds 34-38 — PeekSecret.shouldRejectPeek_whenPeekedJustBefore, shouldRejectPeek_justBeforeCooldownEnds, shouldRejectPeek_whenCaughtJustBefore, shouldStartCooldown_whenPeekRevealed, shouldStartCooldown_whenCaught (guards 35 shouldAllowPeek_whenCooldownHasPassed and 36 shouldCostNothing_whenPeekRejectedDuringCooldown are not evidence); full build `npx jest && npx tsc --noEmit`: 41 passed, tsc clean. "Shown as a bar refilling": browser checks e2e/ac11.spec.js "after a peek the cooldown bar refills for 5 s, and a peek meanwhile is refused at no cost" (caught path) and "a revealed peek starts the cooldown too", passed on the web build (14 passed), Playwright clock; the bar's look, by the user, pending; kenji-reviewer: 6 minor, none blocking. Round 5 (AC19): the refused peek now throws a punch: the check is renamed "a peek meanwhile is refused (its punch parried, nothing lost)" and parries it; still passing (34 passed)
+- Evidence: reds 34-38 — PeekSecret.shouldRejectPeek_whenPeekedJustBefore, shouldRejectPeek_justBeforeCooldownEnds, shouldRejectPeek_whenCaughtJustBefore, shouldStartCooldown_whenPeekRevealed, shouldStartCooldown_whenCaught (guards 35 shouldAllowPeek_whenCooldownHasPassed and 36 shouldCostNothing_whenPeekRejectedDuringCooldown are not evidence); full build `npx jest && npx tsc --noEmit`: 41 passed, tsc clean. "Shown as a bar refilling": browser checks e2e/ac11.spec.js "after a peek the cooldown bar refills for 5 s, and a peek meanwhile is refused at no cost" (caught path) and "a revealed peek starts the cooldown too", passed on the web build (14 passed), Playwright clock; the bar's look, by the user, pending; kenji-reviewer: 6 minor, none blocking. Round 5 (AC19): the refused peek now throws a punch: the check is renamed "a peek meanwhile is refused (its punch parried, nothing lost)" and parries it; still passing (34 passed); phone fix (user: "Cool bar does not refill progressively."): the fill now animates on the native UI thread, browser check e2e/end-and-cooldown.spec.js "AC11: the cooldown bar refills progressively" passed (4 repeats); the refill on the phone: by the user, pending (HUMAN)
 - Status: verified
 
 ## AC12: Time limit
@@ -290,6 +290,14 @@ Order: AC10, AC11, AC12, AC14, AC13; then AC15 (user, after playing); then AC16,
 - Questions: none
 - Covered by: domain/attack.ts (windUp), Tick, FallingMeatball
 - Evidence: Tick.test.ts shouldThrowAFork_oneThrowInThree, shouldStealAPlacedPeg_andNoLife_whenTheForkLands, shouldKeepTheRow_whenTheShieldBlocksTheFork; browser check e2e/ac32-ac34.spec.js "a fork falls like the meatball and, unblocked, steals a placed peg but no life" (the other checks fix every throw as a meatball, fixture `throws`)
+- Status: verified
+
+## AC35: The end of a game is not skipped by a stray tap (user, phone bug)
+- Source: "when life is finished it is reset. Why ?" (user, from the phone)
+- Interpretation: when a game ends (won, lost, time up, or a match ends), "New game" (or "Back to the room") ignores taps for 1.5 s, so a tap meant for the last guess, which lands where "Guess" was, does not start a new game; after that it works as before (AC2)
+- Questions: none (diagnosis: life stays at 0 on the web build; the button takes the place of "Guess")
+- Covered by: src/ui/GameScreen.tsx (NEW_GAME_GUARD_MS, newGameArmed)
+- Evidence: browser check e2e/end-and-cooldown.spec.js "AC35: a tap right after the game is lost does not start a new game; New game works 1.5 s later" passed (4 repeats); with the guard at 0 it fails (mutation); AC2's and AC10's checks wait for the button to be pressable (Playwright's click), AC20's check advances the clock 1.6 s first; the match path ("Back to the room") has the same guard and no check; on the phone: by the user, pending (HUMAN)
 - Status: verified
 
 ## Discrepancies

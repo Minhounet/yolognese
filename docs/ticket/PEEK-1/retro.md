@@ -43,3 +43,6 @@
 - Round 9: adding the bomb made random items dangerous in every long browser check (three became flaky); the checks now fix the item draw through the composition root unless they choose their item, like the guardian's luck.
 - Round 9: the item checks fix Math.random to (k + 0.5) / n; adding a seventh kind moved every draw, and the present's draw now picks darkness: a check tied to a count of kinds breaks when a kind is added.
 - Round 12: the AC24 check was flaky under load: Playwright's installed clock keeps running in real time between steps; the check now pauses the clock (pauseAt), so only runFor moves time
+- A session resumed on the stale default branch feat/peek-a-code and redid AC10 there (already on main); discarded. main is now the default branch on GitHub and the only branch.
+- Two phone-only bugs that the web build did not show: life looked "reset" at 0 (the New game button takes Guess's place, so the next tap restarted the game; now guarded 1.5 s, AC35), and the cooldown bar jumped instead of refilling (redrawn from a JS timer the busy game tick starves; now a native-driver animation). Lesson: a bar or animation that must move smoothly on the phone runs on the native driver, not on a JS interval.
+

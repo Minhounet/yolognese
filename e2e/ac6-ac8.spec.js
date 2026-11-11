@@ -101,6 +101,7 @@ test('AC20: a game that ends with a peg up starts the next one clean (no false "
     await page.getByTestId('submit').click({ force: true });
   }
   await expect(page.getByTestId('new-game')).toBeVisible();
+  await page.clock.runFor(1600); // New game ignores taps for 1.5 s after the end
 
   await page.getByTestId('new-game').click({ force: true });
   for (let tick = 0; tick < 3; tick += 1) {
