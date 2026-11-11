@@ -254,8 +254,15 @@ function Board({ useCases, initialView, match, onBack }: GameScreenProps & { rea
 
   useEffect(() => {
     if (!playing) return undefined;
+    // one tick at a time: a slow phone (or a burst of timers) skips a tick rather than piling them up,
+    // so the screen never runs behind the game's clock
+    let ticking = false;
     const timer = setInterval(async () => {
-      const response = await useCases.tick.execute();
+      if (ticking) return;
+      ticking = true;
+      const response = await useCases.tick.execute().finally(() => {
+        ticking = false;
+      });
       flush();
       if (response.kind !== 'ticked') return;
       setTimeLeftMs(response.timeLeftMs);
