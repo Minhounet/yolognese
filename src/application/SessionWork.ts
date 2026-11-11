@@ -11,8 +11,9 @@ export interface Worked<T> {
  * save. The screen ticks every 100 ms while the player taps; with an asynchronous
  * repository (a remote table, device storage) two operations could otherwise
  * read the same session and the second save would drop the first one's change.
- * `settle` applies, after any change, the rules that follow from the new state
- * (a match's own rules, "steal the sauce").
+ * `settle` applies the rules that follow from the state and the time (a match's
+ * own rules, "steal the sauce"): before the work, so its answer already sees
+ * them, and after it, to what it changed.
  */
 export class SessionWork {
   private queue: Promise<unknown> = Promise.resolve();
@@ -25,7 +26,7 @@ export class SessionWork {
   run<T>(work: (session: Session | undefined) => Worked<T>): Promise<T> {
     const done = this.queue.then(async () => {
       const loaded = await this.repository.load();
-      const { session, result } = work(loaded);
+      const { session, result } = work(loaded === undefined ? undefined : this.settle(loaded));
       if (session !== undefined) await this.repository.save(this.settle(session));
       return result;
     });

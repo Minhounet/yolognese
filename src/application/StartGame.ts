@@ -9,6 +9,11 @@ import { GameView } from './views';
 const PEEK_READY_AT_START = 0;
 const GAME_DURATION_MS = 180_000;
 
+export function drawSecret(random: RandomSource): Code {
+  const drawColor = () => COLORS[random.nextInt(COLORS.length)];
+  return [drawColor(), drawColor(), drawColor(), drawColor()];
+}
+
 export interface StartGame {
   execute(): Promise<GameView>;
 }
@@ -29,7 +34,6 @@ export class StartGameImpl implements StartGame {
   }
 
   private drawSecret(): Code {
-    const drawColor = () => COLORS[this.random.nextInt(COLORS.length)];
-    return [drawColor(), drawColor(), drawColor(), drawColor()];
+    return drawSecret(this.random);
   }
 }

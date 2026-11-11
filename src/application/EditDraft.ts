@@ -1,7 +1,7 @@
 import { Color } from '../domain/color';
 import { EMPTY_DRAFT, clearSlot, placeColor } from '../domain/draft';
-import { isOver } from '../domain/game';
 import { toGameView } from './GameMapper';
+import { isSessionOver } from './stealMatch';
 import { Clock } from './ports';
 import { SessionWork } from './SessionWork';
 import { GameView } from './views';
@@ -29,7 +29,7 @@ export class EditDraftImpl implements EditDraft {
   execute(command: EditDraftCommand): Promise<EditDraftResponse> {
     return this.work.run<EditDraftResponse>((session) => {
       if (session === undefined) return { result: { kind: 'rejected', reason: 'no-game' } };
-      if (isOver(session.game)) return { result: { kind: 'rejected', reason: 'game-over' } };
+      if (isSessionOver(session)) return { result: { kind: 'rejected', reason: 'game-over' } };
       const current = session.draft ?? EMPTY_DRAFT;
       const draft = command.kind === 'place' ? placeColor(current, command.color, command.slot) : clearSlot(current, command.slot);
       const edited = { ...session, draft };

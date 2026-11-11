@@ -49,10 +49,16 @@ describe('SessionWork', () => {
 
   it('shouldApplyTheSettleRules_toEverySavedChange', async () => {
     const repository = new SlowRepository();
-    const work = new SessionWork(repository, (session) => ({ ...session, peekReadyAt: 42 }));
+    const work = new SessionWork(repository, (session) => ({ ...session, peekReadyAt: session.peekReadyAt + 1 }));
 
-    await work.run((session) => ({ session, result: undefined }));
+    await work.run((session) => ({ session: session && { ...session, peekReadyAt: 40 }, result: undefined }));
 
-    expect((await repository.load())?.peekReadyAt).toBe(42);
+    expect((await repository.load())?.peekReadyAt).toBe(41);
+  });
+
+  it('shouldApplyTheSettleRules_beforeTheWorkSeesTheSession', async () => {
+    const work = new SessionWork(new SlowRepository(), (session) => ({ ...session, peekReadyAt: 42 }));
+
+    expect(await work.run((session) => ({ result: session?.peekReadyAt }))).toBe(42);
   });
 });

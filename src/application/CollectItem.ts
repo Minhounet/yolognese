@@ -1,10 +1,11 @@
 import { EMPTY_DRAFT, switchTwo } from '../domain/draft';
-import { explode, isOver, restoreLife } from '../domain/game';
+import { explode, restoreLife } from '../domain/game';
 import { blindUntil } from '../domain/guardian';
 import { DARKNESS_MS, GIFT_KINDS, GiftKind, HOURGLASS_BONUS_MS, ItemKind, SMOKE_BLIND_MS, XRAY_SHOWN_MS, isItemShown } from '../domain/items';
 
 const SECRET_LENGTH = 4;
 import { toGameView } from './GameMapper';
+import { askPeg, isSessionOver } from './stealMatch';
 import { Clock, RandomSource, Session } from './ports';
 import { SessionWork } from './SessionWork';
 import { GameView } from './views';
@@ -36,7 +37,7 @@ export class CollectItemImpl implements CollectItem {
   execute(_command: CollectItemCommand): Promise<CollectItemResponse> {
     return this.work.run<CollectItemResponse>((session) => {
       if (session === undefined) return { result: { kind: 'rejected', reason: 'no-game' } };
-      if (isOver(session.game)) return { result: { kind: 'rejected', reason: 'game-over' } };
+      if (isSessionOver(session)) return { result: { kind: 'rejected', reason: 'game-over' } };
       const { item, itemAt } = session;
       const now = this.clock.now();
       if (item === undefined || itemAt === undefined || !isItemShown(itemAt, now)) {
@@ -62,8 +63,10 @@ export class CollectItemImpl implements CollectItem {
         return { ...session, game: restoreLife(session.game) };
       case 'smoke':
         return { ...session, guardian: blindUntil(now + SMOKE_BLIND_MS) };
-      case 'xray':
-        return { ...session, xray: { index: this.random.nextInt(SECRET_LENGTH), until: now + XRAY_SHOWN_MS } };
+      case 'xray': {
+        const index = this.random.nextInt(SECRET_LENGTH);
+        return askPeg({ ...session, xray: { index, until: now + XRAY_SHOWN_MS } }, index, 'xray');
+      }
       case 'hourglass':
         return { ...session, endsAt: session.endsAt + HOURGLASS_BONUS_MS };
       case 'charm':

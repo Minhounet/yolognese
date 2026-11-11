@@ -1,11 +1,11 @@
 import { Attack, LANE_COUNT, punchWindUp } from '../domain/attack';
-import { isOver } from '../domain/game';
 import { distract } from '../domain/guardian';
 import { Point } from '../domain/point';
 import { withPunchThrown } from './punches';
 import { Clock, RandomSource } from './ports';
 import { SessionWork } from './SessionWork';
 import { toGameView } from './GameMapper';
+import { isSessionOver } from './stealMatch';
 import { GameView, GuardianView } from './views';
 
 const DISTRACTION_MS = 1500;
@@ -35,7 +35,7 @@ export class DistractGuardianImpl implements DistractGuardian {
   execute(command: DistractCommand): Promise<DistractResponse> {
     return this.work.run<DistractResponse>((session) => {
       if (session === undefined) return { result: { kind: 'rejected', reason: 'no-game' } };
-      if (isOver(session.game)) return { result: { kind: 'rejected', reason: 'game-over' } };
+      if (isSessionOver(session)) return { result: { kind: 'rejected', reason: 'game-over' } };
       const now = this.clock.now();
       if (this.luck.nextInt(LUCK_OUTCOMES) === SEES_THROUGH) {
         const view = toGameView(session.game, { session, now });

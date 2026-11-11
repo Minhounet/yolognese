@@ -62,7 +62,8 @@ export class TickImpl implements Tick {
   private passTime(session: Session): { readonly session: Session; readonly result: TickResponse } {
     const now = this.clock.now();
     const timeLeftMs = Math.max(MIN_TIME_LEFT_MS, session.endsAt - now);
-    const timedGame = timeLeftMs === MIN_TIME_LEFT_MS ? timeUp(session.game) : session.game;
+    // "steal the sauce" ends the match itself (settleSteal): time never takes the life
+    const timedGame = timeLeftMs === MIN_TIME_LEFT_MS && session.steal === undefined ? timeUp(session.game) : session.game;
     const landing = this.landing(session, now);
     const caughtPeeking = this.isCaughtPeeking(session, now);
     const landedGame = this.afterLanding(timedGame, landing);

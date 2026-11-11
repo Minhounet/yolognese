@@ -1,6 +1,7 @@
 import { Code, COLORS, Color } from './color';
 
 export const MAX_LIFE = 10;
+export const CODE_LENGTH = 4;
 const STARTING_LIFE = MAX_LIFE;
 const LIFE_LOST_PER_MISS = 1;
 const LIFE_LOST_WHEN_CAUGHT = 2;
@@ -16,18 +17,25 @@ export interface Turn {
 }
 
 export interface Game {
-  readonly secret: Code;
+  /** Undefined when the server holds it ("steal the sauce"): guesses are scored there. */
+  readonly secret?: Code;
   readonly turns: readonly Turn[];
   readonly life: number;
   readonly revealed: readonly number[];
 }
 
-export function newGame(secret: Code): Game {
+export function newGame(secret?: Code): Game {
   return { secret, turns: [], life: STARTING_LIFE, revealed: [] };
 }
 
+function secretOf(game: Game): Code {
+  if (game.secret === undefined) throw new Error('this secret is held by the server');
+  return game.secret;
+}
+
 function countExact(game: Game, guess: Code): number {
-  return guess.filter((color, position) => color === game.secret[position]).length;
+  const secret = secretOf(game);
+  return guess.filter((color, position) => color === secret[position]).length;
 }
 
 function occurrences(code: Code, color: Color): number {
@@ -42,21 +50,22 @@ function countSharedColours(secret: Code, guess: Code): number {
 }
 
 function countMisplaced(game: Game, guess: Code): number {
-  return countSharedColours(game.secret, guess) - countExact(game, guess);
+  return countSharedColours(secretOf(game), guess) - countExact(game, guess);
 }
 
-function cracksCode(game: Game, turn: Turn): boolean {
-  return turn.exact === game.secret.length;
+function cracksCode(turn: Turn): boolean {
+  return turn.exact === CODE_LENGTH;
 }
 
-export function play(game: Game, guess: Code): Game {
-  const turn: Turn = {
-    guess,
-    exact: countExact(game, guess),
-    misplaced: countMisplaced(game, guess),
-  };
-  const life = cracksCode(game, turn) ? game.life : game.life - LIFE_LOST_PER_MISS;
+/** Adds a scored guess; one that does not crack the code costs a life. */
+export function record(game: Game, turn: Turn): Game {
+  const life = cracksCode(turn) ? game.life : game.life - LIFE_LOST_PER_MISS;
   return { ...game, turns: [...game.turns, turn], life };
+}
+
+/** Scores a guess against the secret this phone holds, and records it. */
+export function play(game: Game, guess: Code): Game {
+  return record(game, { guess, exact: countExact(game, guess), misplaced: countMisplaced(game, guess) });
 }
 
 export function penalise(game: Game): Game {
@@ -77,7 +86,7 @@ export function restoreLife(game: Game): Game {
 }
 
 export function hiddenPegs(game: Game): readonly number[] {
-  return game.secret.map((_, index) => index).filter((index) => !game.revealed.includes(index));
+  return Array.from({ length: CODE_LENGTH }, (_, index) => index).filter((index) => !game.revealed.includes(index));
 }
 
 export function revealPeg(game: Game, index: number): Game {
@@ -89,7 +98,7 @@ export function timeUp(game: Game): Game {
 }
 
 export function isWon(game: Game): boolean {
-  return game.turns.some((turn) => cracksCode(game, turn));
+  return game.turns.some(cracksCode);
 }
 
 export function isLost(game: Game): boolean {

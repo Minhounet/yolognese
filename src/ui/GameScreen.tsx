@@ -18,6 +18,7 @@ import { FallingMeatball } from './FallingMeatball';
 import { PunchArm } from './PunchArm';
 import { Peg } from './Peg';
 import { SecretPeg } from './SecretPeg';
+import { StealBanner } from './StealBanner';
 import { THEME } from './theme';
 
 type Draft = readonly (Color | undefined)[];
@@ -92,10 +93,38 @@ const STATUS_TEXT: Readonly<Record<GameView['status'], string>> = {
   lost: 'Out of life. The guardian wins.',
 };
 
+/** A match with friends: ask the match server what only it knows, and hear the room's changes to the game. */
+export interface MatchProps {
+  readonly flush: () => Promise<void>;
+  readonly subscribe: (onView: (view: GameView) => void) => () => void;
+}
+
 interface GameScreenProps {
   readonly useCases: UseCases;
   /** The view to begin with (a match already started); otherwise a solo game starts. */
   readonly initialView?: GameView;
+  readonly match?: MatchProps;
+  /** Back to the menu (solo) or to the room (a match). */
+  readonly onBack?: () => void;
+}
+
+const STEAL_NOTICES = {
+  switch: '🔀 Switch! New target',
+  robbed: '😱 Your sauce was stolen! You got a new one',
+  scored: '🍝 You stole the sauce! +1',
+  'knocked-out': '💫 Knocked out! −1 point, life refilled',
+} as const;
+
+function stealStatus(view: GameView): string | undefined {
+  const { steal } = view;
+  if (steal === undefined) return undefined;
+  if (steal.finished) {
+    const [top] = steal.scores;
+    return view.status === 'won' ? `Match over! 🏆 You win with ${top.points}` : `Match over: ${top.name} wins with ${top.points}`;
+  }
+  if (steal.notice !== undefined) return STEAL_NOTICES[steal.notice];
+  if (view.pendingGuess !== undefined) return '⏳ The judge is checking your guess…';
+  return `Steal ${steal.target}'s sauce!`;
 }
 
 /** Starts a solo game when no view is given, then shows the board. */
@@ -111,13 +140,18 @@ export function GameScreen(props: GameScreenProps) {
   return <Board {...props} initialView={first} />;
 }
 
-function Board({ useCases, initialView }: GameScreenProps & { readonly initialView: GameView }) {
+function Board({ useCases, initialView, match, onBack }: GameScreenProps & { readonly initialView: GameView }) {
   const [view, setView] = useState<GameView>(initialView);
+  const flush = useCallback(() => void match?.flush(), [match]);
+  useEffect(() => match?.subscribe(setView), [match]);
+  // a peek in a match shows its peg when the server answers: only a peg seen up can be caught up
+  const pegSeen = useRef(false);
   const playing = view.status === 'playing';
   const draft: Draft = view.draft;
   const editDraft = async (command: Parameters<UseCases['editDraft']['execute']>[0]) => {
     const response = await useCases.editDraft.execute(command);
     if (response.kind === 'edited') setView(response.view);
+    flush();
   };
   const [gaze, setGaze] = useState<Point | undefined>(undefined);
   const guardianCentre = useRef<Point>({ x: 0, y: 0 });
@@ -173,6 +207,7 @@ function Board({ useCases, initialView }: GameScreenProps & { readonly initialVi
   const collect = async (shown: Item) => {
     const response = await useCases.collectItem.execute({ id: shown.id });
     setItem(undefined);
+    flush();
     if (response.kind !== 'collected') return;
     const received = response.gift ?? (response.item === 'present' ? undefined : response.item);
     if (received === undefined) return;
@@ -221,6 +256,7 @@ function Board({ useCases, initialView }: GameScreenProps & { readonly initialVi
     if (!playing) return undefined;
     const timer = setInterval(async () => {
       const response = await useCases.tick.execute();
+      flush();
       if (response.kind !== 'ticked') return;
       setTimeLeftMs(response.timeLeftMs);
       if (response.landed !== undefined) {
@@ -244,15 +280,17 @@ function Board({ useCases, initialView }: GameScreenProps & { readonly initialVi
       }
       if (response.item !== undefined) lastItemAt.current = itemPoint(response.item, screenSize);
       setItem(response.item);
-      if (pegUpRef.current !== undefined && response.view.pegUp === undefined) {
+      if (response.view.pegUp !== undefined) pegSeen.current = true;
+      if (pegUpRef.current !== undefined && response.view.pegUp === undefined && pegSeen.current) {
         pegUpRef.current = undefined; // the guardian looked back with the peg still up: caught
+        pegSeen.current = false;
         setPeeked(undefined);
         setCaught(true);
       }
       setView(response.view);
     }, TICK_MS);
     return () => clearInterval(timer);
-  }, [playing, useCases]);
+  }, [playing, useCases, flush]);
   const [puffs, setPuffs] = useState<readonly { readonly id: number; readonly at: Point }[]>([]);
   const nextPuff = useRef(0);
 
@@ -291,11 +329,13 @@ function Board({ useCases, initialView }: GameScreenProps & { readonly initialVi
   const flipBack = (index: number) => {
     void useCases.hidePeg.execute({ index });
     pegUpRef.current = undefined;
+    pegSeen.current = false;
     setPeeked(undefined);
   };
 
   const peek = async (index: number) => {
     const response = await useCases.peekSecret.execute({ index });
+    flush();
     if (response.kind === 'revealed' || response.kind === 'caught') {
       setCooldown({ startedAt: Date.now(), cooldownMs: response.cooldownMs });
     }
@@ -303,7 +343,10 @@ function Board({ useCases, initialView }: GameScreenProps & { readonly initialVi
       throwPunch(response.punch);
     }
     if (response.kind === 'revealed') {
-      setPeeked({ index, color: response.color });
+      if (response.color !== undefined) {
+        setPeeked({ index, color: response.color });
+        pegSeen.current = true;
+      }
       pegUpRef.current = index;
     }
     if (response.kind === 'caught') {
@@ -325,6 +368,7 @@ function Board({ useCases, initialView }: GameScreenProps & { readonly initialVi
 
   const distractTowards = async (target: Point) => {
     const response = await useCases.distractGuardian.execute({ target });
+    flush();
     if (response.kind === 'punched') {
       setView(response.view);
       if (response.punch !== undefined) throwPunch(response.punch);
@@ -356,6 +400,7 @@ function Board({ useCases, initialView }: GameScreenProps & { readonly initialVi
     if (!isComplete(draft)) return;
     const response = await useCases.submitGuess.execute({ guess: draft });
     if (response.kind === 'played') setView(response.view);
+    flush();
   };
 
   const newGame = async () => {
@@ -367,6 +412,7 @@ function Board({ useCases, initialView }: GameScreenProps & { readonly initialVi
     setAttackResult(undefined);
     setItem(undefined);
     pegUpRef.current = undefined; // a peg left up in the last game is not this game's
+    pegSeen.current = false;
     setPeeked(undefined);
     setBlind(false);
     setCharmed(false);
@@ -375,21 +421,32 @@ function Board({ useCases, initialView }: GameScreenProps & { readonly initialVi
 
   return (
     <Pressable testID="scene" style={styles.screen} onPress={pointAt}>
-      <Text style={styles.title}>Yolognese</Text>
+      <View style={styles.titleLine}>
+        {onBack !== undefined && (
+          <Pressable testID="back" accessibilityRole="button" onPress={onBack} style={styles.back} onTouchStart={touchedControl}>
+            <Text style={styles.backText}>{match ? '‹ Room' : '‹ Menu'}</Text>
+          </Pressable>
+        )}
+        <Text style={styles.title}>Yolognese</Text>
+      </View>
+      {view.steal !== undefined && <StealBanner steal={view.steal} />}
       <View ref={guardianRef} onLayout={measureGuardian}>
         <Guardian gaze={gaze} laughing={caught} />
       </View>
       <View ref={secretRow} style={styles.row} testID="secret" onTouchStart={touchedControl}>
         {(view.secret ?? EMPTY_DRAFT).map((color, slot) => {
           const xrayed = view.revealed.find((peg) => peg.index === slot)?.color;
-          const up = view.secret === undefined && peeked?.index === slot;
-          const shown = up ? peeked.color : (color ?? xrayed);
+          const serverPeg = view.pegUp?.index === slot ? view.pegUp.color : undefined; // "steal the sauce": the server's answer
+          const up = view.secret === undefined && (peeked?.index === slot || serverPeg !== undefined);
+          const shown = up ? (peeked?.index === slot ? peeked.color : serverPeg) : (color ?? xrayed);
           const onPress = up ? () => flipBack(slot) : () => void peek(slot);
           return <SecretPeg key={slot} testID={`secret-${slot}`} color={shown} onPress={playing ? onPress : undefined} />;
         })}
       </View>
       <Text testID="status" style={[styles.status, caught && styles.caught]}>
-        {caught ? 'Caught peeking! −2 life' : timeLeftMs === 0 && view.status === 'lost' ? "Time's up! The guardian wins." : STATUS_TEXT[view.status]}
+        {caught
+          ? 'Caught peeking! −2 life'
+          : (stealStatus(view) ?? (timeLeftMs === 0 && view.status === 'lost' ? "Time's up! The guardian wins." : STATUS_TEXT[view.status]))}
       </Text>
       <Text testID="timer" accessibilityLabel="time left" style={styles.timer}>
         ⏱️ {timeLeftMs === undefined ? "–:––" : countdown(timeLeftMs)}
@@ -453,8 +510,13 @@ function Board({ useCases, initialView }: GameScreenProps & { readonly initialVi
           </Pressable>
         </View>
       ) : (
-        <Pressable testID="new-game" accessibilityRole="button" onPress={() => void newGame()} style={styles.button}>
-          <Text style={styles.buttonText}>New game</Text>
+        <Pressable
+          testID="new-game"
+          accessibilityRole="button"
+          onPress={match && onBack ? onBack : () => void newGame()}
+          style={styles.button}
+        >
+          <Text style={styles.buttonText}>{match ? 'Back to the room' : 'New game'}</Text>
         </Pressable>
       )}
       {playing && item !== undefined && (
@@ -497,7 +559,10 @@ function Board({ useCases, initialView }: GameScreenProps & { readonly initialVi
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: THEME.background, alignItems: 'center', paddingTop: 36, paddingBottom: 24 },
-  title: { fontSize: 24, fontWeight: 'bold', color: THEME.sauce, marginBottom: 8 },
+  title: { fontSize: 24, fontWeight: 'bold', color: THEME.sauce },
+  titleLine: { alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
+  back: { position: 'absolute', left: 12, paddingVertical: 4, paddingHorizontal: 8 },
+  backText: { color: THEME.sauce, fontSize: 15, fontWeight: 'bold' },
   status: { color: THEME.ink, fontSize: 16, marginVertical: 8 },
   board: { flex: 1, alignSelf: 'stretch', marginHorizontal: 16, backgroundColor: THEME.board, borderRadius: 12 },
   boardContent: { alignItems: 'center', paddingVertical: BOARD_PADDING },

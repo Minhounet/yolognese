@@ -5,5 +5,11 @@
     "types": [
       "jest"
     ]
-  }
+  },
+  "exclude": [
+    "dist",
+    "docs",
+    "node_modules",
+    "supabase"
+  ]
 }
