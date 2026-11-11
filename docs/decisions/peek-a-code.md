@@ -149,3 +149,8 @@
 - Decided: all fixed as listed in docs/ticket/PEEK-3/conception.md; no change for the player
 - Evidence: 122 unit tests (new: SessionWork, roomWire, RoomPlay with an in-memory fake room that holds presence back like a slow network); 8 rules broken on purpose, 6 caught, 1 redundant guard removed, 1 gap closed with a test; tsc clean; 25 browser checks, and the normal build checked too
 - Asked user: no (the user asked for the refactor)
+
+## Measured: server-authoritative guess latency (user: refactor first, then measure)
+- Decided: a throwaway Edge Function `yolognese-measure` (scores a guess, one db query, one broadcast, no table) deployed with a personal access token the user then revoked; results in docs/ticket/PEEK-3/measure/README.md
+- Result: warm ≈ 170 ms median for the guesser and for the rivals (p90 ≈ 210 ms); cold start ≈ 1.7 s; the function ran away from the database region (85 ms per query)
+- Open: delete `yolognese-measure` in the dashboard (the token is revoked) (HUMAN)
