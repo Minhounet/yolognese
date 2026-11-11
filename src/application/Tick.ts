@@ -14,6 +14,7 @@ import {
   ITEM_DELAY_SPREAD_MS,
   ITEM_KINDS,
   ITEM_SPOT_SPAN,
+  MATCH_ITEM_KINDS,
   Item,
   appear,
   isBombLeft,
@@ -103,7 +104,7 @@ export class TickImpl implements Tick {
 
   private itemOnShow(session: Session, now: number) {
     const itemAt = this.itemAtFor(session, now);
-    const item = isItemShown(itemAt, now) ? (session.item ?? this.showItem()) : undefined;
+    const item = isItemShown(itemAt, now) ? (session.item ?? this.showItem(session.steal !== undefined)) : undefined;
     return { itemAt, item, itemCollected: false };
   }
 
@@ -114,11 +115,13 @@ export class TickImpl implements Tick {
       : scheduled;
   }
 
-  private showItem(): Item {
+  private showItem(inMatch: boolean): Item {
+    const kinds = inMatch ? MATCH_ITEM_KINDS : ITEM_KINDS;
     return appear(
-      this.itemRandom.nextInt(ITEM_KINDS.length),
+      this.itemRandom.nextInt(kinds.length),
       this.itemRandom.nextInt(ITEM_SPOT_SPAN),
       this.itemRandom.nextInt(ITEM_SPOT_SPAN),
+      kinds,
     );
   }
 

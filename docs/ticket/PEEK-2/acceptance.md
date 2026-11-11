@@ -30,6 +30,24 @@
 - Evidence: test/application/SauceBot.test.ts, test/domain/botBrain.test.ts, RoomPlay.test.ts test bots block; e2e/steal.spec.js one phone with bots (a 3-player circle; a duel the bot wins)
 - Status: verified
 
+## AC6: See the others play (round 14)
+- Source: "I would like in certain manner see the other person doing that"
+- Interpretation: the player sees, live, the latest guesses the rival after its sauce makes on it: the pegs tried and their score (the last three kept, the newest shown)
+- Evidence: Steal.test.ts shouldSeeTheAttackersGuesses_onMySauceLive, shouldKeepOnlyTheLatestThreeAttempts; roomWire.test.ts (the attempt in the progress message, optional for an older server); e2e/steal.spec.js "Round 14" (the bot's attempts show)
+- Status: verified
+
+## AC7: Ink a rival (round 14)
+- Source: "I could counter attack when somebody is blinding me"; user: "The one you're after", "From items"
+- Interpretation: in a match the field also shows 🦑 ink (never in solo); tapping it throws ink at the player whose sauce you are after; the server checks the thrower is seated and allows one ink every 10 s; bots throw ink too (every 12-35 s)
+- Evidence: Steal.test.ts shouldInkThePlayerWhoseSauceIAmAfter_whenInkCollected, shouldNotShowInk_inASoloGame; SauceBot.test.ts shouldThrowInkAtItsTarget_every12To35Seconds; supabase/tests/steal_the_sauce.sql (ink to the current target, a second within 10 s refused); e2e/steal.spec.js "Round 14"
+- Status: verified
+
+## AC8: Rub the ink off (round 14)
+- Source: "(I must erase the screen)"; user: "Wipe the screen"
+- Interpretation: ink covers the guardian, the secret and the guesses (the row, the palette and the shield stay free); rubbing it with the finger clears it as the finger travels (about five swipes); left alone it fades after 20 s
+- Evidence: Steal.test.ts shouldClearTheInk_asItIsWiped, shouldFadeTheInk_after20SecondsEvenIfNotWiped; e2e/steal.spec.js "Round 14" (inked by the bot, rubbed off with drags)
+- Status: verified
+
 ## Discrepancies
 
 None.

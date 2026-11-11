@@ -18,7 +18,9 @@ const EVENTS: readonly RoomEvent[] = [
   { type: 'state', state: STATE, cause: { kind: 'stolen', by: 'a', victim: 'b' } },
   { type: 'state', state: STATE, cause: { kind: 'switch' } },
   { type: 'state', state: STATE, cause: { kind: 'knockout', by: 'b' } },
-  { type: 'pressure', from: 'a', target: 'b', bestExact: 3 },
+  { type: 'pressure', from: 'a', target: 'b', bestExact: 3, attempt: undefined },
+  { type: 'pressure', from: 'a', target: 'b', bestExact: 2, attempt: { guess: ['red', 'blue', 'red', 'green'], exact: 2, misplaced: 1 } },
+  { type: 'ink', from: 'a', target: 'b' },
 ];
 
 describe('roomWire', () => {
@@ -28,6 +30,12 @@ describe('roomWire', () => {
 
   it('shouldUseItsOwnNames_notTheDomainOnes', () => {
     expect(encode({ type: 'pressure', from: 'a', target: 'b', bestExact: 3 })).toEqual({ v: WIRE_VERSION, t: 'steal.pressure', by: 'a', on: 'b', best: 3 });
+  });
+
+  it('shouldReadAProgressMessage_fromAServerBeforeRound14_withoutTheAttempt', () => {
+    expect(decode({ v: WIRE_VERSION, t: 'steal.pressure', by: 'a', on: 'b', best: 2 })).toEqual({
+      type: 'pressure', from: 'a', target: 'b', bestExact: 2, attempt: undefined,
+    });
   });
 
   it('shouldDropMessage_fromAnotherVersion', () => {
@@ -41,6 +49,7 @@ describe('roomWire', () => {
     ['an old peer message', { v: WIRE_VERSION, t: 'steal.stolen', by: 'a', victim: 'b' }],
     ['a best above four', { v: WIRE_VERSION, t: 'steal.pressure', by: 'a', on: 'b', best: 9 }],
     ['no sender', { v: WIRE_VERSION, t: 'steal.pressure', on: 'b', best: 1 }],
+    ['ink with no target', { v: WIRE_VERSION, t: 'steal.ink', by: 'a' }],
     ['not an object', 'hello'],
   ])('shouldDropMessage_withMalformedContent: %s', (_why, message) => {
     expect(decode(message)).toBeUndefined();

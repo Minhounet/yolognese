@@ -97,6 +97,9 @@ export class FlushMatch {
           await this.apply((session, now) => applyState(session, state, { kind: 'switch' }, now));
           return;
         }
+        case 'ink':
+          await this.server.ink(matchId);
+          return;
         case 'my-sauce': {
           const sauce = await this.server.mySauce(matchId);
           await this.apply((session) => applyMySauce(session, sauce));

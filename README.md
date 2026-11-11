@@ -14,7 +14,8 @@ your pegs). One throw in three is a 🍴 fork that steals a peg you placed.
 **Steal the sauce** (menu): several phones, each hiding a sauce and cracking another player's, in
 a circle that turns every 45 s and after each crack; +1 per sauce stolen, most points in 5 minutes
 wins. A server referees it (Supabase, `supabase/README.md`): no phone can see another's sauce.
-Alone? In the room, the host can tap "🤖 Add a bot". Design in `docs/ticket/PEEK-2/`.
+You see your attacker's guesses on your sauce live, and a 🦑 ink item lets you ink your target's
+screen (they rub it off with a finger). Alone? In the room, the host can tap "🤖 Add a bot". Design in `docs/ticket/PEEK-2/`.
 
 Built in yolo mode with the aixlper skills; design and acceptance criteria
 in `docs/ticket/PEEK-1/`, decisions in `docs/decisions/peek-a-code.md`.

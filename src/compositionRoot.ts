@@ -2,6 +2,7 @@ import { CollectItem, CollectItemImpl } from './application/CollectItem';
 import { DistractGuardian, DistractGuardianImpl } from './application/DistractGuardian';
 import { EditDraft, EditDraftImpl } from './application/EditDraft';
 import { JoinRoom } from './application/RoomPlay';
+import { WipeInk } from './application/WipeInk';
 import { settleSteal } from './application/stealMatch';
 import { HidePeg, HidePegImpl } from './application/HidePeg';
 import { MoveShield, MoveShieldImpl } from './application/MoveShield';
@@ -33,6 +34,7 @@ export interface UseCases {
   readonly editDraft: EditDraft;
   /** "Steal the sauce": rooms, the match server, test bots. */
   readonly joinRoom: JoinRoom;
+  readonly wipeInk: WipeInk;
 }
 
 /** A luck draw fixed by configuration (globalThis.yologneseLuck), used by the browser checks; none in play. */
@@ -77,6 +79,7 @@ export function createUseCases(): UseCases {
     hidePeg: new HidePegImpl(repository),
     editDraft: new EditDraftImpl(repository, clock),
     collectItem: new CollectItemImpl(repository, clock, random),
+    wipeInk: new WipeInk(repository, clock),
     joinRoom: new JoinRoom({
       gateway: new SupabaseRoomGateway(supabase),
       server: new SupabaseMatchServer(supabase),

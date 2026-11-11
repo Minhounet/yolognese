@@ -8,6 +8,11 @@ import { Session } from './ports';
 /** How long a notice ("Switch!", "Your sauce was stolen!") stays on screen. */
 export const NOTICE_MS = 1500;
 
+/** Round 14: ink left on a screen fades by itself after this long, even if never wiped. */
+export const INK_MAX_MS = 20_000;
+/** How many of the rivals' latest attempts on this player's sauce are kept for the screen. */
+const ATTEMPTS_KEPT = 3;
+
 /** A server time in this phone's clock (the network delay is ignored: under a second). */
 const toLocal = (serverTime: number, state: MatchState, now: number) => serverTime - state.serverNow + now;
 
@@ -29,6 +34,7 @@ export function newStealSession(me: string, state: MatchState, now: number): Ses
     pressure: {},
     syncing: false,
     requests: [{ type: 'my-sauce' }],
+    attempts: [],
   };
   return {
     game: newGame(),
@@ -68,7 +74,7 @@ export function applyState(session: Session, state: MatchState, cause: StateCaus
   const game = sameSauce ? session.game : { ...newGame(), turns: after.memory[sauceKey(target)] ?? [], life: session.game.life };
   const turned = { ...session, game, endsAt: toLocal(state.endsAt, state, now), pegUp: sameSauce ? session.pegUp : undefined };
   if (cause.kind === 'stolen' && cause.victim === steal.me) {
-    return { ...turned, steal: notify(ask({ ...after, pressure: {} }, { type: 'my-sauce' }), 'robbed', now) };
+    return { ...turned, steal: notify(ask({ ...after, pressure: {}, attempts: [] }, { type: 'my-sauce' }), 'robbed', now) };
   }
   if (cause.kind === 'stolen' && cause.by === steal.me) return { ...turned, steal: notify(after, 'scored', now) };
   if (!sameSauce && !fresh(steal, now)) return { ...turned, steal: notify(after, 'switch', now) };
@@ -79,7 +85,8 @@ export function applyState(session: Session, state: MatchState, cause: StateCaus
 export function settleSteal(session: Session, now: number): Session {
   const { steal } = session;
   if (steal === undefined || steal.finished) return session;
-  if (now >= session.endsAt) return { ...session, steal: ask({ ...steal, finished: true }, { type: 'sync' }) };
+  if (now >= session.endsAt) return { ...session, steal: ask({ ...steal, finished: true, ink: undefined }, { type: 'sync' }) };
+  if (steal.ink !== undefined && now - steal.ink.at >= INK_MAX_MS) return settleSteal({ ...session, steal: { ...steal, ink: undefined } }, now);
   if (session.game.life <= 0) {
     const knocked = notify(ask(steal, { type: 'knockout' }), 'knocked-out', now);
     return { ...session, steal: knocked, game: { ...session.game, life: MAX_LIFE } };
@@ -124,13 +131,32 @@ export function serverFailed(session: Session, request: ServerRequest): Session 
   return session;
 }
 
-/** Applies what the room said: the server's state, an attacker's progress on this player's sauce. */
+/** Applies what the room said: the server's state, an attacker's guess on this player's sauce, a rival's ink. */
 export function receiveSteal(session: Session, event: RoomEvent, now: number): Session {
   const { steal } = session;
   if (steal === undefined) return session;
   if (event.type === 'state') return applyState(session, event.state, event.cause, now);
-  if (event.target !== steal.me) return session;
-  return { ...session, steal: { ...steal, pressure: { ...steal.pressure, [event.from]: event.bestExact } } };
+  if (event.target !== steal.me || steal.finished) return session;
+  if (event.type === 'ink') {
+    return { ...session, steal: notify({ ...steal, ink: { by: event.from, left: 1, at: now } }, 'inked', now) };
+  }
+  const attempts = event.attempt === undefined ? steal.attempts : [...steal.attempts, { ...event.attempt, by: event.from }].slice(-ATTEMPTS_KEPT);
+  return { ...session, steal: { ...steal, attempts, pressure: { ...steal.pressure, [event.from]: event.bestExact } } };
+}
+
+/** Round 14: the player rubs the ink off; `amount` is the share wiped (the screen measures the finger's travel). */
+export function wipeInk(session: Session, amount: number): Session {
+  const ink = session.steal?.ink;
+  if (session.steal === undefined || ink === undefined) return session;
+  const left = Math.max(0, ink.left - Math.max(0, amount));
+  return { ...session, steal: { ...session.steal, ink: left === 0 ? undefined : { ...ink, left } } };
+}
+
+/** Round 14: the ink item, in "steal the sauce": thrown at the player whose sauce this player is after. */
+export function throwInk(session: Session, now: number): Session {
+  const { steal } = session;
+  if (steal === undefined) return session;
+  return { ...session, steal: notify(ask(steal, { type: 'ink' }), 'ink-thrown', now) };
 }
 
 /** Takes the questions for the server. */

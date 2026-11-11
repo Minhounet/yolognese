@@ -34,7 +34,11 @@ export interface StealView {
   readonly switchInMs?: number;
   readonly finished: boolean;
   /** What just happened, while it is fresh. */
-  readonly notice?: 'switch' | 'robbed' | 'scored' | 'knocked-out';
+  readonly notice?: 'switch' | 'robbed' | 'scored' | 'knocked-out' | 'inked' | 'ink-thrown';
+  /** Round 14: the latest guesses rivals made on this player's sauce, newest last. */
+  readonly attempts: readonly { readonly by: string; readonly guess: Code; readonly exact: number; readonly misplaced: number }[];
+  /** Round 14: ink a rival threw on this player's screen, and how much is left to wipe (1 → 0). */
+  readonly ink?: { readonly by: string; readonly left: number };
 }
 
 export interface GameView {

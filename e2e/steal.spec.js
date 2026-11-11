@@ -99,4 +99,25 @@ test.describe('Steal the sauce with test bots (one phone)', () => {
     await expect(page.getByTestId('score-🤖 Bot 1')).toHaveAttribute('aria-label', /^🤖 Bot 1 [1-9]/);
     await expect(page.getByTestId('score-Ann')).toHaveAttribute('aria-label', 'Ann 0');
   });
+
+
+  test('Round 14: the bot inks the phone, which rubs it off, and the bot\'s attempts on its sauce show live', async ({ page }) => {
+    test.setTimeout(90_000);
+    await openRoomWithBots(page, 1);
+    await expect(page.getByTestId('target')).toHaveAttribute('aria-label', 'after 🤖 Bot 1', { timeout: 10_000 });
+
+    const ink = page.getByTestId('ink');
+    await expect(ink).toBeVisible({ timeout: 25_000 }); // the bot's first ink: 12 s after the start (draws fixed at 0)
+    await expect(page.getByTestId('status')).toContainText('inked you');
+    const box = await ink.boundingBox();
+    for (let swipe = 0; swipe < 12 && (await ink.count()) > 0; swipe += 1) {
+      await page.mouse.move(box.x + 20, box.y + box.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(box.x + box.width - 20, box.y + box.height / 2, { steps: 8 });
+      await page.mouse.up();
+    }
+    await expect(ink).toHaveCount(0);
+
+    await expect(page.getByTestId('attempt')).toHaveAttribute('aria-label', /^🤖 Bot 1 tried /, { timeout: 25_000 });
+  });
 });

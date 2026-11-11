@@ -1,4 +1,5 @@
-import { MatchState, RoomEvent, StateCause } from '../domain/steal';
+import { Code } from '../domain/color';
+import { Attempt, MatchState, RoomEvent, StateCause } from '../domain/steal';
 
 /**
  * The messages the match server broadcasts to a room (supabase/migrations), in
@@ -13,8 +14,13 @@ export type WireMessage = { readonly v: number; readonly t: string } & Fields;
 /** The message for an event, as the server writes it (used by the tests). */
 export function encode(event: RoomEvent): WireMessage {
   if (event.type === 'state') return { v: WIRE_VERSION, t: 'srv.state', state: event.state, cause: event.cause };
-  return { v: WIRE_VERSION, t: 'steal.pressure', by: event.from, on: event.target, best: event.bestExact };
+  if (event.type === 'ink') return { v: WIRE_VERSION, t: 'steal.ink', by: event.from, on: event.target };
+  const attempt = event.attempt === undefined ? {} : { guess: event.attempt.guess, exact: event.attempt.exact, misplaced: event.attempt.misplaced };
+  return { v: WIRE_VERSION, t: 'steal.pressure', by: event.from, on: event.target, best: event.bestExact, ...attempt };
 }
+
+const COLOR_NAMES: readonly unknown[] = ['red', 'yellow', 'green', 'blue', 'purple', 'orange'];
+const isCode = (value: unknown): value is Code => Array.isArray(value) && value.length === 4 && value.every((color) => COLOR_NAMES.includes(color));
 
 const isRecord = (value: unknown): value is Fields => typeof value === 'object' && value !== null;
 const isText = (value: unknown): value is string => typeof value === 'string' && value.length > 0 && value.length <= 64;
@@ -53,8 +59,15 @@ export function decode(message: unknown): RoomEvent | undefined {
     return state !== undefined && cause !== undefined ? { type: 'state', state, cause } : undefined;
   }
   if (message.t === 'steal.pressure') {
-    const { by, on, best } = message;
-    return isText(by) && isText(on) && isCount(best, 4) ? { type: 'pressure', from: by, target: on, bestExact: best } : undefined;
+    const { by, on, best, guess, exact, misplaced } = message;
+    if (!isText(by) || !isText(on) || !isCount(best, 4)) return undefined;
+    // the attempt (round 14) is optional: a server from before it sends only the best count
+    const attempt: Attempt | undefined = isCode(guess) && isCount(exact, 4) && isCount(misplaced, 4) ? { guess, exact, misplaced } : undefined;
+    return { type: 'pressure', from: by, target: on, bestExact: best, attempt };
+  }
+  if (message.t === 'steal.ink') {
+    const { by, on } = message;
+    return isText(by) && isText(on) ? { type: 'ink', from: by, target: on } : undefined;
   }
   return undefined;
 }

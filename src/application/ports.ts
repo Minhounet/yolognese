@@ -96,6 +96,8 @@ export interface MatchServer {
   sync(matchId: string): Promise<MatchState>;
   knockout(matchId: string): Promise<MatchState>;
   mySauce(matchId: string): Promise<Code>;
+  /** Round 14: throws ink at the caller's current target; false when asked too fast. */
+  ink(matchId: string): Promise<boolean>;
 }
 
 /** Runs a task later. */

@@ -73,6 +73,17 @@ describe('SauceBot', () => {
     expect(ann.seats.find(({ id }) => id === 'bot1')?.points).toBeGreaterThan(0);
   });
 
+  it('shouldThrowInkAtItsTarget_every12To35Seconds', async () => {
+    const { scheduler, start, heard, settle } = await roomWithBots(1);
+    await start();
+
+    await scheduler.advance(11_900, settle);
+    expect(heard.filter((event) => event.type === 'ink')).toHaveLength(0);
+    await scheduler.advance(100, settle);
+
+    expect(heard.filter((event) => event.type === 'ink')).toEqual([{ type: 'ink', from: 'bot1', target: 'host' }]);
+  });
+
   it('shouldStop_whenItLeaves', async () => {
     const { scheduler, start, bots, guessesBy, settle } = await roomWithBots(1);
     await start();

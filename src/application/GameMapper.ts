@@ -35,8 +35,12 @@ function toStealView(steal: Steal, now: number | undefined): StealView {
     switchInMs: steal.seats.length > 2 && now !== undefined ? Math.max(0, steal.nextSwitchAt - now) : undefined,
     finished: steal.finished,
     notice: noticed ? steal.notice?.kind : undefined,
+    attempts: steal.attempts.map(({ by, guess, exact, misplaced }) => ({ by: nameOf(steal, by), guess, exact, misplaced })),
+    ink: steal.ink === undefined ? undefined : { by: nameOf(steal, steal.ink.by), left: steal.ink.left },
   };
 }
+
+const nameOf = (steal: Steal, id: string) => steal.seats.find((seat) => seat.id === id)?.name ?? '?';
 
 function stealStatus(steal: Steal): GameStatus {
   if (!steal.finished) return 'playing';
