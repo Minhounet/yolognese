@@ -9,9 +9,11 @@ import { SessionWork } from '../../src/application/SessionWork';
 import { settleSteal } from '../../src/application/stealMatch';
 import { SubmitGuessImpl } from '../../src/application/SubmitGuess';
 import { TickImpl } from '../../src/application/Tick';
+import { WipeInk } from '../../src/application/WipeInk';
 import { GameView } from '../../src/application/views';
 import { Code } from '../../src/domain/color';
-import { ITEM_KINDS } from '../../src/domain/items';
+import { ITEM_KINDS, MATCH_ITEM_KINDS } from '../../src/domain/items';
+import { StartGameImpl } from '../../src/application/StartGame';
 import { RoomEvent } from '../../src/domain/steal';
 import { InMemoryGameRepository } from '../../src/infrastructure/InMemoryGameRepository';
 import { FakeClock } from '../support/FakeClock';
@@ -110,6 +112,7 @@ async function match(seatCount = 3) {
       editDraft: new EditDraftImpl(work, clock),
       collectItem: new CollectItemImpl(work, clock, random),
       moveShield: new MoveShieldImpl(work),
+      wipeInk: new WipeInk(work, clock),
       settled,
       /** The phone's view now, after a tick and what it asks, as the screen does every 100 ms. */
       view: () => viewOf(true),
@@ -368,4 +371,82 @@ describe('Steal the sauce: points and the end', () => {
 
     expect(await ann.guess(MISS)).toMatchObject({ kind: 'rejected', reason: 'game-over' });
   });
+});
+
+describe('Round 14: see the others, ink them', () => {
+  /** Lets the first item appear on this phone (8.1 s) as the given kind; answers its id. */
+  async function itemFor(game: Awaited<ReturnType<typeof match>>, player: Awaited<ReturnType<typeof match>>['ann'], kind: string) {
+    await game.runFor(8000);
+    player.random.queue(MATCH_ITEM_KINDS.indexOf(kind as (typeof MATCH_ITEM_KINDS)[number]));
+    await game.runFor(100);
+    return 0;
+  }
+
+  it('shouldSeeTheAttackersGuesses_onMySauceLive', async () => {
+    const { bob, cid } = await match();
+
+    await bob.guess(['green', 'red', 'green', 'blue']);
+
+    expect(await cid.view()).toMatchObject({ steal: { attempts: [{ by: 'Bob', guess: ['green', 'red', 'green', 'blue'], exact: 2, misplaced: 0 }] } });
+  });
+
+  it('shouldKeepOnlyTheLatestThreeAttempts', async () => {
+    const { bob, cid } = await match();
+    for (const color of ['purple', 'orange', 'yellow', 'red'] as const) await bob.guess(all(color));
+
+    expect((await cid.view()).steal?.attempts.map(({ guess }) => guess[0])).toEqual(['orange', 'yellow', 'red']);
+  });
+
+  it('shouldInkThePlayerWhoseSauceIAmAfter_whenInkCollected', async () => {
+    const game = await match();
+    const { ann, bob, cid } = game;
+    const id = await itemFor(game, ann, 'ink');
+
+    await ann.collectItem.execute({ id });
+    await ann.settled();
+
+    expect(await ann.view()).toMatchObject({ steal: { notice: 'ink-thrown' } });
+    expect(await bob.view()).toMatchObject({ steal: { notice: 'inked', ink: { by: 'Ann', left: 1 } } });
+    expect((await cid.view()).steal?.ink).toBeUndefined();
+  });
+
+  it('shouldClearTheInk_asItIsWiped', async () => {
+    const game = await match();
+    const { ann, bob } = game;
+    await ann.collectItem.execute({ id: await itemFor(game, ann, 'ink') });
+    await ann.settled();
+
+    expect(await bob.wipeInk.execute(0.6)).toMatchObject({ steal: { ink: { left: 0.4 } } });
+    expect((await bob.wipeInk.execute(0.5))?.steal?.ink).toBeUndefined();
+  });
+
+  it('shouldFadeTheInk_after20SecondsEvenIfNotWiped', async () => {
+    const game = await match();
+    const { ann, bob, runFor } = game;
+    await ann.collectItem.execute({ id: await itemFor(game, ann, 'ink') });
+    await ann.settled();
+    await runFor(19_900);
+    expect((await bob.quietView()).steal?.ink).toBeDefined();
+
+    await runFor(100);
+
+    expect((await bob.quietView()).steal?.ink).toBeUndefined();
+  });
+
+  it('shouldNotShowInk_inASoloGame', async () => {
+    const clock = new FakeClock();
+    const work = new SessionWork(new InMemoryGameRepository());
+    const asked: number[] = [];
+    const items = { nextInt: (max: number) => (asked.push(max), 0) };
+    await new StartGameImpl(new QueuedRandomSource(), work, clock).execute();
+    const tick = new TickImpl(work, clock, new QueuedRandomSource(), items);
+    await tick.execute();
+    clock.advance(8000);
+
+    await tick.execute(); // the item shows: its kind is drawn among the solo kinds, which have no ink
+
+    expect(asked).toContain(ITEM_KINDS.length);
+    expect(asked).not.toContain(MATCH_ITEM_KINDS.length);
+  });
+
 });

@@ -86,6 +86,14 @@ select pg_temp.as_player(cid) from t_ids;
 insert into t_out select 'ko', public.yolo_knockout((select (v ->> 'matchId')::uuid from t_out where k = 'start'));
 select pg_temp.check((select (v -> 'seats' -> 2 ->> 'points')::int = 0 from t_out where k = 'ko'), 'knock-out floors at 0');
 
+-- ink (round 14): it goes to the player whose sauce the thrower is after, at most once every 10 s
+select pg_temp.as_player(ann) from t_ids;
+select pg_temp.check((select public.yolo_ink((select (v ->> 'matchId')::uuid from t_out where k = 'start')) = bob from t_ids), 'Ann inks Bob, her target now (she cracked Cid too)');
+do $$ begin
+  perform public.yolo_ink((select (v ->> 'matchId')::uuid from t_out where k = 'start'));
+  raise exception 'FAILED: a second ink within 10 s';
+exception when sqlstate 'P0001' then null; end $$;
+
 -- the timer: 45 s later the circle turns once more for everyone (time moved by editing the row as the owner)
 reset role;
 update public.matches set next_switch_at = clock_timestamp() - interval '1 second';

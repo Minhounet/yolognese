@@ -48,6 +48,15 @@ export class SupabaseMatchServer implements MatchServer {
     return sauce as unknown as Code;
   }
 
+  async ink(matchId: string): Promise<boolean> {
+    try {
+      await this.call('yolo_ink', { p_match: matchId });
+      return true;
+    } catch {
+      return false; // asked too fast, or the match is over
+    }
+  }
+
   private async call(fn: string, args: Record<string, unknown>): Promise<unknown> {
     await this.backend.playerId();
     const { data, error } = await this.backend.connection().rpc(fn, args);

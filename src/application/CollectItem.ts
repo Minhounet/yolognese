@@ -5,7 +5,7 @@ import { DARKNESS_MS, GIFT_KINDS, GiftKind, HOURGLASS_BONUS_MS, ItemKind, SMOKE_
 
 const SECRET_LENGTH = 4;
 import { toGameView } from './GameMapper';
-import { askPeg, isSessionOver } from './stealMatch';
+import { askPeg, isSessionOver, throwInk } from './stealMatch';
 import { Clock, RandomSource, Session } from './ports';
 import { SessionWork } from './SessionWork';
 import { GameView } from './views';
@@ -43,14 +43,16 @@ export class CollectItemImpl implements CollectItem {
       if (item === undefined || itemAt === undefined || !isItemShown(itemAt, now)) {
         return { result: { kind: 'rejected', reason: 'no-item' } };
       }
-      const received = item.kind === 'present' ? this.drawGift() : item.kind;
-      const affected = item.kind === 'bomb' ? session : this.effectOf(received, session, now);
+      const gift = item.kind === 'present' ? this.drawGift() : undefined;
+      // a bomb tapped on the field is thrown away; ink (round 14) is thrown at a rival; the rest act here
+      const effect: GiftKind | undefined = gift ?? (item.kind === 'bomb' || item.kind === 'ink' || item.kind === 'present' ? undefined : item.kind);
+      const affected = item.kind === 'ink' ? throwInk(session, now) : effect === undefined ? session : this.effectOf(effect, session, now);
       return {
         session: { ...affected, item: undefined, itemCollected: true },
         result: {
           kind: 'collected',
           item: item.kind,
-          gift: item.kind === 'present' ? received : undefined,
+          gift,
           view: toGameView(affected.game, { session: affected, now }),
         },
       };

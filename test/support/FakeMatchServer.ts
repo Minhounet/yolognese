@@ -8,7 +8,7 @@ const MATCH_MS = 300_000;
 
 interface Match {
   readonly id: string;
-  readonly seats: { readonly id: string; readonly name: string; points: number; version: number; sauce: Code; lastPeek?: number }[];
+  readonly seats: { readonly id: string; readonly name: string; points: number; version: number; sauce: Code; lastPeek?: number; lastInk?: number }[];
   rotation: number;
   nextSwitchAt: number;
   endsAt: number;
@@ -42,6 +42,7 @@ export class FakeMatchServer {
       sync: async (matchId) => this.sync(this.seated(matchId, player)),
       knockout: async (matchId) => this.knockout(this.seated(matchId, player), player),
       mySauce: async (matchId) => this.seated(matchId, player).seats.find(({ id }) => id === player)!.sauce,
+      ink: async (matchId) => this.ink(this.seated(matchId, player), player),
     };
   }
 
@@ -97,7 +98,7 @@ export class FakeMatchServer {
       return { kind: 'scored', exact, misplaced: 0, target: target.id, state: this.say(match, { kind: 'stolen', by: player, victim: target.id }) };
     }
     const best = Math.max(...match.guesses.filter((g) => g.attacker === player && g.target === target.id && g.version === target.version).map((g) => g.exact));
-    this.broadcast({ type: 'pressure', from: player, target: target.id, bestExact: best });
+    this.broadcast({ type: 'pressure', from: player, target: target.id, bestExact: best, attempt: { guess: code, exact, misplaced: shared - exact } });
     const state = turned ? this.say(match, { kind: 'switch' }) : this.state(match);
     return { kind: 'scored', exact, misplaced: shared - exact, target: target.id, state };
   }
@@ -108,6 +109,16 @@ export class FakeMatchServer {
     if (seat.lastPeek !== undefined && now - seat.lastPeek < 1000) return undefined;
     seat.lastPeek = now;
     return this.target(match, player).sauce[index];
+  }
+
+  /** Round 14: ink at the caller's target, at most once every 10 s. */
+  private ink(match: Match, player: string): boolean {
+    const seat = match.seats.find(({ id }) => id === player)!;
+    const now = this.clock.now();
+    if (now >= match.endsAt || (seat.lastInk !== undefined && now - seat.lastInk < 10_000)) return false;
+    seat.lastInk = now;
+    this.broadcast({ type: 'ink', from: player, target: this.target(match, player).id });
+    return true;
   }
 
   private sync(match: Match): MatchState {

@@ -19,6 +19,7 @@ export const ITEM_ICONS: Readonly<Record<ItemKind | GiftKind, string>> = {
   present: '🎁',
   bomb: '💣',
   mixup: '🌀',
+  ink: '🦑',
   darkness: '🌑',
 };
 

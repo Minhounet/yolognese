@@ -18,6 +18,7 @@ import { FallingMeatball } from './FallingMeatball';
 import { PunchArm } from './PunchArm';
 import { Peg } from './Peg';
 import { SecretPeg } from './SecretPeg';
+import { InkOverlay } from './InkOverlay';
 import { StealBanner } from './StealBanner';
 import { THEME } from './theme';
 
@@ -69,6 +70,7 @@ const GIFT_NOTES: Readonly<Record<Exclude<ItemKind | GiftKind, 'present'>, strin
   bomb: 'Bomb thrown away!',
   darkness: "Darkness! You can't see",
   mixup: 'Mix-up! Two of your pegs switched places',
+  ink: 'Ink thrown at your target!',
 };
 const MS_PER_SECOND = 1000;
 const SECONDS_PER_MINUTE = 60;
@@ -109,10 +111,12 @@ interface GameScreenProps {
 }
 
 const STEAL_NOTICES = {
-  switch: '🔀 Switch! New target',
-  robbed: '😱 Your sauce was stolen! You got a new one',
-  scored: '🍝 You stole the sauce! +1',
-  'knocked-out': '💫 Knocked out! −1 point, life refilled',
+  switch: () => '🔀 Switch! New target',
+  robbed: () => '😱 Your sauce was stolen! You got a new one',
+  scored: () => '🍝 You stole the sauce! +1',
+  'knocked-out': () => '💫 Knocked out! −1 point, life refilled',
+  inked: (view: GameView) => `🦑 ${view.steal?.ink?.by ?? 'A rival'} inked you! Rub it off`,
+  'ink-thrown': (view: GameView) => `🦑 Ink thrown at ${view.steal?.target ?? 'your target'}!`,
 } as const;
 
 function stealStatus(view: GameView): string | undefined {
@@ -122,7 +126,7 @@ function stealStatus(view: GameView): string | undefined {
     const [top] = steal.scores;
     return view.status === 'won' ? `Match over! 🏆 You win with ${top.points}` : `Match over: ${top.name} wins with ${top.points}`;
   }
-  if (steal.notice !== undefined) return STEAL_NOTICES[steal.notice];
+  if (steal.notice !== undefined) return STEAL_NOTICES[steal.notice](view);
   if (view.pendingGuess !== undefined) return '⏳ The judge is checking your guess…';
   return `Steal ${steal.target}'s sauce!`;
 }
@@ -316,6 +320,12 @@ function Board({ useCases, initialView, match, onBack }: GameScreenProps & { rea
   }, [returningPunch]);
 
   const [boardHeight, setBoardHeight] = useState(MOST_TURNS_SHOWN * TURN_ROW_HEIGHT);
+  // round 14: a rival's ink covers the screen down to the bottom of the guesses; the controls stay free
+  const [inkHeight, setInkHeight] = useState(0);
+  const wipe = (amount: number) => {
+    touchedControl();
+    void useCases.wipeInk.execute(amount).then((wiped) => wiped && setView(wiped));
+  };
 
   // AC22: a colour dragged from the palette lands in the slot it is dropped on
   const slotRefs = useRef<(ComponentRef<typeof View> | null)[]>([]);
@@ -472,7 +482,13 @@ function Board({ useCases, initialView, match, onBack }: GameScreenProps & { rea
           </Text>
         </>
       )}
-      <View style={styles.board} onLayout={(event) => setBoardHeight(event.nativeEvent.layout.height)}>
+      <View
+        style={styles.board}
+        onLayout={(event) => {
+          setBoardHeight(event.nativeEvent.layout.height);
+          setInkHeight(event.nativeEvent.layout.y + event.nativeEvent.layout.height);
+        }}
+      >
         <View style={styles.boardContent}>
           {view.turns.slice(-turnsThatFit(boardHeight)).map((turn, shown, kept) => {
             const index = view.turns.length - kept.length + shown;
@@ -554,6 +570,9 @@ function Board({ useCases, initialView, match, onBack }: GameScreenProps & { rea
         <View testID="laser-shield" accessibilityLabel="green laser shield" pointerEvents="none" style={[styles.laser, { left: ground.x, top: ground.y - 6, width: ground.width }]} />
       )}
       {playing && view.playerBlind === true && <DarknessVeil />}
+      {playing && view.steal?.ink !== undefined && inkHeight > 0 && (
+        <InkOverlay left={view.steal.ink.left} by={view.steal.ink.by} height={inkHeight} onWipe={wipe} />
+      )}
       {dragging !== undefined && (
         <View pointerEvents="none" testID="dragged-color" style={[styles.dragged, { left: dragging.at.x - DRAGGED_HALF, top: dragging.at.y - DRAGGED_HALF }]}>
           <Peg color={dragging.color} size={DRAGGED_HALF * 2} />

@@ -42,6 +42,28 @@ export function StealBanner({ steal }: { readonly steal: StealView }) {
           ))}
         </View>
       </View>
+      {steal.attempts.length > 0 && <LatestAttempt attempt={steal.attempts[steal.attempts.length - 1]} />}
+    </View>
+  );
+}
+
+/** Round 14: the rival's latest guess on this player's sauce, live: the pegs tried and their score. */
+function LatestAttempt({ attempt }: { readonly attempt: StealView['attempts'][number] }) {
+  return (
+    <View
+      testID="attempt"
+      accessibilityLabel={`${attempt.by} tried ${attempt.guess.join(' ')}: ${attempt.exact} exact, ${attempt.misplaced} misplaced`}
+      style={styles.line}
+    >
+      <Text style={styles.defence}>👀 {attempt.by} tried</Text>
+      <View style={styles.mine}>
+        {attempt.guess.map((color, slot) => (
+          <Peg key={slot} color={color} size={16} />
+        ))}
+      </View>
+      <Text style={styles.defence}>
+        ✅{attempt.exact} 🔄{attempt.misplaced}
+      </Text>
     </View>
   );
 }

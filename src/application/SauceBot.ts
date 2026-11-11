@@ -6,13 +6,16 @@ import { drawSecret } from './StartGame';
 
 const GUESS_EVERY_MS = 7_000;
 const GUESS_SPREAD_MS = 4_000;
+/** Round 14: a bot throws ink at its target every 12 to 35 s, so a lone tester gets inked too. */
+const INK_EVERY_MS = 12_000;
+const INK_SPREAD_MS = 23_000;
 
 /**
  * A test bot for "steal the sauce", so one phone can try a match with several
  * players. It joins the room as a player of its own (its own identity on the
  * server), hides a random sauce, and once a match starts guesses its current
  * target every 7 to 11 s, carelessly (see nextGuess). It never peeks, uses no
- * item and is never knocked out.
+ * item but ink (round 14: one every 12 to 35 s, at its target) and is never knocked out.
  */
 export class SauceBot {
   private room?: Room;
@@ -20,6 +23,7 @@ export class SauceBot {
   /** Its guesses on each sauce (`player@version`). */
   private readonly memory = new Map<string, Turn[]>();
   private cancel: () => void = () => undefined;
+  private cancelInk: () => void = () => undefined;
   private left = false;
 
   constructor(
@@ -41,6 +45,7 @@ export class SauceBot {
   leave(): void {
     this.left = true;
     this.cancel();
+    this.cancelInk();
     this.room?.leave();
   }
 
@@ -53,6 +58,7 @@ export class SauceBot {
     if (fresh) {
       this.memory.clear();
       this.plan();
+      this.planInk();
     }
   }
 
@@ -67,6 +73,20 @@ export class SauceBot {
     if (this.left || this.state?.finished) return;
     const wait = GUESS_EVERY_MS + this.random.nextInt(GUESS_SPREAD_MS + 1);
     this.cancel = this.scheduler.after(wait, () => void this.play());
+  }
+
+  private planInk(): void {
+    this.cancelInk();
+    if (this.left || this.state?.finished) return;
+    const wait = INK_EVERY_MS + this.random.nextInt(INK_SPREAD_MS + 1);
+    this.cancelInk = this.scheduler.after(wait, () => void this.throwInk());
+  }
+
+  private async throwInk(): Promise<void> {
+    const state = this.state;
+    if (state === undefined || this.left) return;
+    await this.connection.server.ink(state.matchId).catch(() => false);
+    this.planInk();
   }
 
   private async play(): Promise<void> {

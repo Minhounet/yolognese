@@ -24,7 +24,10 @@ export type GiftKind = (typeof GIFT_KINDS)[number];
 
 export const ITEM_KINDS = [...FIELD_GIFT_KINDS, 'present', 'bomb'] as const;
 
-export type ItemKind = (typeof ITEM_KINDS)[number];
+/** Round 14: in "steal the sauce" the field also shows 🦑 ink, thrown at the player whose sauce you are after. */
+export const MATCH_ITEM_KINDS = [...ITEM_KINDS, 'ink'] as const;
+
+export type ItemKind = (typeof MATCH_ITEM_KINDS)[number];
 
 export interface Item {
   readonly id: number;
@@ -48,8 +51,8 @@ export function isInDarkness(darkUntil: number | undefined, now: number): boolea
   return darkUntil !== undefined && now < darkUntil;
 }
 
-export function appear(kindIndex: number, x: number, y: number): Item {
-  return { id: 0, kind: ITEM_KINDS[kindIndex], spot: { x, y } };
+export function appear(kindIndex: number, x: number, y: number, kinds: readonly ItemKind[] = ITEM_KINDS): Item {
+  return { id: 0, kind: kinds[kindIndex], spot: { x, y } };
 }
 
 export function isBombLeft(item: Item | undefined, itemAt: number, now: number): boolean {
