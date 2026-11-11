@@ -10,7 +10,19 @@ const test = base.test.extend({
   luck: [1, { option: true }],
   itemDraw: [0, { option: true }],
   throws: ['meatballs', { option: true }],
-  page: async ({ page, luck, itemDraw, throws }, use) => {
+  // The app opens on a menu (solo, or steal the sauce with friends): the checks start a solo game,
+  // unless a check sets `test.use({ menu: 'stay' })`.
+  menu: ['solo', { option: true }],
+  page: async ({ page, luck, itemDraw, throws, menu }, use) => {
+    if (menu === 'solo') {
+      const open = page.goto.bind(page);
+      page.goto = async (...args) => {
+        const response = await open(...args);
+        await page.getByTestId('solo').click();
+        await page.getByTestId('secret').waitFor();
+        return response;
+      };
+    }
     await page.addInitScript(
       ([fixedLuck, fixedItemDraw, fixedThrows]) => {
         globalThis.yologneseLuck = fixedLuck;

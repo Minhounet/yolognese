@@ -1,11 +1,13 @@
 import { EMPTY_DRAFT, switchTwo } from '../domain/draft';
-import { explode, isOver, restoreLife } from '../domain/game';
+import { explode, restoreLife } from '../domain/game';
 import { blindUntil } from '../domain/guardian';
 import { DARKNESS_MS, GIFT_KINDS, GiftKind, HOURGLASS_BONUS_MS, ItemKind, SMOKE_BLIND_MS, XRAY_SHOWN_MS, isItemShown } from '../domain/items';
 
 const SECRET_LENGTH = 4;
 import { toGameView } from './GameMapper';
-import { Clock, GameRepository, RandomSource, Session } from './ports';
+import { askPeg, isSessionOver } from './stealMatch';
+import { Clock, RandomSource, Session } from './ports';
+import { SessionWork } from './SessionWork';
 import { GameView } from './views';
 
 export interface CollectItemCommand {
@@ -22,38 +24,37 @@ export type CollectItemResponse =
   | { readonly kind: 'rejected'; readonly reason: 'no-game' | 'no-item' | 'game-over' };
 
 export interface CollectItem {
-  execute(command: CollectItemCommand): CollectItemResponse;
+  execute(command: CollectItemCommand): Promise<CollectItemResponse>;
 }
 
 export class CollectItemImpl implements CollectItem {
   constructor(
-    private readonly repository: GameRepository,
+    private readonly work: SessionWork,
     private readonly clock: Clock,
     private readonly random: RandomSource,
   ) {}
 
-  execute(_command: CollectItemCommand): CollectItemResponse {
-    const session = this.repository.load();
-    if (session === undefined) {
-      return { kind: 'rejected', reason: 'no-game' };
-    }
-    if (isOver(session.game)) {
-      return { kind: 'rejected', reason: 'game-over' };
-    }
-    const { item, itemAt } = session;
-    const now = this.clock.now();
-    if (item === undefined || itemAt === undefined || !isItemShown(itemAt, now)) {
-      return { kind: 'rejected', reason: 'no-item' };
-    }
-    const received = item.kind === 'present' ? this.drawGift() : item.kind;
-    const affected = item.kind === 'bomb' ? session : this.effectOf(received, session, now);
-    this.repository.save({ ...affected, item: undefined, itemCollected: true });
-    return {
-      kind: 'collected',
-      item: item.kind,
-      gift: item.kind === 'present' ? received : undefined,
-      view: toGameView(affected.game, { session: affected, now }),
-    };
+  execute(_command: CollectItemCommand): Promise<CollectItemResponse> {
+    return this.work.run<CollectItemResponse>((session) => {
+      if (session === undefined) return { result: { kind: 'rejected', reason: 'no-game' } };
+      if (isSessionOver(session)) return { result: { kind: 'rejected', reason: 'game-over' } };
+      const { item, itemAt } = session;
+      const now = this.clock.now();
+      if (item === undefined || itemAt === undefined || !isItemShown(itemAt, now)) {
+        return { result: { kind: 'rejected', reason: 'no-item' } };
+      }
+      const received = item.kind === 'present' ? this.drawGift() : item.kind;
+      const affected = item.kind === 'bomb' ? session : this.effectOf(received, session, now);
+      return {
+        session: { ...affected, item: undefined, itemCollected: true },
+        result: {
+          kind: 'collected',
+          item: item.kind,
+          gift: item.kind === 'present' ? received : undefined,
+          view: toGameView(affected.game, { session: affected, now }),
+        },
+      };
+    });
   }
 
   private effectOf(kind: GiftKind, session: Session, now: number): Session {
@@ -62,8 +63,10 @@ export class CollectItemImpl implements CollectItem {
         return { ...session, game: restoreLife(session.game) };
       case 'smoke':
         return { ...session, guardian: blindUntil(now + SMOKE_BLIND_MS) };
-      case 'xray':
-        return { ...session, xray: { index: this.random.nextInt(SECRET_LENGTH), until: now + XRAY_SHOWN_MS } };
+      case 'xray': {
+        const index = this.random.nextInt(SECRET_LENGTH);
+        return askPeg({ ...session, xray: { index, until: now + XRAY_SHOWN_MS } }, index, 'xray');
+      }
       case 'hourglass':
         return { ...session, endsAt: session.endsAt + HOURGLASS_BONUS_MS };
       case 'charm':

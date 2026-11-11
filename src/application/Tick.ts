@@ -25,7 +25,8 @@ import {
 import { EMPTY_DRAFT, stealOne } from '../domain/draft';
 import { toGameView } from './GameMapper';
 import { PEEK_COOLDOWN_MS } from '../domain/peek';
-import { Clock, GameRepository, RandomSource, Session } from './ports';
+import { Clock, RandomSource, Session } from './ports';
+import { SessionWork } from './SessionWork';
 import { GameView } from './views';
 
 const MIN_TIME_LEFT_MS = 0;
@@ -43,25 +44,26 @@ export type TickResponse =
   | { readonly kind: 'rejected'; readonly reason: 'no-game' };
 
 export interface Tick {
-  execute(): TickResponse;
+  execute(): Promise<TickResponse>;
 }
 
 export class TickImpl implements Tick {
   constructor(
-    private readonly repository: GameRepository,
+    private readonly work: SessionWork,
     private readonly clock: Clock,
     private readonly random: RandomSource,
     private readonly itemRandom: RandomSource,
   ) {}
 
-  execute(): TickResponse {
-    const session = this.repository.load();
-    if (session === undefined) {
-      return { kind: 'rejected', reason: 'no-game' };
-    }
+  execute(): Promise<TickResponse> {
+    return this.work.run<TickResponse>((session) => (session === undefined ? { result: { kind: 'rejected', reason: 'no-game' } } : this.passTime(session)));
+  }
+
+  private passTime(session: Session): { readonly session: Session; readonly result: TickResponse } {
     const now = this.clock.now();
     const timeLeftMs = Math.max(MIN_TIME_LEFT_MS, session.endsAt - now);
-    const timedGame = timeLeftMs === MIN_TIME_LEFT_MS ? timeUp(session.game) : session.game;
+    // "steal the sauce" ends the match itself (settleSteal): time never takes the life
+    const timedGame = timeLeftMs === MIN_TIME_LEFT_MS && session.steal === undefined ? timeUp(session.game) : session.game;
     const landing = this.landing(session, now);
     const caughtPeeking = this.isCaughtPeeking(session, now);
     const landedGame = this.afterLanding(timedGame, landing);
@@ -83,8 +85,7 @@ export class TickImpl implements Tick {
       attackIsFork: attackState.isFork ?? landing.pendingIsFork,
       draft: landing.forkHits ? stealOne(session.draft ?? EMPTY_DRAFT, (count) => this.random.nextInt(count)) : session.draft,
     };
-    this.repository.save(stored);
-    return {
+    const result: TickResponse = {
       kind: 'ticked',
       view: { ...toGameView(game, { session: stored, now }), pegUp, playerBlind: isInDarkness(session.darkUntil, now) },
       timeLeftMs,
@@ -93,6 +94,7 @@ export class TickImpl implements Tick {
       landed: landing.forkHits ? 'stolen' : this.reported(landing),
       exploded: exploded ? true : undefined,
     };
+    return { session: stored, result };
   }
 
   private isCaughtPeeking(session: Session, now: number): boolean {

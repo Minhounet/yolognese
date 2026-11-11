@@ -1,4 +1,4 @@
-import { GameRepository } from './ports';
+import { SessionWork } from './SessionWork';
 
 export interface HidePegCommand {
   readonly index: number;
@@ -9,18 +9,16 @@ export type HidePegResponse =
   | { readonly kind: 'rejected'; readonly reason: 'no-game' | 'not-up' };
 
 export interface HidePeg {
-  execute(command: HidePegCommand): HidePegResponse;
+  execute(command: HidePegCommand): Promise<HidePegResponse>;
 }
 
 export class HidePegImpl implements HidePeg {
-  constructor(private readonly repository: GameRepository) {}
+  constructor(private readonly work: SessionWork) {}
 
-  execute(command: HidePegCommand): HidePegResponse {
-    const session = this.repository.load();
-    if (session === undefined) {
-      return { kind: 'rejected', reason: 'no-game' };
-    }
-    this.repository.save({ ...session, pegUp: undefined });
-    return { kind: 'hidden', index: command.index };
+  execute(command: HidePegCommand): Promise<HidePegResponse> {
+    return this.work.run<HidePegResponse>((session) => {
+      if (session === undefined) return { result: { kind: 'rejected', reason: 'no-game' } };
+      return { session: { ...session, pegUp: undefined }, result: { kind: 'hidden', index: command.index } };
+    });
   }
 }

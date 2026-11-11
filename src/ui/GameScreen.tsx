@@ -18,6 +18,7 @@ import { FallingMeatball } from './FallingMeatball';
 import { PunchArm } from './PunchArm';
 import { Peg } from './Peg';
 import { SecretPeg } from './SecretPeg';
+import { StealBanner } from './StealBanner';
 import { THEME } from './theme';
 
 type Draft = readonly (Color | undefined)[];
@@ -92,13 +93,65 @@ const STATUS_TEXT: Readonly<Record<GameView['status'], string>> = {
   lost: 'Out of life. The guardian wins.',
 };
 
-export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
-  const [view, setView] = useState<GameView>(() => useCases.startGame.execute());
+/** A match with friends: ask the match server what only it knows, and hear the room's changes to the game. */
+export interface MatchProps {
+  readonly flush: () => Promise<void>;
+  readonly subscribe: (onView: (view: GameView) => void) => () => void;
+}
+
+interface GameScreenProps {
+  readonly useCases: UseCases;
+  /** The view to begin with (a match already started); otherwise a solo game starts. */
+  readonly initialView?: GameView;
+  readonly match?: MatchProps;
+  /** Back to the menu (solo) or to the room (a match). */
+  readonly onBack?: () => void;
+}
+
+const STEAL_NOTICES = {
+  switch: '🔀 Switch! New target',
+  robbed: '😱 Your sauce was stolen! You got a new one',
+  scored: '🍝 You stole the sauce! +1',
+  'knocked-out': '💫 Knocked out! −1 point, life refilled',
+} as const;
+
+function stealStatus(view: GameView): string | undefined {
+  const { steal } = view;
+  if (steal === undefined) return undefined;
+  if (steal.finished) {
+    const [top] = steal.scores;
+    return view.status === 'won' ? `Match over! 🏆 You win with ${top.points}` : `Match over: ${top.name} wins with ${top.points}`;
+  }
+  if (steal.notice !== undefined) return STEAL_NOTICES[steal.notice];
+  if (view.pendingGuess !== undefined) return '⏳ The judge is checking your guess…';
+  return `Steal ${steal.target}'s sauce!`;
+}
+
+/** Starts a solo game when no view is given, then shows the board. */
+export function GameScreen(props: GameScreenProps) {
+  const { useCases, initialView } = props;
+  const [first, setFirst] = useState<GameView | undefined>(initialView);
+
+  useEffect(() => {
+    if (initialView === undefined) void useCases.startGame.execute().then(setFirst);
+  }, [initialView, useCases]);
+
+  if (first === undefined) return <View style={styles.screen} />;
+  return <Board {...props} initialView={first} />;
+}
+
+function Board({ useCases, initialView, match, onBack }: GameScreenProps & { readonly initialView: GameView }) {
+  const [view, setView] = useState<GameView>(initialView);
+  const flush = useCallback(() => void match?.flush(), [match]);
+  useEffect(() => match?.subscribe(setView), [match]);
+  // a peek in a match shows its peg when the server answers: only a peg seen up can be caught up
+  const pegSeen = useRef(false);
   const playing = view.status === 'playing';
   const draft: Draft = view.draft;
-  const editDraft = (command: Parameters<UseCases['editDraft']['execute']>[0]) => {
-    const response = useCases.editDraft.execute(command);
+  const editDraft = async (command: Parameters<UseCases['editDraft']['execute']>[0]) => {
+    const response = await useCases.editDraft.execute(command);
     if (response.kind === 'edited') setView(response.view);
+    flush();
   };
   const [gaze, setGaze] = useState<Point | undefined>(undefined);
   const guardianCentre = useRef<Point>({ x: 0, y: 0 });
@@ -151,9 +204,10 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
       setBeam({ from, to: { x: x + ((pegIndex + 0.5) * width) / SECRET_LENGTH, y: y + height / 2 } }),
     );
 
-  const collect = (shown: Item) => {
-    const response = useCases.collectItem.execute({ id: shown.id });
+  const collect = async (shown: Item) => {
+    const response = await useCases.collectItem.execute({ id: shown.id });
     setItem(undefined);
+    flush();
     if (response.kind !== 'collected') return;
     const received = response.gift ?? (response.item === 'present' ? undefined : response.item);
     if (received === undefined) return;
@@ -183,14 +237,14 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
     showWarning({ lane: punch.lane, landsAt: Date.now() + punch.landsInMs, fallMs: punch.landsInMs, punch: true });
 
   const moveShield = useCallback(
-    (lane: number) => {
-      const response = useCases.moveShield.execute({ lane });
+    async (lane: number) => {
+      const response = await useCases.moveShield.execute({ lane });
       if (response.kind === 'moved') setShieldLane(response.lane);
     },
     [useCases],
   );
 
-  useEffect(() => moveShield(MIDDLE_LANE), [moveShield]);
+  useEffect(() => void moveShield(MIDDLE_LANE), [moveShield]);
 
   useEffect(() => {
     if (attackResult === undefined) return undefined;
@@ -200,8 +254,9 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
 
   useEffect(() => {
     if (!playing) return undefined;
-    const timer = setInterval(() => {
-      const response = useCases.tick.execute();
+    const timer = setInterval(async () => {
+      const response = await useCases.tick.execute();
+      flush();
       if (response.kind !== 'ticked') return;
       setTimeLeftMs(response.timeLeftMs);
       if (response.landed !== undefined) {
@@ -225,15 +280,17 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
       }
       if (response.item !== undefined) lastItemAt.current = itemPoint(response.item, screenSize);
       setItem(response.item);
-      if (pegUpRef.current !== undefined && response.view.pegUp === undefined) {
+      if (response.view.pegUp !== undefined) pegSeen.current = true;
+      if (pegUpRef.current !== undefined && response.view.pegUp === undefined && pegSeen.current) {
         pegUpRef.current = undefined; // the guardian looked back with the peg still up: caught
+        pegSeen.current = false;
         setPeeked(undefined);
         setCaught(true);
       }
       setView(response.view);
     }, TICK_MS);
     return () => clearInterval(timer);
-  }, [playing, useCases]);
+  }, [playing, useCases, flush]);
   const [puffs, setPuffs] = useState<readonly { readonly id: number; readonly at: Point }[]>([]);
   const nextPuff = useRef(0);
 
@@ -261,7 +318,7 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
     slotRefs.current.forEach((slot, index) =>
       slot?.measureInWindow((x, y, width, height) => {
         const inside = at.x >= x && at.x <= x + width && at.y >= y && at.y <= y + height;
-        if (inside) editDraft({ kind: 'place', color, slot: index });
+        if (inside) void editDraft({ kind: 'place', color, slot: index });
       }),
     );
   };
@@ -270,13 +327,16 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
   const pegUpRef = useRef<number | undefined>(undefined);
 
   const flipBack = (index: number) => {
-    useCases.hidePeg.execute({ index });
+    void useCases.hidePeg.execute({ index });
+    setView((current) => ({ ...current, pegUp: undefined })); // hidden now, not at the next tick
     pegUpRef.current = undefined;
+    pegSeen.current = false;
     setPeeked(undefined);
   };
 
-  const peek = (index: number) => {
-    const response = useCases.peekSecret.execute({ index });
+  const peek = async (index: number) => {
+    const response = await useCases.peekSecret.execute({ index });
+    flush();
     if (response.kind === 'revealed' || response.kind === 'caught') {
       setCooldown({ startedAt: Date.now(), cooldownMs: response.cooldownMs });
     }
@@ -284,7 +344,10 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
       throwPunch(response.punch);
     }
     if (response.kind === 'revealed') {
-      setPeeked({ index, color: response.color });
+      if (response.color !== undefined) {
+        setPeeked({ index, color: response.color });
+        pegSeen.current = true;
+      }
       pegUpRef.current = index;
     }
     if (response.kind === 'caught') {
@@ -304,8 +367,9 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
       guardianCentre.current = { x: x + width / 2, y: y + height / 2 };
     });
 
-  const distractTowards = (target: Point) => {
-    const response = useCases.distractGuardian.execute({ target });
+  const distractTowards = async (target: Point) => {
+    const response = await useCases.distractGuardian.execute({ target });
+    flush();
     if (response.kind === 'punched') {
       setView(response.view);
       if (response.punch !== undefined) throwPunch(response.punch);
@@ -328,19 +392,20 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
     const { pageX, pageY } = event.nativeEvent;
     const id = nextPuff.current++;
     setPuffs((current) => [...current, { id, at: { x: pageX, y: pageY } }]);
-    distractTowards({ x: pageX - guardianCentre.current.x, y: pageY - guardianCentre.current.y });
+    void distractTowards({ x: pageX - guardianCentre.current.x, y: pageY - guardianCentre.current.y });
   };
 
   const removePuff = useCallback((id: number) => setPuffs((current) => current.filter((puff) => puff.id !== id)), []);
 
-  const submit = () => {
+  const submit = async () => {
     if (!isComplete(draft)) return;
-    const response = useCases.submitGuess.execute({ guess: draft });
+    const response = await useCases.submitGuess.execute({ guess: draft });
     if (response.kind === 'played') setView(response.view);
+    flush();
   };
 
-  const newGame = () => {
-    const fresh = useCases.startGame.execute();
+  const newGame = async () => {
+    const fresh = await useCases.startGame.execute();
     setView(fresh);
     setCooldown({ startedAt: 0, cooldownMs: 0 });
     setTimeLeftMs(undefined);
@@ -348,29 +413,42 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
     setAttackResult(undefined);
     setItem(undefined);
     pegUpRef.current = undefined; // a peg left up in the last game is not this game's
+    pegSeen.current = false;
     setPeeked(undefined);
     setBlind(false);
     setCharmed(false);
-    moveShield(MIDDLE_LANE);
+    void moveShield(MIDDLE_LANE);
   };
 
   return (
     <Pressable testID="scene" style={styles.screen} onPress={pointAt}>
-      <Text style={styles.title}>Yolognese</Text>
+      <View style={styles.titleLine}>
+        {onBack !== undefined && (
+          <Pressable testID="back" accessibilityRole="button" onPress={onBack} style={styles.back} onTouchStart={touchedControl}>
+            <Text style={styles.backText}>{match ? '‹ Room' : '‹ Menu'}</Text>
+          </Pressable>
+        )}
+        <Text style={styles.title}>Yolognese</Text>
+      </View>
+      {view.steal !== undefined && <StealBanner steal={view.steal} />}
       <View ref={guardianRef} onLayout={measureGuardian}>
         <Guardian gaze={gaze} laughing={caught} />
       </View>
       <View ref={secretRow} style={styles.row} testID="secret" onTouchStart={touchedControl}>
         {(view.secret ?? EMPTY_DRAFT).map((color, slot) => {
           const xrayed = view.revealed.find((peg) => peg.index === slot)?.color;
-          const up = view.secret === undefined && peeked?.index === slot;
-          const shown = up ? peeked.color : (color ?? xrayed);
-          const onPress = up ? () => flipBack(slot) : () => peek(slot);
+          // "steal the sauce": a peeked peg's colour is the server's answer, shown when it comes
+          const serverPeg = view.steal !== undefined && view.pegUp?.index === slot ? view.pegUp.color : undefined;
+          const up = view.secret === undefined && (peeked?.index === slot || serverPeg !== undefined);
+          const shown = up ? (peeked?.index === slot ? peeked.color : serverPeg) : (color ?? xrayed);
+          const onPress = up ? () => flipBack(slot) : () => void peek(slot);
           return <SecretPeg key={slot} testID={`secret-${slot}`} color={shown} onPress={playing ? onPress : undefined} />;
         })}
       </View>
       <Text testID="status" style={[styles.status, caught && styles.caught]}>
-        {caught ? 'Caught peeking! −2 life' : timeLeftMs === 0 && view.status === 'lost' ? "Time's up! The guardian wins." : STATUS_TEXT[view.status]}
+        {caught
+          ? 'Caught peeking! −2 life'
+          : (stealStatus(view) ?? (timeLeftMs === 0 && view.status === 'lost' ? "Time's up! The guardian wins." : STATUS_TEXT[view.status]))}
       </Text>
       <Text testID="timer" accessibilityLabel="time left" style={styles.timer}>
         ⏱️ {timeLeftMs === undefined ? "–:––" : countdown(timeLeftMs)}
@@ -408,7 +486,7 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
           <View style={styles.row}>
             {draft.map((color, slot) => (
               <View key={slot} ref={(element) => { slotRefs.current[slot] = element; }}>
-                <Peg testID={`slot-${slot}`} color={color} onPress={() => editDraft({ kind: 'clear', slot })} />
+                <Peg testID={`slot-${slot}`} color={color} onPress={() => void editDraft({ kind: 'clear', slot })} />
               </View>
             ))}
           </View>
@@ -417,7 +495,7 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
               <DraggableColor
                 key={color}
                 color={color}
-                onTap={() => editDraft({ kind: 'place', color })}
+                onTap={() => void editDraft({ kind: 'place', color })}
                 onDrag={(dragged, at) => setDragging({ color: dragged, at })}
                 onDrop={dropColor}
               />
@@ -427,23 +505,28 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
             testID="submit"
             accessibilityRole="button"
             disabled={!isComplete(draft)}
-            onPress={submit}
+            onPress={() => void submit()}
             style={[styles.button, !isComplete(draft) && styles.disabled]}
           >
             <Text style={styles.buttonText}>Guess</Text>
           </Pressable>
         </View>
       ) : (
-        <Pressable testID="new-game" accessibilityRole="button" onPress={newGame} style={styles.button}>
-          <Text style={styles.buttonText}>New game</Text>
+        <Pressable
+          testID="new-game"
+          accessibilityRole="button"
+          onPress={match && onBack ? onBack : () => void newGame()}
+          style={styles.button}
+        >
+          <Text style={styles.buttonText}>{match ? 'Back to the room' : 'New game'}</Text>
         </Pressable>
       )}
       {playing && item !== undefined && (
-        <ItemSprite item={item} onCollect={() => collect(item)} onTouchStart={touchedControl} />
+        <ItemSprite item={item} onCollect={() => void collect(item)} onTouchStart={touchedControl} />
       )}
       <View style={styles.playerZone} testID="player-zone" onTouchStart={touchedControl}>
         {playing && (
-          <ShieldLanes shieldLane={shieldLane} warningLane={warning?.lane} onMove={moveShield} onMeasured={setGround} />
+          <ShieldLanes shieldLane={shieldLane} warningLane={warning?.lane} onMove={(lane) => void moveShield(lane)} onMeasured={setGround} />
         )}
         <LifeBar life={view.life} maxLife={view.maxLife} />
       </View>
@@ -478,7 +561,10 @@ export function GameScreen({ useCases }: { readonly useCases: UseCases }) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: THEME.background, alignItems: 'center', paddingTop: 36, paddingBottom: 24 },
-  title: { fontSize: 24, fontWeight: 'bold', color: THEME.sauce, marginBottom: 8 },
+  title: { fontSize: 24, fontWeight: 'bold', color: THEME.sauce },
+  titleLine: { alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
+  back: { position: 'absolute', left: 12, paddingVertical: 4, paddingHorizontal: 8 },
+  backText: { color: THEME.sauce, fontSize: 15, fontWeight: 'bold' },
   status: { color: THEME.ink, fontSize: 16, marginVertical: 8 },
   board: { flex: 1, alignSelf: 'stretch', marginHorizontal: 16, backgroundColor: THEME.board, borderRadius: 12 },
   boardContent: { alignItems: 'center', paddingVertical: BOARD_PADDING },
