@@ -16,11 +16,15 @@ and no policy.
 | `yolo_sync(match)` | a player | lets due 45 s switches happen |
 | `yolo_knockout(match)` | a player | −1 point (never below 0) |
 | `yolo_my_sauce(match)` | a player | the caller's own sauce (after being robbed) |
+| `yolo_ink(match)` | a player | ink at the caller's target, one every 10 s (round 14) |
+| `yolo_taunt(match, insult)` | a player | taunts the caller's target (round 15): one every 15 s, nobody in two duels; the taunted player has 5 s |
+| `yolo_retort(taunt, comeback)` | the taunted | settles the duel: the insult's own comeback wins it; draws the penalty, tells the room |
+| `yolo_taunt_result(taunt)` | either side | the verdict (null while it is open; settled once the time is up); a 🔍's peg to the winner only |
 
 Set up a project (done once for this one):
 
-1. Run `migrations/20261111000000_steal_the_sauce.sql` (SQL editor, or the
-   Management API `POST /v1/projects/<ref>/database/query`).
+1. Run the files of `migrations/` in order (SQL editor, or the Management API
+   `POST /v1/projects/<ref>/database/query`).
 2. Authentication → Sign In / Providers → allow anonymous sign-ins.
 3. Put the project URL and publishable key in `src/infrastructure/supabaseConfig.ts`.
 
