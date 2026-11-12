@@ -1,5 +1,6 @@
 import { Code } from '../domain/color';
 import { Attempt, MatchState, RoomEvent, StateCause } from '../domain/steal';
+import { DuelOutcome, INSULT_COUNT, MATCH_PENALTIES } from '../domain/duel';
 
 /**
  * The messages the match server broadcasts to a room (supabase/migrations), in
@@ -15,6 +16,11 @@ export type WireMessage = { readonly v: number; readonly t: string } & Fields;
 export function encode(event: RoomEvent): WireMessage {
   if (event.type === 'state') return { v: WIRE_VERSION, t: 'srv.state', state: event.state, cause: event.cause };
   if (event.type === 'ink') return { v: WIRE_VERSION, t: 'steal.ink', by: event.from, on: event.target };
+  if (event.type === 'taunt') return { v: WIRE_VERSION, t: 'steal.taunt', id: event.id, by: event.from, on: event.target, insult: event.insult };
+  if (event.type === 'duel') {
+    const { id, taunter, target, winner, penalty } = event.outcome;
+    return { v: WIRE_VERSION, t: 'steal.duel', id, by: taunter, on: target, winner, penalty };
+  }
   const attempt = event.attempt === undefined ? {} : { guess: event.attempt.guess, exact: event.attempt.exact, misplaced: event.attempt.misplaced };
   return { v: WIRE_VERSION, t: 'steal.pressure', by: event.from, on: event.target, best: event.bestExact, ...attempt };
 }
@@ -65,9 +71,27 @@ export function decode(message: unknown): RoomEvent | undefined {
     const attempt: Attempt | undefined = isCode(guess) && isCount(exact, 4) && isCount(misplaced, 4) ? { guess, exact, misplaced } : undefined;
     return { type: 'pressure', from: by, target: on, bestExact: best, attempt };
   }
+  if (message.t === 'steal.taunt') {
+    const { id, by, on, insult } = message;
+    return isText(id) && isText(by) && isText(on) && isCount(insult, INSULT_COUNT - 1) ? { type: 'taunt', id, from: by, target: on, insult } : undefined;
+  }
+  if (message.t === 'steal.duel') {
+    const outcome = decodeOutcome({ ...message, taunter: message.by, target: message.on });
+    return outcome === undefined ? undefined : { type: 'duel', outcome };
+  }
   if (message.t === 'steal.ink') {
     const { by, on } = message;
     return isText(by) && isText(on) ? { type: 'ink', from: by, target: on } : undefined;
   }
   return undefined;
+}
+
+/** A duel's verdict (round 15), from the room or a server answer; the peg only in the winner's answer. */
+export function decodeOutcome(value: unknown): DuelOutcome | undefined {
+  if (!isRecord(value)) return undefined;
+  const { id, taunter, target, winner, penalty, peg } = value;
+  if (!isText(id) || !isText(taunter) || !isText(target) || !isText(winner)) return undefined;
+  if (!(MATCH_PENALTIES as readonly unknown[]).includes(penalty) || (winner !== taunter && winner !== target)) return undefined;
+  const shown = isRecord(peg) && isCount(peg.index, 3) && COLOR_NAMES.includes(peg.color) ? { index: peg.index, color: peg.color as Code[number] } : undefined;
+  return { id, taunter, target, winner, penalty: penalty as DuelOutcome['penalty'], ...(shown === undefined ? {} : { peg: shown }) };
 }

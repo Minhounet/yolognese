@@ -2,11 +2,17 @@ import { Code, Color } from '../domain/color';
 import { EMPTY_DRAFT } from '../domain/draft';
 import { MAX_LIFE, isOver, newGame, record } from '../domain/game';
 import { WATCHING } from '../domain/guardian';
+import { fullBar } from '../domain/actionBar';
 import { MatchState, RoomEvent, ServerRequest, StateCause, Steal, StealNotice, ask, sauceKey, targetOf } from '../domain/steal';
 import { Session } from './ports';
+import { hearTaunt, hearVerdict, tauntRefused } from './actions';
 
 /** How long a notice ("Switch!", "Your sauce was stolen!") stays on screen. */
 export const NOTICE_MS = 1500;
+/** Round 15 (AC1): a knock-out must be seen clearly: it stays longer. */
+export const KNOCK_OUT_NOTICE_MS = 2500;
+
+export const noticeMs = (kind: StealNotice) => (kind === 'knocked-out' ? KNOCK_OUT_NOTICE_MS : NOTICE_MS);
 
 /** Round 14: ink left on a screen fades by itself after this long, even if never wiped. */
 export const INK_MAX_MS = 20_000;
@@ -39,7 +45,7 @@ export function newStealSession(me: string, state: MatchState, now: number): Ses
   return {
     game: newGame(),
     guardian: WATCHING,
-    peekReadyAt: 0,
+    peekReadyAt: fullBar(now),
     endsAt: toLocal(state.endsAt, state, now),
     draft: EMPTY_DRAFT,
     steal,
@@ -47,7 +53,7 @@ export function newStealSession(me: string, state: MatchState, now: number): Ses
 }
 
 const notify = (steal: Steal, kind: StealNotice, now: number): Steal => ({ ...steal, notice: { kind, at: now } });
-const fresh = (steal: Steal, now: number) => steal.notice !== undefined && now - steal.notice.at < NOTICE_MS;
+const fresh = (steal: Steal, now: number) => steal.notice !== undefined && now - steal.notice.at < noticeMs(steal.notice.kind);
 
 /** Takes the server's state: scores, rotation, times; the game follows the target, guesses kept per sauce. */
 export function applyState(session: Session, state: MatchState, cause: StateCause, now: number): Session {
@@ -128,6 +134,7 @@ export function serverFailed(session: Session, request: ServerRequest): Session 
   if (steal === undefined) return session;
   if (request.type === 'guess') return { ...session, steal: { ...steal, guessing: undefined } };
   if (request.type === 'sync') return { ...session, steal: { ...steal, syncing: false } };
+  if (request.type === 'taunt') return tauntRefused(session);
   return session;
 }
 
@@ -136,7 +143,10 @@ export function receiveSteal(session: Session, event: RoomEvent, now: number): S
   const { steal } = session;
   if (steal === undefined) return session;
   if (event.type === 'state') return applyState(session, event.state, event.cause, now);
-  if (event.target !== steal.me || steal.finished) return session;
+  if (steal.finished) return session;
+  if (event.type === 'taunt') return hearTaunt(session, event, now);
+  if (event.type === 'duel') return hearVerdict(session, event.outcome, now);
+  if (event.target !== steal.me) return session;
   if (event.type === 'ink') {
     return { ...session, steal: notify({ ...steal, ink: { by: event.from, left: 1, at: now } }, 'inked', now) };
   }

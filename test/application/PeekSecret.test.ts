@@ -111,39 +111,54 @@ describe('PeekSecret', () => {
     expect(response).toMatchObject({ kind: 'played', view: { life: 7 } });
   });
 
-  it('shouldRejectPeek_whenPeekedJustBefore', async () => {
-    const { distractGuardian, peekSecret } = await startedGame();
-    await distractGuardian.execute(AWAY);
-    await peekSecret.execute({ index: 0 });
+  // AC2 (round 15): the bar holds three charges; a revealed peek costs one (it used to empty the bar)
+  async function peekThreeTimes() {
+    const game = await startedGame();
+    await game.distractGuardian.execute(AWAY);
+    for (const index of [0, 1, 2]) {
+      await game.peekSecret.execute({ index });
+      await game.hidePeg.execute({ index });
+    }
+    return game;
+  }
 
-    const response = await peekSecret.execute({ index: 1 });
-
-    expect(response).toMatchObject({ kind: 'rejected', reason: 'cooling-down' });
-  });
-
-  it('shouldRejectPeek_justBeforeCooldownEnds', async () => {
-    const { clock, distractGuardian, peekSecret } = await startedGame();
-    await distractGuardian.execute(AWAY);
-    await peekSecret.execute({ index: 0 });
-    clock.advance(4999);
-    await distractGuardian.execute(AWAY);
-
-    const response = await peekSecret.execute({ index: 1 });
-
-    expect(response).toMatchObject({ kind: 'rejected', reason: 'cooling-down' });
-  });
-
-  it('shouldAllowPeek_whenCooldownHasPassed', async () => {
-    const { clock, distractGuardian, hidePeg, peekSecret } = await startedGame();
+  it('shouldRevealASecondPeg_whenAChargeIsLeftAfterAPeek', async () => {
+    const { distractGuardian, hidePeg, peekSecret } = await startedGame();
     await distractGuardian.execute(AWAY);
     await peekSecret.execute({ index: 0 });
     await hidePeg.execute({ index: 0 });
-    clock.advance(5000);
-    await distractGuardian.execute(AWAY);
 
     const response = await peekSecret.execute({ index: 1 });
 
     expect(response).toMatchObject({ kind: 'revealed', index: 1, color: 'yellow' });
+  });
+
+  it('shouldRejectPeek_whenThreePeeksSpentTheBar', async () => {
+    const { peekSecret } = await peekThreeTimes();
+
+    const response = await peekSecret.execute({ index: 3 });
+
+    expect(response).toMatchObject({ kind: 'rejected', reason: 'cooling-down' });
+  });
+
+  it('shouldRejectPeek_justBeforeAChargeRefills', async () => {
+    const { clock, distractGuardian, peekSecret } = await peekThreeTimes();
+    clock.advance(4999);
+    await distractGuardian.execute(AWAY);
+
+    const response = await peekSecret.execute({ index: 3 });
+
+    expect(response).toMatchObject({ kind: 'rejected', reason: 'cooling-down' });
+  });
+
+  it('shouldAllowPeek_whenAChargeHasRefilled', async () => {
+    const { clock, distractGuardian, peekSecret } = await peekThreeTimes();
+    clock.advance(5000);
+    await distractGuardian.execute(AWAY);
+
+    const response = await peekSecret.execute({ index: 3 });
+
+    expect(response).toMatchObject({ kind: 'revealed', index: 3, color: 'blue' });
   });
 
   it('shouldRejectPeek_whenCaughtJustBefore', async () => {

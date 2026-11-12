@@ -8,7 +8,8 @@ import {
   scheduleAttackAt,
   windUp,
 } from '../domain/attack';
-import { Game, explode, penalise, punch, timeUp } from '../domain/game';
+import { Game, explode, isOver, penalise, punch, timeUp } from '../domain/game';
+import { guardianTaunts, scheduleGuardianTaunt } from './actions';
 import { isDistracted } from '../domain/guardian';
 import {
   ITEM_DELAY_SPREAD_MS,
@@ -25,7 +26,7 @@ import {
 } from '../domain/items';
 import { EMPTY_DRAFT, stealOne } from '../domain/draft';
 import { toGameView } from './GameMapper';
-import { PEEK_COOLDOWN_MS } from '../domain/peek';
+import { emptied } from '../domain/actionBar';
 import { Clock, RandomSource, Session } from './ports';
 import { SessionWork } from './SessionWork';
 import { GameView } from './views';
@@ -54,6 +55,8 @@ export class TickImpl implements Tick {
     private readonly clock: Clock,
     private readonly random: RandomSource,
     private readonly itemRandom: RandomSource,
+    /** Round 15 (AC6): the guardian's taunts in solo; none without it (the older tests' sequences stay as they were). */
+    private readonly duelRandom?: RandomSource,
   ) {}
 
   execute(): Promise<TickResponse> {
@@ -75,12 +78,12 @@ export class TickImpl implements Tick {
     const attackState = this.windUpIfDue(session, now, landing.pendingLandsAt);
     const itemState = this.itemOnShow(session, now);
     const stored: Session = {
-      ...session,
+      ...this.guardianTaunt(session, now),
       ...attackState.stored,
       ...itemState,
       game,
       pegUp,
-      peekReadyAt: caughtPeeking ? now + PEEK_COOLDOWN_MS : session.peekReadyAt,
+      peekReadyAt: caughtPeeking ? emptied(now) : session.peekReadyAt,
       charmed: landing.charmed,
       attackIsPunch: landing.pendingIsPunch,
       attackIsFork: attackState.isFork ?? landing.pendingIsFork,
@@ -96,6 +99,16 @@ export class TickImpl implements Tick {
       exploded: exploded ? true : undefined,
     };
     return { session: stored, result };
+  }
+
+  /** AC6: in solo the guardian taunts every 40 to 70 s, when the table is free. */
+  private guardianTaunt(session: Session, now: number): Session {
+    const random = this.duelRandom;
+    if (random === undefined || session.steal !== undefined || isOver(session.game)) return session;
+    const draw = (count: number) => random.nextInt(count);
+    if (session.guardianTauntAt === undefined) return { ...session, guardianTauntAt: scheduleGuardianTaunt(now, draw) };
+    if (now < session.guardianTauntAt || session.duel !== undefined || session.shell !== undefined) return session;
+    return { ...guardianTaunts(session, now, draw), guardianTauntAt: scheduleGuardianTaunt(now, draw) };
   }
 
   private isCaughtPeeking(session: Session, now: number): boolean {

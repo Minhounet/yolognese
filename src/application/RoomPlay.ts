@@ -46,6 +46,8 @@ export interface Dependencies {
   readonly scheduler: Scheduler;
   /** A new network identity for a test bot. */
   readonly botConnection: () => BotConnection;
+  /** Round 15: whether test bots taunt (on unless the browser checks turn it off). */
+  readonly botsTaunt?: boolean;
 }
 
 /**
@@ -125,7 +127,7 @@ export class RoomPlay {
   /** The host adds a test bot to the room; it plays the next matches like any player. */
   async addBot(): Promise<void> {
     if (!this.view().canAddBot) return;
-    const bot = new SauceBot(this.deps.botConnection(), this.deps.random, this.deps.scheduler);
+    const bot = new SauceBot(this.deps.botConnection(), this.deps.random, this.deps.scheduler, undefined, this.deps.botsTaunt ?? true);
     this.bots.push(bot);
     await bot.join(this.code, `🤖 Bot ${this.bots.length}`);
   }

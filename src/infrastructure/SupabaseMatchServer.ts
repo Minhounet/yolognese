@@ -2,7 +2,8 @@ import { GuessAnswer, MatchServer } from '../application/ports';
 import { COLORS, Code, Color } from '../domain/color';
 import { MatchState } from '../domain/steal';
 import { SupabaseBackend } from './SupabaseBackend';
-import { decodeState } from './roomWire';
+import { decodeOutcome, decodeState } from './roomWire';
+import { DuelOutcome } from '../domain/duel';
 
 /** The match server as Postgres functions (supabase/migrations), called over RPC as the signed-in player. */
 export class SupabaseMatchServer implements MatchServer {
@@ -55,6 +56,30 @@ export class SupabaseMatchServer implements MatchServer {
     } catch {
       return false; // asked too fast, or the match is over
     }
+  }
+
+  async taunt(matchId: string, insult: number): Promise<string | undefined> {
+    try {
+      const id = await this.call('yolo_taunt', { p_match: matchId, p_insult: insult });
+      return typeof id === 'string' ? id : undefined;
+    } catch {
+      return undefined; // too fast, a duel open, or the match is over
+    }
+  }
+
+  async retort(tauntId: string, comeback: number): Promise<DuelOutcome> {
+    return this.outcome(await this.call('yolo_retort', { p_taunt: tauntId, p_comeback: comeback }));
+  }
+
+  async tauntResult(tauntId: string): Promise<DuelOutcome | undefined> {
+    const answer = await this.call('yolo_taunt_result', { p_taunt: tauntId });
+    return answer === null ? undefined : this.outcome(answer);
+  }
+
+  private outcome(raw: unknown): DuelOutcome {
+    const outcome = decodeOutcome(raw);
+    if (outcome === undefined) throw new Error('bad duel verdict');
+    return outcome;
   }
 
   private async call(fn: string, args: Record<string, unknown>): Promise<unknown> {

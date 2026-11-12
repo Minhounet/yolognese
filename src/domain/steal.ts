@@ -1,5 +1,6 @@
 import { Code } from './color';
 import { Turn } from './game';
+import { DuelOutcome } from './duel';
 
 /**
  * "Steal the sauce": every player hides a sauce and cracks another player's.
@@ -46,7 +47,11 @@ export type RoomEvent =
   | { readonly type: 'state'; readonly state: MatchState; readonly cause: StateCause }
   | { readonly type: 'pressure'; readonly from: string; readonly target: string; readonly bestExact: number; readonly attempt?: Attempt }
   /** Round 14: `from` threw ink at `target`. */
-  | { readonly type: 'ink'; readonly from: string; readonly target: string };
+  | { readonly type: 'ink'; readonly from: string; readonly target: string }
+  /** Round 15: `from` taunted `target` with an insult (its number). */
+  | { readonly type: 'taunt'; readonly id: string; readonly from: string; readonly target: string; readonly insult: number }
+  /** Round 15: the server settled a duel. */
+  | { readonly type: 'duel'; readonly outcome: DuelOutcome };
 
 /** What the phone must ask the server. */
 export type ServerRequest =
@@ -56,7 +61,11 @@ export type ServerRequest =
   | { readonly type: 'knockout' }
   | { readonly type: 'my-sauce' }
   /** Round 14: throw ink at the player whose sauce this player is after. */
-  | { readonly type: 'ink' };
+  | { readonly type: 'ink' }
+  /** Round 15: the duel requests. */
+  | { readonly type: 'taunt'; readonly insult: number }
+  | { readonly type: 'retort'; readonly id: string; readonly comeback: number }
+  | { readonly type: 'taunt-result'; readonly id: string };
 
 export type StealNotice = 'switch' | 'robbed' | 'scored' | 'knocked-out' | 'inked' | 'ink-thrown';
 

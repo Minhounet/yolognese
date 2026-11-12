@@ -1,5 +1,7 @@
 import { Point } from '../domain/point';
 import { Code, Color } from '../domain/color';
+import { Penalty } from '../domain/duel';
+import { Swap } from '../domain/shellGame';
 
 export interface TurnView {
   readonly guess: Code;
@@ -54,6 +56,47 @@ export interface GameView {
   readonly steal?: StealView;
   /** "Steal the sauce": a guess the server has not scored yet. */
   readonly pendingGuess?: Code;
+  /** Round 15 (AC2): the action bar: charges as a fraction (0 to 3), and the time until it is full. */
+  readonly bar?: BarView;
+  /** Round 15 (AC3): the shell game on the table. */
+  readonly shell?: ShellView;
+  /** Round 15 (AC4): the duel this player is in, and the last verdict while it is fresh (AC5). */
+  readonly duel?: DuelView;
+  readonly duelResult?: DuelResultView;
+  /** Round 15 (AC5): the palette lies; the screen is upside down. */
+  readonly scrambled?: boolean;
+  readonly flipped?: boolean;
+}
+
+export interface BarView {
+  readonly charges: number;
+  readonly fullInMs: number;
+  /** What each action costs, and whether it can be paid now. */
+  readonly canShell: boolean;
+  readonly canTaunt: boolean;
+}
+
+export interface ShellView {
+  /** The 🍝's place before the swaps, and the swaps: the screen moves the cups itself. */
+  readonly start: number;
+  readonly swaps: readonly Swap[];
+  /** Since it was opened. */
+  readonly elapsedMs: number;
+  readonly canPick: boolean;
+  /** Once over: the place tapped (if any), the 🍝's place, and whether it was found. */
+  readonly over?: { readonly picked?: number; readonly sauceAt: number; readonly found: boolean };
+}
+
+export type DuelView =
+  | { readonly phase: 'choosing'; readonly offered: readonly number[] }
+  | { readonly phase: 'waiting'; readonly insult: number; readonly opponent: string }
+  | { readonly phase: 'answering'; readonly insult: number; readonly from: string; readonly choices: readonly number[]; readonly leftMs: number; readonly answered?: number };
+
+export interface DuelResultView {
+  readonly won: boolean;
+  readonly penalty: Penalty;
+  /** The opponent's name ("the guardian" in solo). */
+  readonly opponent: string;
 }
 
 export interface GuardianView {

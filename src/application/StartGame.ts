@@ -1,12 +1,12 @@
 import { COLORS, Code } from '../domain/color';
 import { newGame } from '../domain/game';
 import { WATCHING } from '../domain/guardian';
+import { fullBar } from '../domain/actionBar';
 import { toGameView } from './GameMapper';
 import { Clock, RandomSource } from './ports';
 import { SessionWork } from './SessionWork';
 import { GameView } from './views';
 
-const PEEK_READY_AT_START = 0;
 const GAME_DURATION_MS = 180_000;
 
 export function drawSecret(random: RandomSource): Code {
@@ -28,8 +28,8 @@ export class StartGameImpl implements StartGame {
   execute(): Promise<GameView> {
     return this.work.run(() => {
       const game = newGame(this.drawSecret());
-      const session = { game, guardian: WATCHING, peekReadyAt: PEEK_READY_AT_START, endsAt: this.clock.now() + GAME_DURATION_MS };
-      return { session, result: toGameView(game) };
+      const session = { game, guardian: WATCHING, peekReadyAt: fullBar(this.clock.now()), endsAt: this.clock.now() + GAME_DURATION_MS };
+      return { session, result: toGameView(game, { session, now: this.clock.now() }) };
     });
   }
 
