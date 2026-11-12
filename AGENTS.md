@@ -10,9 +10,9 @@ Expo ships breaking changes every SDK release. APIs you remember are likely rena
 
 ## Resuming work (a new session)
 
-Start from `main` (`git fetch origin main`, work on a branch reset onto `origin/main`), then read the
+Start from `main` (`git fetch origin main`, work on `main` itself, whatever branch the session opened on), then read the
 **Resume** block at the top of `docs/decisions/peek-a-code.md`: what is done, what is next, how to run the
-checks and the user's preferences (merge every change into `main` through a pull request, publish the
+checks and the user's preferences (squash the session's commits into one and push it to `main`, publish the
 `main` channel, end every report with the Expo link below). The user resumes with "resume peek-a-code".
 
 ## Report the Expo link
