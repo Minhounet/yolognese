@@ -411,3 +411,9 @@
 - Why: on the web build life stays at 0 and the bar refills; on the phone the button replaces Guess under the finger, and the JS thread is busy with the game tick
 - Decided: kenji-reviewer blocking (OBJECTION): the change was not recorded in the ticket → AC35 written, AC11 evidence and retro updated; minor fixed: checks tagged [AC35]/[AC11]; minor open: the cooldown check polls the real clock (native-driver animation does not follow page.clock), the match path's guard has no check
 - Asked user: no (yolo)
+
+## Round 15 - the action bar, the shell game, the taunt duel, a clear K.O. (user)
+- Decided (user, at the gate): charges (peek 1, shell game 2, taunt 3); insult duel (matches: the player whose sauce you are after; solo: the guardian, who taunts too; bots answer, often wrong); penalties: show a peg, give life, scrambled palette, upside-down screen, one drawn at random; a personal access token for the server function, asked through the secure form when the migration is ready
+- Decided: ticket PEEK-3 (AC1-AC7), design in its conception.md; numbers by the orchestrator (5 s a charge, K.O. 2.5 s, shell 5 swaps, duel 5 s, scramble 10 s, flip 8 s, guardian taunt every 40-70 s, bots answer right 2 in 5)
+- Decided: process as round 14 (new rules with their tests and rules broken on purpose, browser checks per AC, one review at the end), one commit at the end squashed onto main; work in progress pushed to the session branch so a restart loses nothing
+- Asked user: yes (the four gates); the numbers no (yolo)
