@@ -7,12 +7,15 @@ import { Point } from '../domain/point';
 import { Feedback, FeedbackLegend } from './Feedback';
 import { Guardian } from './Guardian';
 import { LifeBar } from './LifeBar';
-import { CooldownBar } from './CooldownBar';
+import { ActionBar } from './ActionBar';
+import { ShellGameTable } from './ShellGameTable';
+import { DuelPanel, verdictLine } from './DuelPanel';
 import { ShieldLanes } from './ShieldLanes';
 import { DraggableColor } from './DraggableColor';
 import { ITEM_ICONS, ItemSprite, itemPoint } from './ItemSprite';
 import { DarknessVeil, Explosion, SmokeGrenade, XrayBeam } from './Effects';
 import { GiftKind, Item, ItemKind } from '../domain/items';
+import { DIZZY_MS } from '../domain/duel';
 import { DustPuff } from './DustPuff';
 import { FallingMeatball } from './FallingMeatball';
 import { PunchArm } from './PunchArm';
@@ -164,7 +167,6 @@ function Board({ useCases, initialView, match, onBack }: GameScreenProps & { rea
   const remainingMs = useRef(0);
   const [peeked, setPeeked] = useState<{ readonly index: number; readonly color: Color } | undefined>();
   const [caught, setCaught] = useState(false);
-  const [cooldown, setCooldown] = useState({ startedAt: 0, cooldownMs: 0 });
   const [newGameArmed, setNewGameArmed] = useState(false);
   const [timeLeftMs, setTimeLeftMs] = useState<number | undefined>(undefined);
   const [shieldLane, setShieldLane] = useState(MIDDLE_LANE);
@@ -356,9 +358,7 @@ function Board({ useCases, initialView, match, onBack }: GameScreenProps & { rea
   const peek = async (index: number) => {
     const response = await useCases.peekSecret.execute({ index });
     flush();
-    if (response.kind === 'revealed' || response.kind === 'caught') {
-      setCooldown({ startedAt: Date.now(), cooldownMs: response.cooldownMs });
-    }
+    if (response.kind === 'revealed' && response.view !== undefined) setView(response.view);
     if (response.kind === 'rejected' && response.reason === 'cooling-down' && response.punch !== undefined) {
       throwPunch(response.punch);
     }
@@ -436,7 +436,6 @@ function Board({ useCases, initialView, match, onBack }: GameScreenProps & { rea
   const newGame = async () => {
     const fresh = await useCases.startGame.execute();
     setView(fresh);
-    setCooldown({ startedAt: 0, cooldownMs: 0 });
     setTimeLeftMs(undefined);
     showWarning(undefined);
     setAttackResult(undefined);
@@ -449,8 +448,30 @@ function Board({ useCases, initialView, match, onBack }: GameScreenProps & { rea
     void moveShield(MIDDLE_LANE);
   };
 
+  // round 15: the action bar's actions (AC2-AC4)
+  const act = async (done: Promise<{ readonly kind: string; readonly view?: GameView }>) => {
+    touchedControl();
+    const response = await done;
+    if (response.view !== undefined) setView(response.view);
+    flush();
+  };
+  const openShell = () => void act(useCases.playShellGame.execute({ kind: 'open' }));
+  const pickCup = (place: number) => void act(useCases.playShellGame.execute({ kind: 'pick', place }));
+  const openTaunt = () => void act(useCases.taunt.execute({ kind: 'open' }));
+  const sayInsult = (insult: number) => void act(useCases.taunt.execute({ kind: 'say', insult }));
+  const answerTaunt = (comeback: number) => void act(useCases.taunt.execute({ kind: 'answer', comeback }));
+  const knockedOut = view.steal?.knockedOut === true;
+
+  // AC5: a guardian that lost a duel is dizzy for 4 s: its eyes roll away as for a distraction
+  const dizzy = view.duelResult?.won === true && view.duelResult.penalty === 'dizzy';
+  useEffect(() => {
+    if (!dizzy) return;
+    remainingMs.current = DIZZY_MS;
+    setGaze({ x: -60, y: -60 });
+  }, [dizzy]);
+
   return (
-    <Pressable testID="scene" style={styles.screen} onPress={pointAt}>
+    <Pressable testID="scene" style={[styles.screen, view.flipped && styles.upsideDown]} onPress={pointAt}>
       <View style={styles.titleLine}>
         {onBack !== undefined && (
           <Pressable testID="back" accessibilityRole="button" onPress={onBack} style={styles.back} onTouchStart={touchedControl}>
@@ -482,7 +503,9 @@ function Board({ useCases, initialView, match, onBack }: GameScreenProps & { rea
       <Text testID="timer" accessibilityLabel="time left" style={styles.timer}>
         ⏱️ {timeLeftMs === undefined ? "–:––" : countdown(timeLeftMs)}
       </Text>
-      {playing && <CooldownBar startedAt={cooldown.startedAt} cooldownMs={cooldown.cooldownMs} />}
+      {playing && view.bar !== undefined && (
+        <ActionBar bar={view.bar} busy={view.shell !== undefined || view.duel !== undefined} onShell={openShell} onTaunt={openTaunt} onTouchStart={touchedControl} />
+      )}
       <FeedbackLegend />
       {playing && (
         <>
@@ -525,6 +548,11 @@ function Board({ useCases, initialView, match, onBack }: GameScreenProps & { rea
               </View>
             ))}
           </View>
+          {view.scrambled && (
+            <Text testID="scrambled" style={styles.scrambled}>
+              🌀 Your colours lie!
+            </Text>
+          )}
           <View style={styles.row}>
             {COLORS.map((color) => (
               <DraggableColor
@@ -586,6 +614,24 @@ function Board({ useCases, initialView, match, onBack }: GameScreenProps & { rea
       {playing && view.steal?.ink !== undefined && inkHeight > 0 && (
         <InkOverlay left={view.steal.ink.left} by={view.steal.ink.by} height={inkHeight} onWipe={wipe} />
       )}
+      {playing && view.shell !== undefined && <ShellGameTable shell={view.shell} onPick={pickCup} onTouchStart={touchedControl} />}
+      {playing && view.duel !== undefined && (
+        <DuelPanel duel={view.duel} opponent={view.steal?.target ?? 'the guardian'} onSay={sayInsult} onAnswer={answerTaunt} onTouchStart={touchedControl} />
+      )}
+      {view.duelResult !== undefined && (
+        <View pointerEvents="none" style={[styles.banner, view.duelResult.won ? styles.won : styles.lost]}>
+          <Text testID="duel-result" style={styles.bannerText}>
+            {verdictLine(view.duelResult)}
+          </Text>
+        </View>
+      )}
+      {knockedOut && (
+        <View testID="knock-out" pointerEvents="none" style={styles.knockOut}>
+          <Text style={styles.knockOutTitle}>💫 K.O.!</Text>
+          <Text style={styles.knockOutText}>−1 point · life refilled</Text>
+        </View>
+      )}
+      {view.flipped && <View testID="upside-down" accessibilityLabel="screen upside down" pointerEvents="none" style={styles.marker} />}
       {dragging !== undefined && (
         <View pointerEvents="none" testID="dragged-color" style={[styles.dragged, { left: dragging.at.x - DRAGGED_HALF, top: dragging.at.y - DRAGGED_HALF }]}>
           <Peg color={dragging.color} size={DRAGGED_HALF * 2} />
@@ -620,4 +666,14 @@ const styles = StyleSheet.create({
   attackResult: { color: THEME.sauce, fontWeight: 'bold', minHeight: 20 },
   timer: { color: THEME.ink, fontSize: 16, fontWeight: 'bold', fontVariant: ['tabular-nums'] },
   buttonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
+  upsideDown: { transform: [{ rotate: '180deg' }] },
+  scrambled: { color: THEME.sauce, fontWeight: 'bold' },
+  banner: { position: 'absolute', left: 12, right: 12, top: 70, padding: 12, borderRadius: 14, alignItems: 'center' },
+  won: { backgroundColor: '#2e7d32' },
+  lost: { backgroundColor: THEME.sauce },
+  bannerText: { color: '#fff', fontSize: 17, fontWeight: 'bold', textAlign: 'center' },
+  knockOut: { position: 'absolute', left: 24, right: 24, top: 90, paddingVertical: 24, borderRadius: 20, backgroundColor: 'rgba(178, 58, 34, 0.94)', alignItems: 'center', borderWidth: 4, borderColor: '#fdd835' },
+  knockOutTitle: { color: '#fdd835', fontSize: 64, fontWeight: '900', letterSpacing: 4 },
+  knockOutText: { color: '#fff', fontSize: 18, fontWeight: 'bold', marginTop: 4 },
+  marker: { position: 'absolute', width: 1, height: 1, opacity: 0 },
 });

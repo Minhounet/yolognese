@@ -13,7 +13,15 @@ const test = base.test.extend({
   // The app opens on a menu (solo, or steal the sauce with friends): the checks start a solo game,
   // unless a check sets `test.use({ menu: 'stay' })`.
   menu: ['solo', { option: true }],
-  page: async ({ page, luck, itemDraw, throws, menu }, use) => {
+  // Round 15: the guardian's taunts (solo, every 40-70 s) and the bots' taunts would cut into the
+  // other rounds' long checks: off unless a check sets `test.use({ guardianTaunts: true })` or
+  // `botsTaunt: true`. The shell game's and the duels' draws can be fixed (`shellDraw`, `duelDraw`:
+  // a number, or a list drawn in turn).
+  guardianTaunts: [false, { option: true }],
+  botsTaunt: [false, { option: true }],
+  shellDraw: [null, { option: true }],
+  duelDraw: [null, { option: true }],
+  page: async ({ page, luck, itemDraw, throws, menu, guardianTaunts, botsTaunt, shellDraw, duelDraw }, use) => {
     if (menu === 'solo') {
       const open = page.goto.bind(page);
       page.goto = async (...args) => {
@@ -24,12 +32,16 @@ const test = base.test.extend({
       };
     }
     await page.addInitScript(
-      ([fixedLuck, fixedItemDraw, fixedThrows]) => {
+      ([fixedLuck, fixedItemDraw, fixedThrows, taunts, botTaunts, fixedShell, fixedDuel]) => {
         globalThis.yologneseLuck = fixedLuck;
         if (typeof fixedItemDraw === 'number') globalThis.yologneseItemDraw = fixedItemDraw;
         globalThis.yologneseThrows = fixedThrows;
+        globalThis.yologneseGuardianTaunts = taunts;
+        globalThis.yologneseBotsTaunt = botTaunts;
+        if (fixedShell !== null) globalThis.yologneseShellDraw = fixedShell;
+        if (fixedDuel !== null) globalThis.yologneseDuelDraw = fixedDuel;
       },
-      [luck, itemDraw, throws],
+      [luck, itemDraw, throws, guardianTaunts, botsTaunt, shellDraw, duelDraw],
     );
     await use(page);
   },

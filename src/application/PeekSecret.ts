@@ -24,6 +24,8 @@ export type PeekResponse =
       /** Undefined when the server holds the secret: the peg comes up a moment later, in the view's pegUp. */
       readonly color?: Color;
       readonly cooldownMs: number;
+      /** Round 15: the view after the peek (the action bar spent a charge). */
+      readonly view?: GameView;
     }
   | { readonly kind: 'caught'; readonly view: GameView; readonly cooldownMs: number }
   | { readonly kind: 'rejected'; readonly reason: 'no-game' | 'game-over' | 'peg-up' }
@@ -54,18 +56,18 @@ export class PeekSecretImpl implements PeekSecret {
       if (!isDistracted(session.guardian, now)) {
         const game = penalise(session.game);
         const caught = { ...session, game, peekReadyAt: emptied(now) };
-        return { session: caught, result: { kind: 'caught', view: toGameView(game, { session, now }), cooldownMs: PEEK_COOLDOWN_MS } };
+        return { session: caught, result: { kind: 'caught', view: toGameView(game, { session: caught, now }), cooldownMs: PEEK_COOLDOWN_MS } };
       }
       // AC2 (round 15): a peek costs one charge of the action bar, none while the guardian is blinded
       const cooldownMs = isBlind(session.guardian, now) ? NO_COOLDOWN_MS : PEEK_COOLDOWN_MS;
       const peekReadyAt = cooldownMs === NO_COOLDOWN_MS ? session.peekReadyAt : spend(session.peekReadyAt, now, ACTION_COSTS.peek);
       if (session.game.secret === undefined) {
         const asked = askPeg({ ...session, peekReadyAt }, command.index, 'peek');
-        return { session: asked, result: { kind: 'revealed', index: command.index, cooldownMs } };
+        return { session: asked, result: { kind: 'revealed', index: command.index, cooldownMs, view: toGameView(asked.game, { session: asked, now }) } };
       }
       const color = session.game.secret[command.index];
       const peeked = { ...session, peekReadyAt, pegUp: { index: command.index, color } };
-      return { session: peeked, result: { kind: 'revealed', index: command.index, color, cooldownMs } };
+      return { session: peeked, result: { kind: 'revealed', index: command.index, color, cooldownMs, view: toGameView(peeked.game, { session: peeked, now }) } };
     });
   }
 }

@@ -13,7 +13,7 @@ import {
   takeRequests,
 } from './stealMatch';
 import { GameView } from './views';
-import { hearVerdict, tauntRefused, tauntSent } from './actions';
+import { hearVerdict, tauntRefused, tauntSent, verdictPending } from './actions';
 
 /** Starts this player's "steal the sauce" match from the server's first state. */
 export class StartSteal {
@@ -113,7 +113,7 @@ export class FlushMatch {
         }
         case 'taunt-result': {
           const outcome = await this.server.tauntResult(request.id);
-          if (outcome !== undefined) await this.apply((session, now) => hearVerdict(session, outcome, now));
+          await this.apply((session, now) => (outcome === undefined ? verdictPending(session, request.id, now) : hearVerdict(session, outcome, now)));
           return;
         }
         case 'my-sauce': {

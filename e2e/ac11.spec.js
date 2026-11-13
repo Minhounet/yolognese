@@ -7,7 +7,7 @@ async function tapAt(page, locator) {
   await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
 }
 
-test('AC11: after a peek the cooldown bar refills for 5 s, and a peek meanwhile is refused (its punch parried, nothing lost)', async ({ page }) => {
+test('AC11: caught, the action bar is emptied and its first charge takes 5 s; a peek meanwhile is refused (its punch parried, nothing lost)', async ({ page }) => {
   await page.clock.install();
   await page.goto('/');
   const cooldown = page.getByTestId('cooldown');
@@ -17,10 +17,11 @@ test('AC11: after a peek the cooldown bar refills for 5 s, and a peek meanwhile 
   await tapAt(page, page.getByTestId('secret-0')); // watched: caught, −2
   await expect(life).toHaveAttribute('aria-label', 'Life 8 of 10');
   await expect(cooldown).toHaveAttribute('aria-label', 'Peek cooling down');
+  await expect(cooldown).toHaveAttribute('aria-valuetext', '0 of 3 charges'); // round 15: the action bar (PEEK-3 AC2)
 
   await page.clock.runFor(2000);
   await tapAt(page, page.getByTestId('secret-1')); // still cooling: refused, and a punch comes (AC19)
-  await expect(cooldown).toHaveAttribute('aria-valuenow', /^[3-5]\d$/); // refilling, about 40 %
+  await expect(cooldown).toHaveAttribute('aria-valuenow', /^1\d$/); // refilling: 40 % of the first of three charges
   const fist = page.getByTestId('meatball');
   const lane = (await fist.getAttribute('aria-label')).slice(-1);
   await tapAt(page, page.getByTestId(`lane-${lane}`)); // parried: the refused peek itself costs nothing
@@ -34,7 +35,7 @@ test('AC11: after a peek the cooldown bar refills for 5 s, and a peek meanwhile 
   await expect(life).toHaveAttribute('aria-label', 'Life 6 of 10');
 });
 
-test('AC11: a revealed peek starts the cooldown too', async ({ page }) => {
+test('AC11 (round 15): a revealed peek costs one of the three charges', async ({ page }) => {
   await page.clock.install();
   await page.goto('/');
   const box = await page.getByTestId('guardian').boundingBox();
@@ -43,6 +44,7 @@ test('AC11: a revealed peek starts the cooldown too', async ({ page }) => {
 
   await tapAt(page, page.getByTestId('secret-2'));
   await expect(page.getByTestId('secret-2')).not.toHaveAttribute('aria-label', 'hidden peg');
-  await expect(page.getByTestId('cooldown')).toHaveAttribute('aria-label', 'Peek cooling down');
+  await expect(page.getByTestId('cooldown')).toHaveAttribute('aria-valuetext', '2 of 3 charges');
+  await expect(page.getByTestId('cooldown')).toHaveAttribute('aria-label', 'Peek ready');
   await expect(page.getByTestId('life')).toHaveAttribute('aria-label', 'Life 10 of 10');
 });

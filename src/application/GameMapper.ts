@@ -2,7 +2,7 @@ import { Game, MAX_LIFE, isLost, isOver, isWon } from '../domain/game';
 import { EMPTY_DRAFT } from '../domain/draft';
 import { Steal, attackerOf, isTop, ranking, targetOf } from '../domain/steal';
 import { Duel, Session } from './ports';
-import { noticeMs } from './stealMatch';
+import { KNOCK_OUT_NOTICE_MS, noticeMs } from './stealMatch';
 import { BarView, DuelView, GameStatus, GameView, ShellView, StealView } from './views';
 import { ACTION_COSTS, canAfford, chargesAt, fullInMs } from '../domain/actionBar';
 import { canPick, isFound, sauceAt } from '../domain/shellGame';
@@ -41,6 +41,7 @@ function toStealView(steal: Steal, now: number | undefined): StealView {
     notice: noticed ? steal.notice?.kind : undefined,
     attempts: steal.attempts.map(({ by, guess, exact, misplaced }) => ({ by: nameOf(steal, by), guess, exact, misplaced })),
     ink: steal.ink === undefined ? undefined : { by: nameOf(steal, steal.ink.by), left: steal.ink.left },
+    knockedOut: steal.knockedOutAt !== undefined && now !== undefined && now - steal.knockedOutAt < KNOCK_OUT_NOTICE_MS ? true : undefined,
   };
 }
 

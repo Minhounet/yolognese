@@ -310,7 +310,8 @@ describe('Steal the sauce: peeking', () => {
 
     const response = await bob.peek(2);
 
-    expect(response).toEqual({ kind: 'revealed', index: 2, cooldownMs: 5000 }); // no colour yet: the server holds it
+    expect(response).toMatchObject({ kind: 'revealed', index: 2, cooldownMs: 5000 });
+    expect(response).not.toHaveProperty('color'); // no colour yet: the server holds it
     expect(await bob.view()).toMatchObject({ pegUp: { index: 2, color: 'green' } });
   });
 
@@ -466,6 +467,17 @@ describe('Round 15: a clear knock-out (AC1)', () => {
 
     expect((await ann.view()).steal?.notice).toBeUndefined();
   });
+
+  it('shouldKeepTheKnockOutShown_whenAnotherNoticeFollows', async () => {
+    const { ann, bob, clock } = await match(2);
+    for (let miss = 0; miss < 10; miss += 1) await ann.guess(MISS);
+    clock.advance(1000);
+    await bob.guess(all('red')); // a duel: Bob steals Ann's sauce: "Your sauce was stolen!"
+
+    expect(await ann.view()).toMatchObject({ steal: { notice: 'robbed', knockedOut: true } });
+    clock.advance(1500);
+    expect((await ann.view()).steal?.knockedOut).toBeUndefined();
+  });
 });
 
 describe('Round 15: the taunt duel in a match (AC4, AC5)', () => {
@@ -502,7 +514,7 @@ describe('Round 15: the taunt duel in a match (AC4, AC5)', () => {
 
   it('shouldApplyTheVerdictOnce_thoughHeardTwice', async () => {
     const { bob } = await annTauntsBob();
-    const wrong = (await bob.view()).duel as { choices: number[] };
+    const wrong = (await bob.view()).duel as { readonly choices: readonly number[] };
 
     await bob.taunt.execute({ kind: 'answer', comeback: wrong.choices.find((choice) => choice !== 2)! });
     await bob.settled();
@@ -519,6 +531,19 @@ describe('Round 15: the taunt duel in a match (AC4, AC5)', () => {
     expect(await game.bob.view()).toMatchObject({ scrambled: true, duelResult: { won: false, penalty: 'scramble' } });
     expect(await game.ann.view()).toMatchObject({ duelResult: { won: true, penalty: 'scramble' } });
     expect((await game.ann.view()).scrambled).toBeUndefined();
+  });
+
+  it('shouldSettleTheDuel_whenThePhonesAskBeforeTheServersDeadline', async () => {
+    const game = await match();
+    await game.ann.taunt.execute({ kind: 'open' });
+    await game.ann.taunt.execute({ kind: 'say', insult: 2 });
+    game.clock.advance(1000); // the taunt reaches the server a second late: its deadline is 7 s after the insult
+    await game.ann.settled();
+
+    // both phones first ask before the deadline ("still open"), then again a second later
+    await game.runFor(8000);
+
+    expect(await game.ann.view()).toMatchObject({ duelResult: { won: true } });
   });
 
   it('shouldShowTheWinnerAPegOfTheSauceItIsAfter', async () => {
@@ -540,6 +565,15 @@ describe('Round 15: the taunt duel in a match (AC4, AC5)', () => {
 
     expect(await game.bob.view()).toMatchObject({ flipped: true });
     expect((await game.ann.view()).flipped).toBeUndefined();
+  });
+
+  it('shouldKeepTheInsultsOffered_whileThePlayerChooses', async () => {
+    const { ann, runFor } = await match();
+    await ann.taunt.execute({ kind: 'open' });
+
+    await runFor(3000);
+
+    expect((await ann.view()).duel).toMatchObject({ phase: 'choosing', offered: [0, 1, 2] });
   });
 
   it('shouldGiveTheChargesBack_whenTheServerRefusesTheTaunt', async () => {

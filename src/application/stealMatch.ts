@@ -94,7 +94,7 @@ export function settleSteal(session: Session, now: number): Session {
   if (now >= session.endsAt) return { ...session, steal: ask({ ...steal, finished: true, ink: undefined }, { type: 'sync' }) };
   if (steal.ink !== undefined && now - steal.ink.at >= INK_MAX_MS) return settleSteal({ ...session, steal: { ...steal, ink: undefined } }, now);
   if (session.game.life <= 0) {
-    const knocked = notify(ask(steal, { type: 'knockout' }), 'knocked-out', now);
+    const knocked = { ...notify(ask(steal, { type: 'knockout' }), 'knocked-out', now), knockedOutAt: now };
     return { ...session, steal: knocked, game: { ...session.game, life: MAX_LIFE } };
   }
   if (!steal.syncing && now >= steal.nextSwitchAt && steal.seats.length > 2) {

@@ -120,4 +120,53 @@ test.describe('Steal the sauce with test bots (one phone)', () => {
 
     await expect(page.getByTestId('attempt')).toHaveAttribute('aria-label', /^🤖 Bot 1 tried /, { timeout: 25_000 });
   });
+
+  test('Round 15 AC1: a knock-out is shown clearly, for 2.5 s', async ({ page }) => {
+    test.setTimeout(60_000);
+    await openRoomWithBots(page, 1);
+    await expect(page.getByTestId('target')).toHaveAttribute('aria-label', 'after 🤖 Bot 1', { timeout: 10_000 });
+    const knockOut = page.getByTestId('knock-out');
+    const life = page.getByTestId('life');
+    for (let guess = 0; guess < 12 && (await knockOut.count()) === 0; guess += 1) {
+      const before = await life.getAttribute('aria-label');
+      for (const color of ['purple', 'purple', 'orange', 'orange']) await page.getByTestId(`palette-${color}`).click();
+      await page.getByTestId('submit').click();
+      await expect(life).not.toHaveAttribute('aria-label', before, { timeout: 10_000 }); // scored by the server: a life lost
+    }
+
+    await expect(knockOut).toBeVisible();
+    await expect(knockOut).toContainText('K.O.!');
+    await page.waitForTimeout(2000);
+    await expect(knockOut).toBeVisible();
+    await expect(knockOut).toHaveCount(0, { timeout: 1500 });
+  });
+
+  test('Round 15 AC4, AC7: the phone taunts the bot, which answers with the insult\'s own comeback', async ({ page }) => {
+    test.setTimeout(60_000);
+    await openRoomWithBots(page, 1); // the draws fixed at 0: the bot answers right, after 1.5 s
+    await expect(page.getByTestId('target')).toHaveAttribute('aria-label', 'after 🤖 Bot 1', { timeout: 10_000 });
+
+    await page.getByTestId('action-taunt').click();
+    await page.locator('[data-testid^="insult-"]').first().click(); // three of the eight, drawn at random
+    await expect(page.getByTestId('duel-waiting')).toContainText('🤖 Bot 1 looks for a comeback');
+
+    await expect(page.getByTestId('duel-result')).toContainText('😖 🤖 Bot 1 wins!', { timeout: 10_000 });
+    await expect(page.getByTestId('cooldown')).toHaveAttribute('aria-label', 'Peek cooling down');
+  });
+
+  test.describe('the bot taunts', () => {
+    test.use({ botsTaunt: true });
+
+    test('Round 15 AC4, AC7: the bot taunts the phone, which wins with the right comeback', async ({ page }) => {
+      test.setTimeout(90_000);
+      await openRoomWithBots(page, 1);
+      await expect(page.getByTestId('target')).toHaveAttribute('aria-label', 'after 🤖 Bot 1', { timeout: 10_000 });
+
+      // the bot's first taunt: 35 s after the start (draws fixed at 0), insult 0
+      await expect(page.getByTestId('duel-insult')).toHaveText('“Your sauce comes out of a jar!”', { timeout: 50_000 });
+      await page.getByTestId('comeback-0').click();
+
+      await expect(page.getByTestId('duel-result')).toContainText('🏆 You win!', { timeout: 10_000 });
+    });
+  });
 });

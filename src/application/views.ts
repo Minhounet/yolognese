@@ -39,6 +39,8 @@ export interface StealView {
   readonly notice?: 'switch' | 'robbed' | 'scored' | 'knocked-out' | 'inked' | 'ink-thrown';
   /** Round 14: the latest guesses rivals made on this player's sauce, newest last. */
   readonly attempts: readonly { readonly by: string; readonly guess: Code; readonly exact: number; readonly misplaced: number }[];
+  /** Round 15 (AC1): knocked out just now (2.5 s), whatever notice came after. */
+  readonly knockedOut?: boolean;
   /** Round 14: ink a rival threw on this player's screen, and how much is left to wipe (1 → 0). */
   readonly ink?: { readonly by: string; readonly left: number };
 }

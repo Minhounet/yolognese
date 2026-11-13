@@ -39,6 +39,7 @@ const VERDICT_GRACE_MS = 1500;
 /** ... and gives up on it after this much more (the server never answered). */
 const VERDICT_GIVE_UP_MS = 6000;
 const DUELS_REMEMBERED = 10;
+const VERDICT_RETRY_MS = 1000;
 
 type Draw = (count: number) => number;
 
@@ -198,7 +199,8 @@ export function hearTaunt(session: Session, event: { readonly id: string; readon
   const me = session.steal?.me;
   if (me === undefined || session.duelsDone?.includes(event.id)) return session;
   if (event.from === me && session.duel?.phase === 'waiting' && session.duel.id === undefined) {
-    return { ...session, duel: { ...session.duel, id: event.id } };
+    // the server's target: the circle may have turned while the taunt was on its way
+    return { ...session, duel: { ...session.duel, id: event.id, opponent: event.target } };
   }
   if (event.target !== me || session.duel?.phase === 'answering') return session;
   const choices = comebacksFor(event.insult, seededDraw(event.id));
@@ -225,6 +227,13 @@ export function hearVerdict(session: Session, outcome: DuelOutcome, now: number)
 export function tauntRefused(session: Session): Session {
   if (session.duel?.phase !== 'waiting' || session.duel.id !== undefined) return session;
   return { ...session, duel: undefined, peekReadyAt: session.peekReadyAt - ACTION_COSTS.taunt * CHARGE_MS };
+}
+
+/** The server said the duel is still open (this phone's clock ran ahead of its deadline): ask again a second later. */
+export function verdictPending(session: Session, id: string, now: number): Session {
+  const { duel } = session;
+  if (duel === undefined || duel.phase === 'choosing' || duel.id !== id) return session;
+  return { ...session, duel: { ...duel, asked: false, until: Math.max(duel.until, now + VERDICT_RETRY_MS) } };
 }
 
 export function tauntSent(session: Session, id: string): Session {

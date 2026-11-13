@@ -88,6 +88,8 @@ export interface Steal {
   readonly syncing: boolean;
   readonly requests: readonly ServerRequest[];
   readonly notice?: { readonly kind: StealNotice; readonly at: number };
+  /** Round 15 (AC1): when this player was last knocked out; shown 2.5 s whatever notice follows. */
+  readonly knockedOutAt?: number;
   /** The latest guesses rivals made on this player's sauce, newest last. */
   readonly attempts: readonly (Attempt & { readonly by: string })[];
   /** Ink a rival threw on this player's screen: how much is left (1 → 0) as it is wiped. */
