@@ -1,6 +1,7 @@
 import { Attack, LANE_COUNT, punchWindUp } from '../domain/attack';
 import { Color } from '../domain/color';
 import { PEEK_COOLDOWN_MS } from '../domain/peek';
+import { ACTION_COSTS, canAfford, emptied, spend } from '../domain/actionBar';
 import { penalise } from '../domain/game';
 import { isBlind, isDistracted } from '../domain/guardian';
 import { toGameView } from './GameMapper';
@@ -23,6 +24,8 @@ export type PeekResponse =
       /** Undefined when the server holds the secret: the peg comes up a moment later, in the view's pegUp. */
       readonly color?: Color;
       readonly cooldownMs: number;
+      /** Round 15: the view after the peek (the action bar spent a charge). */
+      readonly view?: GameView;
     }
   | { readonly kind: 'caught'; readonly view: GameView; readonly cooldownMs: number }
   | { readonly kind: 'rejected'; readonly reason: 'no-game' | 'game-over' | 'peg-up' }
@@ -44,7 +47,7 @@ export class PeekSecretImpl implements PeekSecret {
       if (session === undefined) return { result: { kind: 'rejected', reason: 'no-game' } };
       if (isSessionOver(session)) return { result: { kind: 'rejected', reason: 'game-over' } };
       const now = this.clock.now();
-      if (now < session.peekReadyAt) {
+      if (!canAfford(session.peekReadyAt, now, ACTION_COSTS.peek)) {
         if (session.attackLandsAt !== undefined) return { result: { kind: 'rejected', reason: 'cooling-down' } };
         const punch = punchWindUp(this.random.nextInt(LANE_COUNT));
         return { session: withPunchThrown(session, now, punch), result: { kind: 'rejected', reason: 'cooling-down', punch } };
@@ -52,17 +55,19 @@ export class PeekSecretImpl implements PeekSecret {
       if (session.pegUp !== undefined) return { result: { kind: 'rejected', reason: 'peg-up' } };
       if (!isDistracted(session.guardian, now)) {
         const game = penalise(session.game);
-        const caught = { ...session, game, peekReadyAt: now + PEEK_COOLDOWN_MS };
-        return { session: caught, result: { kind: 'caught', view: toGameView(game, { session, now }), cooldownMs: PEEK_COOLDOWN_MS } };
+        const caught = { ...session, game, peekReadyAt: emptied(now) };
+        return { session: caught, result: { kind: 'caught', view: toGameView(game, { session: caught, now }), cooldownMs: PEEK_COOLDOWN_MS } };
       }
+      // AC2 (round 15): a peek costs one charge of the action bar, none while the guardian is blinded
       const cooldownMs = isBlind(session.guardian, now) ? NO_COOLDOWN_MS : PEEK_COOLDOWN_MS;
+      const peekReadyAt = cooldownMs === NO_COOLDOWN_MS ? session.peekReadyAt : spend(session.peekReadyAt, now, ACTION_COSTS.peek);
       if (session.game.secret === undefined) {
-        const asked = askPeg({ ...session, peekReadyAt: now + cooldownMs }, command.index, 'peek');
-        return { session: asked, result: { kind: 'revealed', index: command.index, cooldownMs } };
+        const asked = askPeg({ ...session, peekReadyAt }, command.index, 'peek');
+        return { session: asked, result: { kind: 'revealed', index: command.index, cooldownMs, view: toGameView(asked.game, { session: asked, now }) } };
       }
       const color = session.game.secret[command.index];
-      const peeked = { ...session, peekReadyAt: now + cooldownMs, pegUp: { index: command.index, color } };
-      return { session: peeked, result: { kind: 'revealed', index: command.index, color, cooldownMs } };
+      const peeked = { ...session, peekReadyAt, pegUp: { index: command.index, color } };
+      return { session: peeked, result: { kind: 'revealed', index: command.index, color, cooldownMs, view: toGameView(peeked.game, { session: peeked, now }) } };
     });
   }
 }

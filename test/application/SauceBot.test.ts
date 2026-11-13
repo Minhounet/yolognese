@@ -135,4 +135,32 @@ describe('SauceBot', () => {
 
     expect(scheduler.pending).toBe(0);
   });
+
+  it('shouldAnswerATaunt_after1_5To4Seconds', async () => {
+    const { scheduler, start, server, heard, settle } = await roomWithBots(1);
+    const { matchId } = await start();
+    await server.as('host').taunt(matchId, 4);
+    await settle();
+
+    await scheduler.advance(1_400, settle);
+    expect(heard.filter((event) => event.type === 'duel')).toHaveLength(0);
+    await scheduler.advance(100, settle); // nothing queued: the shortest wait, and the right comeback
+
+    expect(heard.filter((event) => event.type === 'duel')).toEqual([
+      { type: 'duel', outcome: { id: 't1', taunter: 'host', target: 'bot1', winner: 'bot1', penalty: 'life' } },
+    ]);
+  });
+
+  it('shouldTauntItsTarget_every35To60Seconds_andAskTheVerdict', async () => {
+    const { scheduler, start, heard, settle } = await roomWithBots(1);
+    await start();
+
+    await scheduler.advance(34_900, settle);
+    expect(heard.filter((event) => event.type === 'taunt')).toHaveLength(0);
+    await scheduler.advance(100, settle);
+    expect(heard.filter((event) => event.type === 'taunt')).toEqual([{ type: 'taunt', id: 't1', from: 'bot1', target: 'host', insult: 0 }]);
+    await scheduler.advance(6_500, settle); // the host never answered: the bot asks, the server settles
+
+    expect(heard.filter((event) => event.type === 'duel')).toMatchObject([{ outcome: { winner: 'bot1' } }]);
+  });
 });

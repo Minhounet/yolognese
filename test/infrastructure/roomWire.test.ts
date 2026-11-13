@@ -1,5 +1,5 @@
 import { RoomEvent } from '../../src/domain/steal';
-import { WIRE_VERSION, decode, encode } from '../../src/infrastructure/roomWire';
+import { WIRE_VERSION, decode, decodeOutcome, encode } from '../../src/infrastructure/roomWire';
 
 const STATE = {
   matchId: '7f0c2a9e-0000-4000-8000-000000000001',
@@ -21,6 +21,8 @@ const EVENTS: readonly RoomEvent[] = [
   { type: 'pressure', from: 'a', target: 'b', bestExact: 3, attempt: undefined },
   { type: 'pressure', from: 'a', target: 'b', bestExact: 2, attempt: { guess: ['red', 'blue', 'red', 'green'], exact: 2, misplaced: 1 } },
   { type: 'ink', from: 'a', target: 'b' },
+  { type: 'taunt', id: 't1', from: 'a', target: 'b', insult: 7 },
+  { type: 'duel', outcome: { id: 't1', taunter: 'a', target: 'b', winner: 'b', penalty: 'flip' } },
 ];
 
 describe('roomWire', () => {
@@ -38,6 +40,12 @@ describe('roomWire', () => {
     });
   });
 
+  it('shouldReadTheWinnersPeg_inAServerAnswer', () => {
+    expect(decodeOutcome({ id: 't1', taunter: 'a', target: 'b', winner: 'a', penalty: 'peg', peg: { index: 3, color: 'green' } })).toEqual({
+      id: 't1', taunter: 'a', target: 'b', winner: 'a', penalty: 'peg', peg: { index: 3, color: 'green' },
+    });
+  });
+
   it('shouldDropMessage_fromAnotherVersion', () => {
     expect(decode({ ...encode({ type: 'pressure', from: 'a', target: 'b', bestExact: 1 }), v: WIRE_VERSION + 1 })).toBeUndefined();
   });
@@ -50,6 +58,9 @@ describe('roomWire', () => {
     ['a best above four', { v: WIRE_VERSION, t: 'steal.pressure', by: 'a', on: 'b', best: 9 }],
     ['no sender', { v: WIRE_VERSION, t: 'steal.pressure', on: 'b', best: 1 }],
     ['ink with no target', { v: WIRE_VERSION, t: 'steal.ink', by: 'a' }],
+    ['an insult the app does not have', { v: WIRE_VERSION, t: 'steal.taunt', id: 't1', by: 'a', on: 'b', insult: 8 }],
+    ['a penalty the app does not know', { v: WIRE_VERSION, t: 'steal.duel', id: 't1', by: 'a', on: 'b', winner: 'a', penalty: 'dizzy' }],
+    ['a winner not in the duel', { v: WIRE_VERSION, t: 'steal.duel', id: 't1', by: 'a', on: 'b', winner: 'c', penalty: 'life' }],
     ['not an object', 'hello'],
   ])('shouldDropMessage_withMalformedContent: %s', (_why, message) => {
     expect(decode(message)).toBeUndefined();

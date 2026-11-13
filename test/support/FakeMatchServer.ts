@@ -1,6 +1,7 @@
 import { GuessAnswer, MatchServer } from '../../src/application/ports';
 import { COLORS, Code, Color } from '../../src/domain/color';
 import { MatchState, RoomEvent, StateCause } from '../../src/domain/steal';
+import { DuelOutcome, Penalty } from '../../src/domain/duel';
 import { FakeClock } from './FakeClock';
 
 const SWITCH_MS = 45_000;
@@ -8,7 +9,7 @@ const MATCH_MS = 300_000;
 
 interface Match {
   readonly id: string;
-  readonly seats: { readonly id: string; readonly name: string; points: number; version: number; sauce: Code; lastPeek?: number; lastInk?: number }[];
+  readonly seats: { readonly id: string; readonly name: string; points: number; version: number; sauce: Code; lastPeek?: number; lastInk?: number; lastTaunt?: number }[];
   rotation: number;
   nextSwitchAt: number;
   endsAt: number;
@@ -27,6 +28,11 @@ export class FakeMatchServer {
   private nextMatch = 0;
   /** Sauces the server draws for robbed players, in order (then all orange). */
   readonly newSauces: Code[] = [];
+  /** Round 15: the penalties the server draws for duels, in order (then 'life'), and the pegs it shows (then 0). */
+  readonly penalties: Penalty[] = [];
+  readonly pegIndexes: number[] = [];
+  private readonly taunts = new Map<string, Taunt>();
+  private nextTaunt = 0;
 
   constructor(
     private readonly clock: FakeClock,
@@ -43,6 +49,9 @@ export class FakeMatchServer {
       knockout: async (matchId) => this.knockout(this.seated(matchId, player), player),
       mySauce: async (matchId) => this.seated(matchId, player).seats.find(({ id }) => id === player)!.sauce,
       ink: async (matchId) => this.ink(this.seated(matchId, player), player),
+      taunt: async (matchId, insult) => this.taunt(this.seated(matchId, player), player, insult),
+      retort: async (tauntId, comeback) => this.retort(tauntId, player, comeback),
+      tauntResult: async (tauntId) => this.tauntResult(tauntId, player),
     };
   }
 
@@ -121,6 +130,53 @@ export class FakeMatchServer {
     return true;
   }
 
+  /** Round 15: a taunt at the caller's target; refused within 15 s of its last, or while either is in an open duel. */
+  private taunt(match: Match, player: string, insult: number): string | undefined {
+    const seat = match.seats.find(({ id }) => id === player)!;
+    const target = this.target(match, player).id;
+    const now = this.clock.now();
+    const open = [...this.taunts.values()].some((t) => t.winner === undefined && now < t.deadline && [t.taunter, t.target].some((p) => p === player || p === target));
+    if (now >= match.endsAt || open || (seat.lastTaunt !== undefined && now - seat.lastTaunt < 15_000)) return undefined;
+    seat.lastTaunt = now;
+    const id = `t${++this.nextTaunt}`;
+    this.taunts.set(id, { id, match, taunter: player, target, insult, deadline: now + 6000 });
+    this.broadcast({ type: 'taunt', id, from: player, target, insult });
+    return id;
+  }
+
+  private retort(tauntId: string, player: string, comeback: number): DuelOutcome {
+    const taunt = this.taunts.get(tauntId);
+    if (taunt === undefined || taunt.target !== player) throw new Error('not your duel');
+    if (taunt.winner === undefined && this.clock.now() < taunt.deadline) this.settle(taunt, comeback);
+    return this.answer(taunt, player);
+  }
+
+  private tauntResult(tauntId: string, player: string): DuelOutcome | undefined {
+    const taunt = this.taunts.get(tauntId);
+    if (taunt === undefined || (taunt.taunter !== player && taunt.target !== player)) throw new Error('not your duel');
+    if (taunt.winner === undefined && this.clock.now() < taunt.deadline) return undefined;
+    if (taunt.winner === undefined) this.settle(taunt, undefined);
+    return this.answer(taunt, player);
+  }
+
+  private settle(taunt: Taunt, comeback: number | undefined): void {
+    taunt.winner = comeback === taunt.insult ? taunt.target : taunt.taunter;
+    taunt.penalty = this.penalties.shift() ?? 'life';
+    if (taunt.penalty === 'peg') {
+      const index = this.pegIndexes.shift() ?? 0;
+      taunt.peg = { index, color: this.target(taunt.match, taunt.winner).sauce[index] };
+    }
+    this.broadcast({ type: 'duel', outcome: this.outcome(taunt) });
+  }
+
+  private outcome(taunt: Taunt): DuelOutcome {
+    return { id: taunt.id, taunter: taunt.taunter, target: taunt.target, winner: taunt.winner!, penalty: taunt.penalty! };
+  }
+
+  private answer(taunt: Taunt, player: string): DuelOutcome {
+    return taunt.winner === player && taunt.peg !== undefined ? { ...this.outcome(taunt), peg: taunt.peg } : this.outcome(taunt);
+  }
+
   private sync(match: Match): MatchState {
     return this.advance(match) ? this.say(match, { kind: 'switch' }) : this.state(match);
   }
@@ -149,4 +205,16 @@ export class FakeMatchServer {
     this.broadcast({ type: 'state', state, cause });
     return state;
   }
+}
+
+interface Taunt {
+  readonly id: string;
+  readonly match: Match;
+  readonly taunter: string;
+  readonly target: string;
+  readonly insult: number;
+  readonly deadline: number;
+  winner?: string;
+  penalty?: Penalty;
+  peg?: { readonly index: number; readonly color: Color };
 }

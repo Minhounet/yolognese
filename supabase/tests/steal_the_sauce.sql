@@ -94,6 +94,53 @@ do $$ begin
   raise exception 'FAILED: a second ink within 10 s';
 exception when sqlstate 'P0001' then null; end $$;
 
+-- taunts (round 15): Ann taunts Bob (her target); one taunt per 15 s; no taunt at a player in an open duel
+select pg_temp.as_player(ann) from t_ids;
+insert into t_out select 'taunt', to_jsonb(public.yolo_taunt((select (v ->> 'matchId')::uuid from t_out where k = 'start'), 3));
+do $$ begin
+  perform public.yolo_taunt((select (v ->> 'matchId')::uuid from t_out where k = 'start'), 1);
+  raise exception 'FAILED: a second taunt within 15 s';
+exception when sqlstate 'P0001' then null; end $$;
+select pg_temp.as_player(cid) from t_ids;
+do $$ begin
+  perform public.yolo_taunt((select (v ->> 'matchId')::uuid from t_out where k = 'start'), 1);
+  raise exception 'FAILED: Cid taunted Ann, who is in an open duel';
+exception when sqlstate 'P0001' then null; end $$;
+do $$ begin
+  perform public.yolo_retort((select (v #>> '{}')::uuid from t_out where k = 'taunt'), 3);
+  raise exception 'FAILED: Cid answered a taunt at Bob';
+exception when sqlstate '42501' then null; end $$;
+do $$ begin
+  perform public.yolo_taunt_result((select (v #>> '{}')::uuid from t_out where k = 'taunt'));
+  raise exception 'FAILED: Cid read a duel he is not in';
+exception when sqlstate '42501' then null; end $$;
+select pg_temp.as_player(ann) from t_ids;
+select pg_temp.check(public.yolo_taunt_result((select (v #>> '{}')::uuid from t_out where k = 'taunt')) is null, 'no verdict while Bob may answer');
+-- Bob answers with insult 3's own comeback: he wins; asked again, the verdict does not change
+select pg_temp.as_player(bob) from t_ids;
+insert into t_out select 'retort', public.yolo_retort((select (v #>> '{}')::uuid from t_out where k = 'taunt'), 3);
+select pg_temp.check((select v ->> 'winner' = bob::text and v ->> 'taunter' = ann::text and v ->> 'penalty' in ('peg', 'life', 'scramble', 'flip') from t_out, t_ids where k = 'retort'), 'the right comeback wins for Bob');
+select pg_temp.check((select public.yolo_retort((select (v #>> '{}')::uuid from t_out where k = 'taunt'), 0) ->> 'winner' = bob::text from t_ids), 'a second answer changes nothing');
+select pg_temp.as_player(ann) from t_ids;
+select pg_temp.check((select public.yolo_taunt_result((select (v #>> '{}')::uuid from t_out where k = 'taunt')) ->> 'winner' = bob::text from t_ids), 'Ann reads the same verdict');
+-- Bob taunts Cid, who never answers: once the time is up, the verdict goes to Bob
+select pg_temp.as_player(bob) from t_ids;
+insert into t_out select 'taunt2', to_jsonb(public.yolo_taunt((select (v ->> 'matchId')::uuid from t_out where k = 'start'), 5));
+reset role;
+update public.taunts set deadline = clock_timestamp() - interval '1 second' where id = (select (v #>> '{}')::uuid from t_out where k = 'taunt2');
+set local role authenticated;
+select pg_temp.as_player(cid) from t_ids;
+select pg_temp.check((select public.yolo_retort((select (v #>> '{}')::uuid from t_out where k = 'taunt2'), 5) ->> 'winner' = bob::text from t_ids), 'a late answer loses');
+-- a peg is told to the winner only
+reset role;
+update public.taunts set penalty = 'peg', peg_index = 2, peg_color = 'green' where id = (select (v #>> '{}')::uuid from t_out where k = 'taunt2');
+set local role authenticated;
+select pg_temp.check(not (public.yolo_taunt_result((select (v #>> '{}')::uuid from t_out where k = 'taunt2')) ? 'peg'), 'the loser is not told the peg');
+select pg_temp.as_player(bob) from t_ids;
+select pg_temp.check((public.yolo_taunt_result((select (v #>> '{}')::uuid from t_out where k = 'taunt2')) -> 'peg' ->> 'color') = 'green', 'the winner is told the peg');
+-- phones cannot read the duels table
+select pg_temp.check((select count(*) = 0 from public.taunts), 'no phone reads the taunts');
+
 -- the timer: 45 s later the circle turns once more for everyone (time moved by editing the row as the owner)
 reset role;
 update public.matches set next_switch_at = clock_timestamp() - interval '1 second';
@@ -108,6 +155,10 @@ set local role anon;
 do $$ begin
   perform public.yolo_sync('00000000-0000-0000-0000-000000000000');
   raise exception 'FAILED: anon called the game';
+exception when insufficient_privilege then null; end $$;
+do $$ begin
+  perform public.yolo_taunt('00000000-0000-0000-0000-000000000000', 0);
+  raise exception 'FAILED: anon taunted';
 exception when insufficient_privilege then null; end $$;
 
 reset role;

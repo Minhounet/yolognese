@@ -9,7 +9,11 @@ Resume block at the top of `docs/decisions/peek-a-code.md`.
 A code-breaking game with a twist: a meatball guardian watches the hidden
 code. Point somewhere (or shake your phone) and its eyes follow, then peek at
 a hidden peg while it looks away. You have a life bar of 10: a missed guess costs 1, getting caught costs 2.
-After a peek you wait 5 s (the cooldown bar), and a game lasts 3 minutes. The guardian throws meatballs:
+The ⚡ action bar holds 3 charges, one refilled every 5 s: a peek costs 1 (getting caught empties it),
+🥤 the shell game costs 2 (find the 🍝 under one of three shuffled cups: +3 life), 🗯️ a taunt costs 3
+(pick an insult; your opponent has 5 s to find its own comeback; the winner forces a penalty on the
+loser: a peg shown, 2 life given, a lying palette or an upside-down screen). In solo you taunt the
+guardian, and it taunts you back every 40-70 s. A game lasts 3 minutes. The guardian throws meatballs:
 drag the shield to the lane it aims at. Tap the items that pop up: 🍝 food, 💨 smoke bomb, 👓 x-ray,
 ⏳ hourglass, 🍀 shield charm, 🎁 present (a gamble: it can hold darkness, a bomb, or a 🌀 mix-up of
 your pegs). One throw in three is a 🍴 fork that steals a peg you placed.
@@ -18,7 +22,9 @@ your pegs). One throw in three is a 🍴 fork that steals a peg you placed.
 a circle that turns every 45 s and after each crack; +1 per sauce stolen, most points in 5 minutes
 wins. A server referees it (Supabase, `supabase/README.md`): no phone can see another's sauce.
 You see your attacker's guesses on your sauce live, and a 🦑 ink item lets you ink your target's
-screen (they rub it off with a finger). Alone? In the room, the host can tap "🤖 Add a bot". Design in `docs/ticket/PEEK-2/`.
+screen (they rub it off with a finger). The taunt goes to the player whose sauce you are after, and the
+server referees the duel. A knock-out shows a big 💫 K.O. for 2.5 s. Alone? In the room, the host can tap
+"🤖 Add a bot" (bots duel too). Design in `docs/ticket/PEEK-2/` and `docs/ticket/PEEK-3/` (round 15).
 
 Built in yolo mode with the aixlper skills; design and acceptance criteria
 in `docs/ticket/PEEK-1/`, decisions in `docs/decisions/peek-a-code.md`.

@@ -1,4 +1,5 @@
-import { Color } from '../domain/color';
+import { COLORS, Color } from '../domain/color';
+import { placedColor } from './actions';
 import { EMPTY_DRAFT, clearSlot, placeColor } from '../domain/draft';
 import { toGameView } from './GameMapper';
 import { isSessionOver } from './stealMatch';
@@ -31,9 +32,14 @@ export class EditDraftImpl implements EditDraft {
       if (session === undefined) return { result: { kind: 'rejected', reason: 'no-game' } };
       if (isSessionOver(session)) return { result: { kind: 'rejected', reason: 'game-over' } };
       const current = session.draft ?? EMPTY_DRAFT;
-      const draft = command.kind === 'place' ? placeColor(current, command.color, command.slot) : clearSlot(current, command.slot);
+      const now = this.clock.now();
+      // AC5 (round 15): a lost duel can make the palette lie: the colour placed is another one
+      const draft =
+        command.kind === 'place'
+          ? placeColor(current, COLORS[placedColor(session, COLORS.indexOf(command.color), now)], command.slot)
+          : clearSlot(current, command.slot);
       const edited = { ...session, draft };
-      return { session: edited, result: { kind: 'edited', view: toGameView(edited.game, { session: edited, now: this.clock.now() }) } };
+      return { session: edited, result: { kind: 'edited', view: toGameView(edited.game, { session: edited, now }) } };
     });
   }
 }

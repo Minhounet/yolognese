@@ -29,18 +29,19 @@ test('AC35: a tap right after the game is lost does not start a new game; New ga
   await expect(page.getByTestId('life')).toHaveAttribute('aria-label', 'Life 10 of 10');
 });
 
-test('AC11: the cooldown bar refills progressively: seen part-filled, then fuller, then full', async ({ page }) => {
+test('AC11: the action bar refills progressively: seen part-filled, then fuller, then full (15 s from empty, round 15)', async ({ page }) => {
+  test.setTimeout(45_000);
   await page.goto('/');
   const track = await page.getByTestId('cooldown').boundingBox();
-  await tapAt(page, page.getByTestId('secret-0')); // watched: caught, the 5 s cooldown starts
+  await tapAt(page, page.getByTestId('secret-0')); // watched: caught, the bar is emptied
   const drawn = async () => (await page.getByTestId('cooldown-fill').boundingBox()).width / track.width;
   const between = (low, high) => async () => {
     const part = await drawn();
     return part > low && part < high;
   };
 
-  await expect.poll(between(0.1, 0.4), { intervals: [50], timeout: 3000 }).toBe(true);
-  await expect.poll(between(0.5, 0.8), { intervals: [50], timeout: 4000 }).toBe(true);
-  await expect.poll(drawn, { intervals: [100], timeout: 4000 }).toBeGreaterThan(0.99);
+  await expect.poll(between(0.1, 0.4), { intervals: [50], timeout: 7000 }).toBe(true);
+  await expect.poll(between(0.5, 0.8), { intervals: [50], timeout: 9000 }).toBe(true);
+  await expect.poll(drawn, { intervals: [100], timeout: 9000 }).toBeGreaterThan(0.99);
   await expect(page.getByTestId('cooldown')).toHaveAttribute('aria-label', 'Peek ready');
 });
