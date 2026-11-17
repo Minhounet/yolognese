@@ -135,7 +135,7 @@ test.describe('AC5-AC6: the guardian taunts the player', () => {
       await runForBlockingAttacks(page, 39_900);
       await expect(page.getByTestId('duel')).toHaveCount(0);
       await page.clock.runFor(300);
-      await expect(page.getByTestId('duel-insult')).toHaveText('“You cook spaghetti like a tourist!”');
+      await expect(page.getByTestId('duel-insult')).toHaveText('“Tu casses tes spaghettis en deux, barbare\u00a0!”');
       for (const comeback of [2, 3, 4]) await expect(page.getByTestId(`comeback-${comeback}`)).toBeVisible();
 
       await tapAt(page, page.getByTestId('comeback-3'));

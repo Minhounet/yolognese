@@ -163,7 +163,7 @@ test.describe('Steal the sauce with test bots (one phone)', () => {
       await expect(page.getByTestId('target')).toHaveAttribute('aria-label', 'after 🤖 Bot 1', { timeout: 10_000 });
 
       // the bot's first taunt: 35 s after the start (draws fixed at 0), insult 0
-      await expect(page.getByTestId('duel-insult')).toHaveText('“Your sauce comes out of a jar!”', { timeout: 50_000 });
+      await expect(page.getByTestId('duel-insult')).toHaveText('“Ta sauce sort d’un bocal\u00a0!”', { timeout: 50_000 });
       await page.getByTestId('comeback-0').click();
 
       await expect(page.getByTestId('duel-result')).toContainText('🏆 You win!', { timeout: 10_000 });
