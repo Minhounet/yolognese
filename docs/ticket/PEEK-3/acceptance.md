@@ -12,7 +12,7 @@ logged in the decision log.
 - Interpretation: in a match, when the player's life reaches 0, a large 💫 K.O. panel covers the guardian for 2.5 s ("−1 point, life refilled"), and the status line says it for as long
 - Questions: none
 - Covered by: D-ko
-- Evidence: Steal.test.ts shouldShowTheKnockOutFor2_5Seconds, shouldKeepTheKnockOutShown_whenAnotherNoticeFollows (the K.O. has its own time, a later notice does not cut it); browser check e2e/steal.spec.js "Round 15 AC1: a knock-out is shown clearly, for 2.5 s" on the real project (the panel seen, still seen after 2 s, gone by 3.5 s); on the phone: by the user, pending (HUMAN)
+- Evidence: Steal.test.ts shouldShowTheKnockOutFor2_5Seconds, shouldKeepTheKnockOutShown_whenAnotherNoticeFollows (the K.O. has its own time, a later notice does not cut it); browser check e2e/steal.spec.js "Round 15 AC1: a knock-out is shown clearly, for 2.5 s" on the real project (the panel seen, still seen after 2 s, gone by 3.5 s); on the phone: confirmed by the user ("Ko is clear")
 - Status: verified
 
 ## AC2: The action bar
