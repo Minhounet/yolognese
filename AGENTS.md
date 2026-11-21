@@ -18,7 +18,9 @@ checks and the user's preferences (squash the session's commits into one and pus
 ## Report the Expo link
 
 Every report to the user about a change ends with the link to play it in Expo Go
-(the `main` channel; publish it after each merge into `main`):
+(the `main` channel; publish it after each merge into `main`). Always put it **alone in its own
+fenced code block**, nothing else inside, so the Claude app shows a copy button that copies the
+link only (user: "must always be the case"):
 
 ```
 exp://u.expo.dev/90eceada-289a-4a45-b958-180a23ddedb8?channel-name=main&runtime-version=exposdk:58.0.0
